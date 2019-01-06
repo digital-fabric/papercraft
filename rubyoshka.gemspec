@@ -4,7 +4,7 @@ Gem::Specification.new do |s|
   s.name        = 'rubyoshka'
   s.version     = Rubyoshka::VERSION
   s.licenses    = ['MIT']
-  s.summary     = 'Rubyoshka: component-based HTML templating for Ruby'
+  s.summary     = 'Rubyoshka: composable HTML templating for Ruby'
   s.author      = 'Sharon Rosner'
   s.email       = 'ciconia@gmail.com'
   s.files       = `git ls-files README.md CHANGELOG.md lib`.split
@@ -14,7 +14,6 @@ Gem::Specification.new do |s|
   }
   s.rdoc_options = ["--title", "rubyoshka", "--main", "README.md"]
   s.extra_rdoc_files = ["README.md"]
-  s.extensions = ["ext/ev/extconf.rb"]
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency      'modulation',     '0.18'

@@ -27,17 +27,24 @@ class AttributesTest < MiniTest::Test
   def test_that_attributes_are_supported_and_escaped
     assert_equal(
       '<div class="blue and green"/>',
-      H { div(class: 'blue and green') }.render
+      H { div class: 'blue and green' }.render
     )
 
     assert_equal(
       '<div onclick="return doit();"/>',
-      H { div(onclick: 'return doit();') }.render
+      H { div onclick: 'return doit();' }.render
     )
 
     assert_equal(
       '<a href="/?q=a%20b"/>',
-      H { a(href: '/?q=a b') }.render
+      H { a href: '/?q=a b' }.render
+    )
+  end
+
+  def test_that_valueless_attributes_are_supported
+    assert_equal(
+      '<input type="checkbox" checked/>',
+      H { input type: 'checkbox', checked: true }.render
     )
   end
 end
@@ -218,6 +225,16 @@ class ContextTest < MiniTest::Test
     assert_equal(
       '<html><head><title>foo</title></head></html>',
       H { html { C5() } }.render(title: 'foo')
+    )
+  end
+end
+
+class BlockTest < MiniTest::Test
+  def test_that_template_block_has_access_to_local_variables
+    text = 'foobar'
+    assert_equal(
+      '<p>foobar</p>',
+      H { p text }.render
     )
   end
 end
