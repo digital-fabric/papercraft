@@ -5,16 +5,24 @@ require 'escape_utils'
 
 export_default :Rubyoshka
 
+# A Rubyoshka is a template representing a piece of HTML
 class Rubyoshka
+  # A Rendering is a rendering of a Rubyoshka
   class Rendering
     attr_reader :context
   
+    # Initializes attributes and renders the given block
+    # @param context [Hash] rendering context
+    # @param block [Proc] template block
+    # @return [void]
     def initialize(context, &block)
       @context = context
       @buffer = +''
       instance_eval(&block)
     end
   
+    # Returns the result of the rendering
+    # @return [String]
     def to_s
       @buffer
     end
@@ -27,6 +35,11 @@ class Rubyoshka
 
     R_CONST_SYM = /^[A-Z]/
   
+    # Catches undefined tag method call and handles them by defining the method
+    # @param sym [Symbol] HTML tag or component identifier
+    # @param args [Array] method call arguments
+    # @param block [Proc] block passed to method call
+    # @return [void]
     def method_missing(sym, *args, &block)
       if sym =~ R_CONST_SYM
         o = instance_eval(sym.to_s) rescue Rubyoshka.const_get(sym) \
@@ -51,6 +64,9 @@ class Rubyoshka
       end
     end
   
+    # Emits the given object into the rendering buffer
+    # @param o [Proc, Rubyoshka, String] emitted object
+    # @return [void]
     def emit(o)
       case o
       when ::Proc
@@ -71,7 +87,15 @@ class Rubyoshka
     S_SPACE           = ' '
     S_EQUAL_QUOTE     = '="'
     S_QUOTE           = '"'
+
+    E = EscapeUtils
   
+    # Emits an HTML tag
+    # @param sym [Symbol] HTML tag
+    # @param text [String] text content of tag
+    # @param props [Hash] tag attributes
+    # @param block [Proc] nested HTML block
+    # @return [void]
     def tag(sym, text = nil, **props, &block)
       sym = sym.to_s
   
@@ -87,15 +111,16 @@ class Rubyoshka
         emit(text)
         @buffer << S_LT_SLASH << sym << S_GT
       elsif text
-        @buffer << S_GT << EscapeUtils.escape_html(text.to_s) <<
+        @buffer << S_GT << E.escape_html(text.to_s) <<
           S_LT_SLASH << sym << S_GT
       else
         @buffer << S_SLASH_GT
       end
     end
 
-    E = EscapeUtils
-  
+    # Emits tag attributes into the rendering buffer
+    # @param props [Hash] tag attributes
+    # @return [void]
     def emit_props(props)
       props.each { |k, v|
         case k
@@ -113,34 +138,51 @@ class Rubyoshka
       }
     end
 
+    # Emits the p tag
+    # @param text [String] text content of tag
+    # @param props [Hash] tag attributes
+    # @para block [Proc] nested HTML block
+    # @return [void]
     def p(text = nil, **props, &block)
       tag(:p, text, **props, &block)
     end
   
     S_HTML5_DOCTYPE = '<!DOCTYPE html>'
   
+    # Emits an HTML5 doctype tag and an html tag with the given block
+    # @param block [Proc] nested HTML block
+    # @return [void]
     def html5(&block)
       @buffer << S_HTML5_DOCTYPE
       self.html(&block)
     end
 
+    # Emits text into the rendering buffer
+    # @param data [String] text
     def text(data)
-      @buffer << EscapeUtils.escape_html(text)
+      @buffer << E.escape_html(text)
     end
   end
 
   attr_reader :block
 
+  # Initializes a Rubyoshka with the given block
+  # @param block [Proc] nested HTML block
+  # @param [void]
   def initialize(&block)
     @block = block
   end
 
+  # Renders the associated block and returns the string result
+  # @param context [Hash] context
+  # @return [String]
   def render(context = {})
     Rendering.new(context, &block).to_s
   end
 end
 
 module ::Kernel
+  # Convenience method for creating a new Rubyoshka
   def H(&block)
     Rubyoshka.new(&block)
   end
