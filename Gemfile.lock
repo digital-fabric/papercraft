@@ -1,0 +1,27 @@
+PATH
+  remote: .
+  specs:
+    rubyoshka (0.1)
+      escape_utils (= 1.2.1)
+      modulation (= 0.18)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    benchmark-ips (2.7.2)
+    erubis (2.7.0)
+    escape_utils (1.2.1)
+    minitest (5.11.3)
+    modulation (0.18)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  benchmark-ips (= 2.7.2)
+  erubis (= 2.7.0)
+  minitest (= 5.11.3)
+  rubyoshka!
+
+BUNDLED WITH
+   1.17.2
