@@ -167,7 +167,7 @@ class Rubyoshka
     # Emits text into the rendering buffer
     # @param data [String] text
     def text(data)
-      @buffer << E.escape_html(text)
+      @buffer << E.escape_html(data)
     end
 
     # Sets a local context for the given block
@@ -195,7 +195,7 @@ class Rubyoshka
   # Renders the associated block and returns the string result
   # @param context [Hash] context
   # @return [String]
-  def render(context = {})
+  def render(**context)
     Rendering.new(context, &block).to_s
   end
 end
