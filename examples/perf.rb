@@ -1,5 +1,6 @@
 require_relative '../lib/rubyoshka'
 require 'erubis'
+require 'erb'
 require 'benchmark/ips'
 
 App = H {
@@ -77,6 +78,19 @@ def render_erubis_content
   Erubis::Eruby.new(HTML_CONTENT).result(binding)
 end
 
+def render_erb_app
+  ERB.new(HTML_APP).result(binding)
+end
+
+def render_erb_header(title:)
+  ERB.new(HTML_HEADER).result(binding)
+end
+
+def render_erb_content
+  ERB.new(HTML_CONTENT).result(binding)
+end
+
+
 def render_rubyoshka_app
   App.render(title: 'title from context')
 end
@@ -86,6 +100,7 @@ Benchmark.ips do |x|
 
   x.report("rubyoshka") { render_rubyoshka_app }
   x.report("erubis") { render_erubis_app }
+  x.report("erb") { render_erb_app }
 
   x.compare!
 end
