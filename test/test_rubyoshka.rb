@@ -238,3 +238,57 @@ class BlockTest < MiniTest::Test
     )
   end
 end
+
+class ArgumentsTest < MiniTest::Test
+  def test_that_with_passes_local_context_to_block
+    comp = H { span foo }
+    t = H { with(foo: 'bar') { emit comp } }
+
+    assert_equal(
+      '<span>bar</span>',
+      t.render
+    )
+  end
+
+  H::C6 = ->(&inner_html) {
+    H {
+      div {
+        span foo
+        emit inner_html
+      }
+    }
+  }
+
+  def test_that_nested_with_calls_replace_and_restore_local_context
+    assert_equal(
+      '<div><span>foo</span><div><span>bar</span></div></div>',
+      H {
+        with(foo: 'foo') {
+          C6 {
+            with(foo: 'bar') {
+              C6()
+            }
+          }
+        }
+      }.render
+    )
+  end
+
+  def ivar_h
+    H(foo: @foo) { span foo }
+  end
+
+  def test_that_H_accepts_local_context
+    @foo = 'bar'
+    assert_equal('<span>bar</span>', ivar_h.render)
+  end
+
+  H::C7 = H { span foo }
+
+  def test_that_rubyoshka_calls_accept_local_context
+    assert_equal(
+      '<span>bar</span>',
+      H { C7(foo: 'bar') }.render
+    )
+  end
+end

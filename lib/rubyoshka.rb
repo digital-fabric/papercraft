@@ -41,16 +41,22 @@ class Rubyoshka
     # @param block [Proc] block passed to method call
     # @return [void]
     def method_missing(sym, *args, &block)
+      value = @local && @local[sym]
+      return value if value
+
       if sym =~ R_CONST_SYM
         o = instance_eval(sym.to_s) rescue Rubyoshka.const_get(sym) \
             rescue Object.const_get(sym)
         case o
         when ::Proc
-          self.class.define_method(sym) { |*a, &b| emit o.(*a, &b) }
-          emit o.(*args, &block)
+          self.class.define_method(sym) { |*a, &b| emit(o.(*a, &b)) }
+          emit(o.(*args, &block))
         when Rubyoshka
-          self.class.define_method(sym) { emit o }
-          emit(o)
+          self.class.define_method(sym) { |**ctx|
+            ctx.empty? ? emit(o) : with(ctx) { emit(o) }
+          }
+          ctx = args.first
+          Hash === ctx ? with(ctx) { emit(o) } : emit(o)
         when ::String
           @buffer << o
         else
@@ -73,6 +79,7 @@ class Rubyoshka
         instance_eval(&o)
       when Rubyoshka
         instance_eval(&o.block)
+      when nil
       else
         @buffer << o.to_s
       end
@@ -162,15 +169,27 @@ class Rubyoshka
     def text(data)
       @buffer << E.escape_html(text)
     end
+
+    # Sets a local context for the given block
+    # @param ctx [Hash] context hash
+    # @param block [Proc] nested HTML block
+    # @return [void]
+    def with(**ctx, &block)
+      old_local, @local = @local, ctx
+      instance_eval(&block)
+    ensure
+      @local = old_local
+    end
   end
 
   attr_reader :block
 
   # Initializes a Rubyoshka with the given block
+  # @param ctx [Hash] local context
   # @param block [Proc] nested HTML block
   # @param [void]
-  def initialize(&block)
-    @block = block
+  def initialize(**ctx, &block)
+    @block = ctx.empty? ? block : proc { with(ctx, &block) }
   end
 
   # Renders the associated block and returns the string result
@@ -183,7 +202,10 @@ end
 
 module ::Kernel
   # Convenience method for creating a new Rubyoshka
-  def H(&block)
-    Rubyoshka.new(&block)
+  # @param ctx [Hash] local context
+  # @param block [Proc] nested block
+  # @return [Rubyoshka] Rubyoshka template
+  def H(**ctx, &block)
+    Rubyoshka.new(ctx, &block)
   end
 end
