@@ -2,7 +2,8 @@
 
 [INSTALL](#installing-rubyoshka) |
 [TUTORIAL](#getting-started) |
-[EXAMPLES](examples)
+[EXAMPLES](examples) |
+[REFERENCE](reference)
 
 ## What is Rubyoshka
 
@@ -12,10 +13,11 @@ features:
 - HTML templating using plain Ruby syntax
 - Minimal boilerplate
 - Mix logic and tags freely
+- Use global and local contexts to pass values to reusable components
 - Automatic HTML escaping
 - Composable nested components
 - Access to a global context from anywhere in the component hierarchy
-- High performance (see [benchmark](examples)).
+- About 4 times faster than ERubis (see [benchmark](examples/perf.rb)).
 
 > **Note** Rubyoshka is a new library and as such may be missing features and
 > contain bugs. Your issue reports and code conributions are most welcome!
@@ -126,32 +128,104 @@ def user_message(user)
 end
 ```
 
-Since the template code is evaluated using `#instance_eval` in the context of a 
-Rubyoshka instance, things may not work as you'd expect. You will not be able to
-access instance variables and methods in your own objects, but you _will_ be
-able to access local variables and arguments.
+## Local context
 
-If you need to access instance variables, you'll need to copy them to local variables outside of the template block:
+When writing logic and referring to application values in you templates, there
+are some ground rules to obey. Since the template code is evaluated using
+`#instance_eval` that means that you will not be able to directly use instance
+variables or do unqualified method calls (calls to `self`).
+
+In order to facilitate exposing values to your template logic, Rubyoshka
+provides an API for setting a local context. The local context is simply a set
+of values that are accessible for a given block of code, and to any nested
+blocks within it. The local context is primarily set using the `#with` method:
+
+```ruby
+H {
+  with(name: 'world') {
+    div {
+      span "Hello, #{name}"
+    }
+  }
+}
+```
+
+The local context can alternatively be set by passing hash values to `#H`:
+
+```ruby
+H(name: 'world') {
+  div { span "Hello, #{name}" }
+}
+```
+
+A local context can also be set for a component (see the next section) simply by
+passing arguments to the component call:
+
+```ruby
+Greeting = H { span "Hello, #{name}" }
+
+H {
+  div {
+    Greeting(name: 'world')
+  }
+}
+```
+
+### Tip: accessing `self` and instance variables from a template
+
+In order to be able to access the object in the context of which the template is
+defined or any of its methods, you can pass it in the local context:
 
 ```ruby
 class User
-  def greeting
-    name = @name
-    H {
-      span "Hello, #{name}"
+  ...
+  def greeting_template
+    H(user: self) {
+      ...
+      span "Hello, #{user.name}"
+      span "your email: #{user.email}"
     }
   end
 end
 ```
 
-## Templates as components
-
-Rubyoshka makes it easy to compose multiple templates into a whole HTML
-document. Each template can be defined as a self-contained component that can
-be reused inside other components. Components should be defined as constants,
-either in the global namespace, or on the Rubyoshka namespace:
+Instance variables can be passed to the template in a similar fashion:
 
 ```ruby
+H(name: @name) { span "Hello, #{name}" }
+```
+
+## Global context
+
+In addition to the local context, Rubyoshka also provides a way to set a global
+context, accessible from anywhere in the template, and also in sub-components 
+used in the template.
+
+The global context is a simple hash that can be accessed from within the
+template with the `#context` method:
+
+```ruby
+greeting = H { span "Hello, #{context[:name]}" }
+```
+
+The global context can be set upon rendering the template:
+
+```ruby
+greeting.render(name: 'world')
+```
+
+## Templates as components
+
+Rubyoshka makes it easy to compose multiple separate templates into a whole HTML
+document. Each template can be defined as a self-contained component that can
+be reused inside other components. Components should be defined as constants,
+either in the global namespace, or on the `Rubyoshka` namespace. Each component
+can be defined as either a Rubyoshka instance (using `#H`) or as a `proc` that
+returns a Rubyoshka instance:
+
+```ruby
+Title = H { h1 title }
+
 # Item is actually a Proc that returns a template
 Item = ->(id:, text:, checked:) {
   H {
@@ -164,6 +238,7 @@ Item = ->(id:, text:, checked:) {
 
 def render_items(items)
   html = H {
+    Title()
     ul {
       items.each { |id, attributes|
         Item id: id, text: attributes[:text], checked: attributes[:active]
@@ -173,20 +248,39 @@ def render_items(items)
 end
 ```
 
-## Wrapping arbitrary HTML
+Note that a component is invoked as a method, which means that if no arguments
+are passed, you should add an empty pair of parens, as shown in the example
+above.
 
-Components can be used to wrap arbitrary HTML content by defining them as procs
-that accept blocks:
+In addition to using components defined as constants, you can also use
+non-constant components by invoking the `#emit` method:
+
+```ruby
+greeting = H { span "Hello, world" }
+
+H {
+  div {
+    emit greeting
+  }
+}
+```
+
+## Wrapping arbitrary HTML with a component
+
+Components can also be used to wrap arbitrary HTML with addional markup. This is
+done by implementing the component as a `proc` that takes a block:
 
 ```ruby
 Header = ->(&inner_html) {
   header {
-    h1 'title'
+    h1 'This is a title'
     emit inner_html
   }
 }
 
-H { Header { button 'OK'} }.render #=> "<header><h1>title</h1><button>OK</button></header>"
+Greeting = H { span "Hello, #{name}" }
+
+H { Header { Greeting(name: 'world') }.render #=> "<header><h1>This is a title</h1><span>Hello, world</span></header>"
 ```
 
 ## Some interesting use cases
@@ -252,3 +346,66 @@ Blog = H {
   }
 }
 ```
+
+## Reference
+
+#### `Rubyoshka#initialize(**context, &block)` a.k.a. `Kernel#H`
+
+- `context`: local context hash
+- `block`: template block
+
+Initializes a new Rubyoshka instance. This method takes a block of template 
+code, and an optional [local context](#local-context) in the form of a hash.
+The `Kernel#H` method serves as a shortcut for creating Rubyoshka instances.
+
+#### `Rubyoshka#render(**context)`
+
+- `context`: global context hash
+
+Renders the template with an optional [global context](#global-context)
+hash.
+
+#### Methods accessible inside template blocks
+
+#### `#<tag/component>(*args, **props, &block)`
+
+- `args`: tag arguments. For an HTML tag Rubyoshka expects a single `String`
+  argument containing the inner text of the tag.
+- `props`: hash of tag attributes
+- `block`: inner HTML block
+
+Adds a tag or component to the current template. If the method name starts with
+an upper-case letter, it is considered a [component](#templates-as-components).
+
+If a text argument is given for a tag, it will be escaped.
+
+#### `#context`
+
+Accesses the [global context](#global-context).
+
+#### `#emit(object)` a.k.a. `#e(object)`
+
+- `object`: `Proc`, `Rubyoshka` instance or `String`
+
+Adds the given object to the current template. If a `String` is given, it is
+rendered verbatim, i.e. without escaping.
+
+#### `html5(&block)`
+
+- `block`: inner HTML block
+
+Adds an HTML5 `doctype` tag, followed by an `html` tag with the given block.
+
+#### `#text(data)`
+
+- `data` - text to add
+
+Adds text without wrapping it in a tag. The text will be escaped.
+
+#### `#with(**context, &block)`
+
+- `context`: local context hash
+- `block`: HTML block
+
+Sets a [local context](#local-context) for use inside the given block. The
+previous local context will be restored upon exiting the given block.
