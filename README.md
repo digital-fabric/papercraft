@@ -346,6 +346,36 @@ Blog = H {
 }
 ```
 
+### A higher-order list component
+
+Here's another demonstration of a higher-order component, a list component that
+takes an item component as an argument. The `List` component can be reused for
+rendering any kind of unordered list, and with any kind of item component:
+
+```ruby
+List = ->(items, item_component) {
+  H {
+    ul {
+      items.each { |item|
+        with(item: item) { 
+          li { emit item_component }
+        }
+      }
+    }
+  }
+}
+
+TodoItem = H {
+  span item.text, class: item.completed ? 'completed' : 'pending'
+}
+
+def todo_list(items)
+  H {
+    div { List(items, TodoItem) }
+  }
+end
+```
+
 ## API Reference
 
 #### `Rubyoshka#initialize(**context, &block)` a.k.a. `Kernel#H`
