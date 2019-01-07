@@ -3,7 +3,7 @@
 [INSTALL](#installing-rubyoshka) |
 [TUTORIAL](#getting-started) |
 [EXAMPLES](examples) |
-[REFERENCE](reference)
+[REFERENCE](#api-reference)
 
 ## What is Rubyoshka
 
@@ -347,7 +347,7 @@ Blog = H {
 }
 ```
 
-## Reference
+## API Reference
 
 #### `Rubyoshka#initialize(**context, &block)` a.k.a. `Kernel#H`
 
