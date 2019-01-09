@@ -16,7 +16,6 @@ features:
 - Use global and local contexts to pass values to reusable components
 - Automatic HTML escaping
 - Composable nested components
-- About 4 times faster than ERubis (see [benchmark](examples/perf.rb)).
 
 > **Note** Rubyoshka is a new library and as such may be missing features and
 > contain bugs. Your issue reports and code conributions are most welcome!
