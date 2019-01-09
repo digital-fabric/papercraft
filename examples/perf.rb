@@ -2,6 +2,7 @@ require_relative '../lib/rubyoshka'
 require 'erubis'
 require 'erb'
 require 'benchmark/ips'
+require 'tilt'
 
 App = H {
   html5 {
@@ -66,41 +67,67 @@ HTML_CONTENT = <<~HTML
 </article>
 HTML
 
-def render_erubis_app
-  Erubis::Eruby.new(HTML_APP).result(binding)
+class Renderer
+  def render_erubis_app
+    @erubis_app ||= Tilt::ErubisTemplate.new { HTML_APP }
+    @erubis_app.render(self)
+  end
+
+  def render_erubis_header(locals)
+    @erubis_header ||= Tilt::ErubisTemplate.new { HTML_HEADER }
+    @erubis_header.render(self, locals)
+  end
+
+  def render_erubis_content
+    @erubis_content ||= Tilt::ErubisTemplate.new { HTML_CONTENT }
+    @erubis_content.render(self)
+  end
+
+  def render_erb_app
+    @erb_app ||= Tilt::ERBTemplate.new { HTML_APP }
+    @erb_app.render(self)
+  end
+
+  def render_erb_header(locals)
+    @erb_header ||= Tilt::ERBTemplate.new { HTML_HEADER }
+    @erb_header.render(self, locals)
+  end
+
+  def render_erb_content
+    @erb_content ||= Tilt::ERBTemplate.new { HTML_CONTENT }
+    @erb_content.render(self)
+  end
+
+
+  def render_rubyoshka_app
+    App.render(title: 'title from context')
+  end
+
+  def render_rubyoshka_content
+    Content.render(title: 'title from context')
+  end
 end
 
-def render_erubis_header(title:)
-  Erubis::Eruby.new(HTML_HEADER).result(binding)
-end
+r = Renderer.new
 
-def render_erubis_content
-  Erubis::Eruby.new(HTML_CONTENT).result(binding)
-end
-
-def render_erb_app
-  ERB.new(HTML_APP).result(binding)
-end
-
-def render_erb_header(title:)
-  ERB.new(HTML_HEADER).result(binding)
-end
-
-def render_erb_content
-  ERB.new(HTML_CONTENT).result(binding)
-end
-
-
-def render_rubyoshka_app
-  App.render(title: 'title from context')
-end
-
+puts "=== Template with 2 partials"
 Benchmark.ips do |x|
   x.config(:time => 3, :warmup => 1)
 
-  x.report("rubyoshka") { render_rubyoshka_app }
-  x.report("erubis") { render_erubis_app }
-  x.report("erb") { render_erb_app }
+  x.report("rubyoshka") { r.render_rubyoshka_app }
+  x.report("erubis") { r.render_erubis_app }
+  x.report("erb") { r.render_erb_app }
+
+  x.compare!
+end
+
+puts "=== Single template"
+Benchmark.ips do |x|
+  x.config(:time => 3, :warmup => 1)
+
+  x.report("rubyoshka") { r.render_rubyoshka_content }
+  x.report("erubis") { r.render_erubis_content }
+  x.report("erb") { r.render_erb_content }
 
   x.compare!
 end

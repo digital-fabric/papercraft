@@ -22,4 +22,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency  'minitest',       '5.11.3'
   s.add_development_dependency  'benchmark-ips',  '2.7.2'
   s.add_development_dependency  'erubis',         '2.7.0'
+  s.add_development_dependency  'tilt',           '2.0.9'
 end
