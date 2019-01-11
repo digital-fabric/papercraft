@@ -136,8 +136,11 @@ class Rubyoshka
           @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE <<
             E.escape_uri(v) << S_QUOTE
         else
-          if v == true
+          case v
+          when true
             @buffer << S_SPACE << k.to_s
+          when false, nil
+            # emit nothing
           else
             @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE << v << S_QUOTE
           end

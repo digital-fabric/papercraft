@@ -46,6 +46,11 @@ class AttributesTest < MiniTest::Test
       '<input type="checkbox" checked/>',
       H { input type: 'checkbox', checked: true }.render
     )
+
+    assert_equal(
+      '<input type="checkbox"/>',
+      H { input type: 'checkbox', checked: false }.render
+    )
   end
 end
 
