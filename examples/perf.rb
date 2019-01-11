@@ -1,8 +1,9 @@
-require_relative '../lib/rubyoshka'
+require 'rubyoshka'
 require 'erubis'
 require 'erb'
 require 'benchmark/ips'
 require 'tilt'
+require 'escape_utils'
 
 App = H {
   html5 {
@@ -48,7 +49,7 @@ HTML
 
 HTML_HEADER = <<~HTML
 <header>
-  <h2 id="title"><%= title %></h2>
+  <h2 id="title"><%= EscapeUtils.escape_html(title) %></h2>
   <button>1</button>
   <button>2</button>
 </header>
@@ -59,7 +60,7 @@ HTML_CONTENT = <<~HTML
   <h3>title from context</h3>
   <p>Hello, world!</p>
   <div>
-    <a href="http://google.com/?a=1&b=2&c=3%204">
+    <a href="<%= EscapeUtils.escape_uri('http://google.com/?a=1&b=2&c=3%204') %>">
       <h3>foo bar</h3>
     </a>
     <p>lorem ipsum </p>
