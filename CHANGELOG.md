@@ -1,3 +1,6 @@
+* Improve performance
+* Handle attributes with `false` value correctly
+
 0.2 2019-01-07
 --------------
 
