@@ -26,10 +26,30 @@ class Rubyoshka
     def to_s
       @buffer
     end
+
+    E = EscapeUtils
   
     S_TAG_METHOD = <<~EOF
-      def %1$s(*args, &block)
-        tag(:%1$s, *args, &block)
+      S_TAG_%<TAG>s_PRE = '<%<tag>s'
+      S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'
+      
+      def %<tag>s(text = nil, **props, &block)
+        @buffer << S_TAG_%<TAG>s_PRE
+        emit_props(props) unless props.empty?
+      
+        if block
+          @buffer << S_GT
+          instance_eval(&block)
+          @buffer << S_TAG_%<TAG>s_CLOSE
+        elsif Rubyoshka === text
+          @buffer << S_GT
+          emit(text)
+          @buffer << S_TAG_%<TAG>s_CLOSE
+        elsif text
+          @buffer << S_GT << E.escape_html(text.to_s) << S_TAG_%<TAG>s_CLOSE
+        else
+          @buffer << S_SLASH_GT
+        end
       end
     EOF
 
@@ -65,8 +85,9 @@ class Rubyoshka
           raise e
         end
       else
-        self.class.class_eval(S_TAG_METHOD % sym)
-        tag(sym, *args, &block)
+        tag = sym.to_s
+        self.class.class_eval(S_TAG_METHOD % { tag: tag, TAG: tag.upcase })
+        send(sym, *args, &block)
       end
     end
   
@@ -95,43 +116,12 @@ class Rubyoshka
     S_EQUAL_QUOTE     = '="'
     S_QUOTE           = '"'
 
-    E = EscapeUtils
-  
-    # Emits an HTML tag
-    # @param sym [Symbol] HTML tag
-    # @param text [String] text content of tag
-    # @param props [Hash] tag attributes
-    # @param block [Proc] nested HTML block
-    # @return [void]
-    def tag(sym, text = nil, **props, &block)
-      sym = sym.to_s
-  
-      @buffer << S_LT << sym
-      emit_props(props) unless props.empty?
-  
-      if block
-        @buffer << S_GT
-        instance_eval(&block)
-        @buffer << S_LT_SLASH << sym << S_GT
-      elsif Rubyoshka === text
-        @buffer << S_GT
-        emit(text)
-        @buffer << S_LT_SLASH << sym << S_GT
-      elsif text
-        @buffer << S_GT << E.escape_html(text.to_s) <<
-          S_LT_SLASH << sym << S_GT
-      else
-        @buffer << S_SLASH_GT
-      end
-    end
-
     # Emits tag attributes into the rendering buffer
     # @param props [Hash] tag attributes
     # @return [void]
     def emit_props(props)
       props.each { |k, v|
         case k
-        when :text
         when :src, :href
           @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE <<
             E.escape_uri(v) << S_QUOTE
@@ -154,7 +144,7 @@ class Rubyoshka
     # @para block [Proc] nested HTML block
     # @return [void]
     def p(text = nil, **props, &block)
-      tag(:p, text, **props, &block)
+      method_missing(:p, text, **props, &block)
     end
   
     S_HTML5_DOCTYPE = '<!DOCTYPE html>'
