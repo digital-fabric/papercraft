@@ -18,14 +18,24 @@ features:
 - Composable nested components
 
 > **Note** Rubyoshka is a new library and as such may be missing features and
-> contain bugs. Your issue reports and code conributions are most welcome!
+> contain bugs. Also, its API may change unexpectedly. Your issue reports and
+> code contributions are most welcome!
 
 With Rubyoshka you can structure your templates like a Russian doll, each
 component containing any number of nested components, in a somewhat similar
-fashion to React. The name *Rubyoshka* is a nod to Matryoshka, the Russian
+fashion to React. The name *Rubyoshka* is a nod to 
+[Matryoshka](https://en.wikipedia.org/wiki/Matryoshka_doll), the Russian
 nesting doll.
 
 ## Installing Rubyoshka
+
+Using bundler:
+
+```ruby
+gem 'polyphony'
+```
+
+Or manually:
 
 ```bash
 $ gem install polyphony
@@ -263,6 +273,54 @@ H {
 }
 ```
 
+## Fragment caching
+
+Any part of a Rubyoshka template can be cached - a fragment, a component, or a
+whole template. It is up to you, the user, to determine which parts of the 
+template to cache. By default, a call to `#cache` creates a cache entry based on
+the source location of the cached block:
+
+```ruby
+Head = H {
+  cache {
+    head {
+      title 'My app'
+      style "@import '/app.css';"
+    }
+  }
+}
+```
+
+However, if your template references local or global variables, you'll want to
+take those into account when caching. This is done by passing any variables used
+in the template to `#cache` in order to create separate cache entries for each
+discrete value or combination of values:
+
+```ruby
+Greeting = H {
+  cache(name) {
+    div {
+      span "Hello, #{name}"
+    }
+  }
+}
+
+names = %w{tommy dolly world}
+App = H {
+  names.each { |n| Greeting(name: n) }
+}
+```
+
+In the above example a separate cache entry will be created for each name. The 
+use of caching in components is especially beneficial since components may be 
+reused in multiple different templates in your app.
+
+### Changing the cache store
+
+Rubyoshka ships with a naïve in-memory cache store built-in. You can use
+another cache store by overriding the `Rubyoshka.cache_get` and
+`Rubyoshka.cache_set` methods (see API [reference](#api-reference)).
+
 ## Wrapping arbitrary HTML with a component
 
 Components can also be used to wrap arbitrary HTML with addional markup. This is
@@ -407,6 +465,17 @@ an upper-case letter, it is considered a [component](#templates-as-components).
 
 If a text argument is given for a tag, it will be escaped.
 
+#### `#cache(*vary, &block)`
+
+- `vary`: variables used in cached block. The given values will be used to
+  create a separate cache entry.
+- `block`: inner HTML block
+
+Caches the markup in the given block, storing it in the Rubyoshka cache store.
+If a cache entry for the given block is found, it will be used instead of
+invoking the block. If one or more variables given, those will be used to create
+a separate cache entry.
+
 #### `#context`
 
 Accesses the [global context](#global-context).
@@ -437,3 +506,31 @@ Adds text without wrapping it in a tag. The text will be escaped.
 
 Sets a [local context](#local-context) for use inside the given block. The
 previous local context will be restored upon exiting the given block.
+
+#### `Rubyoshka.cache`
+
+Returns the cache store. A cache store should implement two methods - `#[]` and
+`#[]=`. Here's an example implementing a Redis-based cache store:
+
+```ruby
+class RedisTemplateCache
+  def initialize(conn, prefix)
+    @conn = conn
+    @prefix = prefix
+  end
+
+  def [](key)
+    @conn.get("#{prefix}:#{key}")
+  end
+
+  def []=(key, value)
+    @conn.set("#{prefix}:#{key}", value)
+  end
+end
+
+TEMPLATE_CACHE = RedisTemplaceCache.new(redis_conn, "templates:cache")
+
+def Rubyoshka.cache
+  TEMPLATE_CACHE
+end
+```

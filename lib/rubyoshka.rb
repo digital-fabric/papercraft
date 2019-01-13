@@ -173,6 +173,24 @@ class Rubyoshka
     ensure
       @local = old_local
     end
+
+    # Caches the given block with the given arguments as cache key
+    # @param vary [*Object] cache key
+    # @param block [Proc] nested HTML block
+    # @return [void]
+    def cache(*vary, &block)
+      key = [block.source_location, *vary]
+
+      if (cached = Rubyoshka.cache[key])
+        @buffer << cached
+        return
+      end
+
+      cache_pos = @buffer.length
+      instance_eval(&block)
+      diff = @buffer[cache_pos..-1]
+      Rubyoshka.cache[key] = diff
+    end
   end
 
   attr_reader :block
@@ -185,11 +203,19 @@ class Rubyoshka
     @block = ctx.empty? ? block : proc { with(ctx, &block) }
   end
 
+  H_EMPTY = {}.freeze
+
   # Renders the associated block and returns the string result
   # @param context [Hash] context
   # @return [String]
-  def render(**context)
+  def render(context = H_EMPTY)
     Rendering.new(context, &block).to_s
+  end
+
+  @@cache = {}
+
+  def self.cache
+    @@cache
   end
 end
 

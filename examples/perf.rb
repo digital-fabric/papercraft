@@ -6,13 +6,15 @@ require 'tilt'
 require 'escape_utils'
 
 App = H {
-  html5 {
-    body {
-      Header(title: 'My app') {
-        button "1"
-        button "2"
+  cache {
+    html5 {
+      body {
+        Header(title: 'My app') {
+          button "1"
+          button "2"
+        }
+        Content {}
       }
-      Content {}
     }
   }
 }
@@ -111,24 +113,27 @@ end
 
 r = Renderer.new
 
+puts r.render_rubyoshka_app
+puts r.render_rubyoshka_app
+
 puts "=== Template with 2 partials"
 Benchmark.ips do |x|
   x.config(:time => 3, :warmup => 1)
 
   x.report("rubyoshka") { r.render_rubyoshka_app }
   x.report("erubis") { r.render_erubis_app }
-  x.report("erb") { r.render_erb_app }
+  # x.report("erb") { r.render_erb_app }
 
   x.compare!
 end
 
-puts "=== Single template"
-Benchmark.ips do |x|
-  x.config(:time => 3, :warmup => 1)
+# puts "=== Single template"
+# Benchmark.ips do |x|
+#   x.config(:time => 3, :warmup => 1)
 
-  x.report("rubyoshka") { r.render_rubyoshka_content }
-  x.report("erubis") { r.render_erubis_content }
-  x.report("erb") { r.render_erb_content }
+#   x.report("rubyoshka") { r.render_rubyoshka_content }
+#   x.report("erubis") { r.render_erubis_content }
+#   # x.report("erb") { r.render_erb_content }
 
-  x.compare!
-end
+#   x.compare!
+# end

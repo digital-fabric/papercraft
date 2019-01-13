@@ -1,3 +1,4 @@
+* Implement caching
 * Improve performance
 * Handle attributes with `false` value correctly
 

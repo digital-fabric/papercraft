@@ -297,3 +297,121 @@ class ArgumentsTest < MiniTest::Test
     )
   end
 end
+
+class CacheTest < MiniTest::Test
+  H::C8 = H {
+    cache {
+      context[:meaning] = 42
+      div {
+        span "hello"
+        span "world"
+      }
+    }
+  }
+
+  def test_that_cache_hits_when_rendering_again
+    H.cache.clear
+    global = {}
+    assert_equal(
+      '<div><span>hello</span><span>world</span></div>',
+      H::C8.render(global)
+    )
+    assert_equal(42, global[:meaning])
+    assert_equal(1, H.cache.size)
+
+    global[:meaning] = nil
+    assert_equal(
+      '<div><span>hello</span><span>world</span></div>',
+      H::C8.render(global)
+    )
+    assert_nil(global[:meaning])
+  end
+
+  H::C9 = H {
+    cache(context[:name]) {
+      context[:meaning] = 42
+      div {
+        span "hello, #{context[:name]}"
+      }
+    }
+  }
+
+  def test_that_separate_cache_entries_are_created_for_different_signatures
+    H.cache.clear
+    global = { name: 'world' }
+
+    assert_equal(
+      '<div><span>hello, world</span></div>',
+      H::C9.render(global)
+    )
+    assert_equal(42, global[:meaning])
+    assert_equal(1, H.cache.size)
+
+    global[:meaning] = nil
+    assert_equal(
+      '<div><span>hello, world</span></div>',
+      H::C9.render(global)
+    )
+    assert_nil(global[:meaning])
+    
+    global[:name] = 'dolly'
+    assert_equal(
+      '<div><span>hello, dolly</span></div>',
+      H::C9.render(global)
+    )
+    assert_equal(42, global[:meaning])
+    assert_equal(2, H.cache.size)
+  end
+
+  H::C10 = H {
+    cache(name) {
+      div {
+        span "hello, #{name}"
+      }
+    }
+  }
+
+  def test_that_multiple_cache_blocks_work_correctly
+    H.cache.clear
+    
+    template = H {
+      C10(name: 'world')
+      C10(name: 'dolly')
+    }
+
+    assert_equal(
+      '<div><span>hello, world</span></div><div><span>hello, dolly</span></div>',
+      template.render
+    )
+
+    assert_equal(2, H.cache.size)
+  end
+
+  def test_that_cache_adapter_can_be_changed
+    ::H.class_eval {
+      class << self
+        def store
+          @store ||= {}
+        end
+
+        alias_method :orig_cache, :cache
+        def cache
+          @store
+        end
+      end
+    }
+
+    assert_equal(0, ::H.store.size)
+    assert_equal(
+      '<div><span>hello, world</span></div>',
+      H { C10(name: 'world') }.render
+    )
+    assert_equal(1, ::H.store.size)
+  ensure
+    ::H.class_eval {
+      class << self
+        alias_method :cache, :orig_cache
+      end
+    }
+  end
+end
