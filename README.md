@@ -16,6 +16,7 @@ features:
 - Use global and local contexts to pass values to reusable components
 - Automatic HTML escaping
 - Composable nested components
+- Template caching from fragments to whole templates
 
 > **Note** Rubyoshka is a new library and as such may be missing features and
 > contain bugs. Also, its API may change unexpectedly. Your issue reports and
