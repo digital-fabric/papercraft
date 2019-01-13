@@ -1,3 +1,6 @@
+0.3 2019-01-13
+--------------
+
 * Implement caching
 * Improve performance
 * Handle attributes with `false` value correctly
