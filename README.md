@@ -33,13 +33,13 @@ nesting doll.
 Using bundler:
 
 ```ruby
-gem 'polyphony'
+gem 'rubyoshka'
 ```
 
 Or manually:
 
 ```bash
-$ gem install polyphony
+$ gem install rubyoshka
 ```
 
 ## Getting started
