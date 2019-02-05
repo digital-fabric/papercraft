@@ -201,6 +201,28 @@ class ComponentTest < MiniTest::Test
   end
 end
 
+class ModuleComponentTest < MiniTest::Test
+  module M
+    Component = H { p 'foobar' }
+  end
+
+  def test_that_module_component_can_be_emitted
+    assert_equal(
+      '<div><p>foobar</p></div>',
+      H { div { e(M) } }.render
+    )
+  end
+
+  module N
+  end
+
+  def test_that_module_without_component_raises
+    assert_raises {
+      H { div { e(N) } }.render
+    }
+  end
+end
+
 class ContextTest < MiniTest::Test
   def test_that_context_is_evaluated_at_render_time
     h = H {

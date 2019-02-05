@@ -92,7 +92,7 @@ class Rubyoshka
     end
   
     # Emits the given object into the rendering buffer
-    # @param o [Proc, Rubyoshka, String] emitted object
+    # @param o [Proc, Rubyoshka, Module, String] emitted object
     # @return [void]
     def emit(o)
       case o
@@ -100,6 +100,8 @@ class Rubyoshka
         instance_eval(&o)
       when Rubyoshka
         instance_eval(&o.block)
+      when Module
+        emit(o::Component)
       when nil
       else
         @buffer << o.to_s
