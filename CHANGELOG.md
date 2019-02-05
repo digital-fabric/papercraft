@@ -1,3 +1,6 @@
+0.4 2019-02-05
+--------------
+
 * Add support for emitting component modules
 
 0.3 2019-01-13
