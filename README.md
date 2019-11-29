@@ -319,8 +319,8 @@ reused in multiple different templates in your app.
 ### Changing the cache store
 
 Rubyoshka ships with a naïve in-memory cache store built-in. You can use
-another cache store by overriding the `Rubyoshka.cache_get` and
-`Rubyoshka.cache_set` methods (see API [reference](#api-reference)).
+another cache store by overriding the `Rubyoshka.cache` method (see API
+[reference](#rubyoshkacache)).
 
 ## Wrapping arbitrary HTML with a component
 
