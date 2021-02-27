@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-require 'modulation/gem'
 require 'escape_utils'
-
-export_default :Rubyoshka
 
 # A Rubyoshka is a template representing a piece of HTML
 class Rubyoshka

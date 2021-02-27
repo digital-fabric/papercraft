@@ -3,7 +3,6 @@ PATH
   specs:
     rubyoshka (0.4)
       escape_utils (= 1.2.1)
-      modulation (= 0.18)
 
 GEM
   remote: https://rubygems.org/
@@ -12,7 +11,6 @@ GEM
     erubis (2.7.0)
     escape_utils (1.2.1)
     minitest (5.11.3)
-    modulation (0.18)
     tilt (2.0.9)
 
 PLATFORMS
@@ -26,4 +24,4 @@ DEPENDENCIES
   tilt (= 2.0.9)
 
 BUNDLED WITH
-   1.17.2
+   2.1.4

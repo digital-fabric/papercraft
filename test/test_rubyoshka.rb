@@ -1,7 +1,8 @@
-require 'modulation'
+require 'bundler/setup'
 require 'minitest/autorun'
+require 'rubyoshka'
 
-H = import '../lib/rubyoshka'
+H = Rubyoshka
 
 class EntryPointTest < MiniTest::Test
   def test_that_entry_point_creates_new_instance
@@ -195,6 +196,25 @@ class ComponentTest < MiniTest::Test
       H {
         div {
           C4('foobar', 'lorem ipsum')
+        }
+      }.render
+    )
+  end
+
+  H::BlogPost = Rubyoshka.component do |title, content|
+    article(id: '42') do
+      h1 title
+      p content
+    end
+  end
+
+  def test_rubyoshka_component_method
+    assert_equal(
+      '<div><article id="42"><h1>foo</h1><p>bar</p></article></div>',
+      H {
+        div {
+          # C4('foobar', 'lorem ipsum')
+          BlogPost('foo', 'bar')
         }
       }.render
     )
