@@ -216,6 +216,10 @@ class Rubyoshka
   def self.cache
     @@cache
   end
+
+  def self.component(&block)
+    proc { |*args| new { instance_exec(*args, &block) } }
+  end
 end
 
 module ::Kernel
