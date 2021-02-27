@@ -1,3 +1,4 @@
+require 'bundler/setup'
 require 'rubyoshka'
 require 'erubis'
 require 'erb'
@@ -122,7 +123,7 @@ Benchmark.ips do |x|
 
   x.report("rubyoshka") { r.render_rubyoshka_app }
   x.report("erubis") { r.render_erubis_app }
-  # x.report("erb") { r.render_erb_app }
+  x.report("erb") { r.render_erb_app }
 
   x.compare!
 end

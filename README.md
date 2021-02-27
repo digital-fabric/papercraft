@@ -226,16 +226,17 @@ greeting.render(name: 'world')
 ## Templates as components
 
 Rubyoshka makes it easy to compose multiple separate templates into a whole HTML
-document. Each template can be defined as a self-contained component that can
-be reused inside other components. Components should be defined as constants,
-either in the global namespace, or on the `Rubyoshka` namespace. Each component
-can be defined as either a Rubyoshka instance (using `#H`) or as a `proc` that
-returns a Rubyoshka instance:
+document. Each template can be defined as a self-contained component that can be
+reused inside other components. Components can be defined as either a Rubyoshka
+instance (using `#H`), a `proc` that returns a Rubyoshka instance, or using
+`Rubyoshka.component`:
 
 ```ruby
+# Simple component relying on global/local context
 Title = H { h1 title }
 
-# Item is actually a Proc that returns a template
+# Proc component that returns a template
+# Notice how the lambda expression takes keyword arguments
 Item = ->(id:, text:, checked:) {
   H {
     li {
@@ -245,20 +246,29 @@ Item = ->(id:, text:, checked:) {
   }
 }
 
-def render_items(items)
+# Components using Rubyoshka.component (or H.component) are a bit more compact.
+# Any parameters are passed as arguments to the block.
+NavBar = Rubyoshka.component do |links|
+  div {
+    links.each { |l| a l[:title], href: l[:url] }
+  }
+end
+
+def render_items(items, links)
   html = H {
     Title()
+    NavBar(links)
     ul {
       items.each { |id, attributes|
         Item id: id, text: attributes[:text], checked: attributes[:active]
       }
     }
-  }.render
+  }.render(title: 'Hello from components')
 end
 ```
 
 Note that a component is invoked as a method, which means that if no arguments
-are passed, you should add an empty pair of parens, as shown in the example
+are passed, you must add an empty pair of parens, as shown in the example
 above.
 
 In addition to using components defined as constants, you can also use
