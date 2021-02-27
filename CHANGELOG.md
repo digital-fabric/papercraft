@@ -1,3 +1,10 @@
+0.5 2021-02-27
+--------------
+
+* Add support for rendering XML
+* Add Rubyoshka.component method
+* Remove Modulation dependency
+
 0.4 2019-02-05
 --------------
 
