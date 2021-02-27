@@ -4,8 +4,8 @@ require 'escape_utils'
 
 # A Rubyoshka is a template representing a piece of HTML
 class Rubyoshka
-  # A Rendering is a rendering of a Rubyoshka
-  class Rendering
+  # A Renderer is a rendering of a Rubyoshka
+  class Renderer
     attr_reader :context
   
     # Initializes attributes and renders the given block
@@ -24,8 +24,15 @@ class Rubyoshka
       @buffer
     end
 
-    E = EscapeUtils
-  
+    def escape_text(text)
+      raise NotImplementedError
+    end
+
+    def escape_uri(uri)
+      EscapeUtils.escape_uri(v)
+    end
+
+    S_TAG_METHOD_LINE = __LINE__ + 1
     S_TAG_METHOD = <<~EOF
       S_TAG_%<TAG>s_PRE = '<%<tag>s'
       S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'
@@ -43,7 +50,7 @@ class Rubyoshka
           emit(text)
           @buffer << S_TAG_%<TAG>s_CLOSE
         elsif text
-          @buffer << S_GT << E.escape_html(text.to_s) << S_TAG_%<TAG>s_CLOSE
+          @buffer << S_GT << escape_text(text.to_s) << S_TAG_%<TAG>s_CLOSE
         else
           @buffer << S_SLASH_GT
         end
@@ -62,6 +69,7 @@ class Rubyoshka
       return value if value
 
       if sym =~ R_CONST_SYM
+        # Component reference (capitalized method name)
         o = instance_eval(sym.to_s) rescue Rubyoshka.const_get(sym) \
             rescue Object.const_get(sym)
         case o
@@ -83,7 +91,8 @@ class Rubyoshka
         end
       else
         tag = sym.to_s
-        self.class.class_eval(S_TAG_METHOD % { tag: tag, TAG: tag.upcase })
+        code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
+        self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
         send(sym, *args, &block)
       end
     end
@@ -98,6 +107,7 @@ class Rubyoshka
       when Rubyoshka
         instance_eval(&o.block)
       when Module
+        # If module is given, the component is expected to be a const inside the module
         emit(o::Component)
       when nil
       else
@@ -123,7 +133,7 @@ class Rubyoshka
         case k
         when :src, :href
           @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE <<
-            E.escape_uri(v) << S_QUOTE
+            EscapeUtils.escape_uri(v) << S_QUOTE
         else
           case v
           when true
@@ -137,7 +147,7 @@ class Rubyoshka
       }
     end
 
-    # Emits the p tag
+    # Emits the p tag (overrides Object#p)
     # @param text [String] text content of tag
     # @param props [Hash] tag attributes
     # @para block [Proc] nested HTML block
@@ -159,7 +169,7 @@ class Rubyoshka
     # Emits text into the rendering buffer
     # @param data [String] text
     def text(data)
-      @buffer << E.escape_html(data)
+      @buffer << escape_text(data)
     end
 
     # Sets a local context for the given block
@@ -192,13 +202,27 @@ class Rubyoshka
     end
   end
 
+  class HTMLRenderer < Renderer
+    def escape_text(text)
+      EscapeUtils.escape_html(text.to_s)
+    end
+
+  end
+
+  class XMLRenderer < Renderer
+    def escape_text(text)
+      EscapeUtils.escape_xml(text.to_s)
+    end
+  end
+
   attr_reader :block
 
   # Initializes a Rubyoshka with the given block
   # @param ctx [Hash] local context
   # @param block [Proc] nested HTML block
   # @param [void]
-  def initialize(**ctx, &block)
+  def initialize(mode: :html, **ctx, &block)
+    @mode = mode
     @block = ctx.empty? ? block : proc { with(ctx, &block) }
   end
 
@@ -208,7 +232,18 @@ class Rubyoshka
   # @param context [Hash] context
   # @return [String]
   def render(context = H_EMPTY)
-    Rendering.new(context, &block).to_s
+    renderer_class.new(context, &block).to_s
+  end
+
+  def renderer_class
+    case @mode
+    when :html
+      HTMLRenderer
+    when :xml
+      XMLRenderer
+    else
+      raise "Invalid mode #{@mode.inspect}"
+    end
   end
 
   @@cache = {}
