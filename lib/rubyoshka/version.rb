@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 class Rubyoshka
-  VERSION = '0.6'
+  VERSION = '0.6.1'
 end

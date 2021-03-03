@@ -74,7 +74,8 @@ class Rubyoshka
         case o
         when ::Proc
           self.class.define_method(sym) { |*a, **c, &b| emit(o.(*a, **c, &b)) }
-          emit(o.(*args, **opts,&block))
+          STDOUT.puts({o: o, args: args, opts: opts, block: block}.inspect)
+          emit(o.(*args, **opts, &block))
         when Rubyoshka
           self.class.define_method(sym) do |**ctx|
             ctx.empty? ? emit(o) : with(**ctx) { emit(o) }

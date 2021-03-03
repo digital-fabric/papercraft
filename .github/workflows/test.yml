@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        ruby: [2.6, 2.7, 3]
+        ruby: [2.7, 3]
 
     name: >-
       ${{matrix.os}}, ${{matrix.ruby}}

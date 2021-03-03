@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rubyoshka (0.6)
+    rubyoshka (0.6.1)
       escape_utils (= 1.2.1)
 
 GEM
