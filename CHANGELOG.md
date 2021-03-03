@@ -1,3 +1,9 @@
+0.6 2021-03-03
+--------------
+
+* Fix Rubyoshka on Ruby 3.0
+* Refactor and add more tests
+
 0.5 2021-02-27
 --------------
 
