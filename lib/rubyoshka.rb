@@ -14,7 +14,7 @@ class Rubyoshka
   # @param [void]
   def initialize(mode: :html, **ctx, &block)
     @mode = mode
-    @block = ctx.empty? ? block : proc { with(ctx, &block) }
+    @block = ctx.empty? ? block : proc { with(**ctx, &block) }
   end
 
   H_EMPTY = {}.freeze

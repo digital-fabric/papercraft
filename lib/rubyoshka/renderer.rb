@@ -77,9 +77,9 @@ class Rubyoshka
           emit(o.(*args, **opts,&block))
         when Rubyoshka
           self.class.define_method(sym) do |**ctx|
-            ctx.empty? ? emit(o) : with(ctx) { emit(o) }
+            ctx.empty? ? emit(o) : with(**ctx) { emit(o) }
           end
-          Hash === opts.empty? ? emit(o) : with(opts) { emit(o) }
+          Hash === opts.empty? ? emit(o) : with(**opts) { emit(o) }
         when ::String
           @buffer << o
         else
