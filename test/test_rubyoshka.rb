@@ -2,8 +2,6 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'rubyoshka'
 
-H = Rubyoshka
-
 class EntryPointTest < MiniTest::Test
   def test_that_entry_point_creates_new_instance
     block = proc { }
@@ -455,5 +453,84 @@ class CacheTest < MiniTest::Test
         alias_method :cache, :orig_cache
       end
     }
+  end
+end
+
+class HTMLTest < MiniTest::Test
+  def test_html5
+    assert_equal(
+      '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
+      H { html5 { div { h1 'foobar' } } }.render
+    )
+  end
+
+  def test_link_stylesheet
+    html = H {
+      link_stylesheet '/assets/style.css'
+    }
+    assert_equal(
+      '<link rel="stylesheet" href="/assets/style.css"/>',
+      html.render
+    )
+
+    html = H {
+      link_stylesheet '/assets/style.css', media: 'print'
+    }
+    assert_equal(
+      '<link media="print" rel="stylesheet" href="/assets/style.css"/>',
+      html.render
+    )
+  end
+
+  def test_style
+    html = H {
+      style <<~CSS.chomp
+        * { color: red }
+      CSS
+    }
+    assert_equal(
+      '<style>* { color: red }</style>',
+      html.render
+    )
+  end
+
+  def test_html_encoding
+    html = H {
+      span 'me, myself & I'
+    }
+
+    assert_equal(
+      '<span>me, myself &amp; I</span>',
+      html.render
+    )
+  end
+end
+
+class HTMLTest < MiniTest::Test
+  def test_generic_xml
+    xml = H.xml {
+      rss(version: '2.0') {
+        channel {
+          item 'foo'
+          item 'bar'
+        }
+      }
+    }
+
+    assert_equal(
+      '<rss version="2.0"><channel><item>foo</item><item>bar</item></channel></rss>',
+      xml.render
+    )
+  end
+
+  def test_xml_encoding
+    xml = H.xml {
+      link 'http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp'
+    }
+
+    assert_equal(
+      '<link>http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp</link>',
+      xml.render
+    )
   end
 end
