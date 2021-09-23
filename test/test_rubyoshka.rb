@@ -573,7 +573,7 @@ class CompilerTest < MiniTest::Test
 
   def template_compiled_body(tmpl)
     ast = RubyVM::AbstractSyntaxTree.of(tmpl.block)
-    # Rubyoshka::Compiler.pp_node(ast)
+    Rubyoshka::Compiler.pp_node(ast)
 
     instructions = Rubyoshka::Compiler.template_ast_to_instructions(ast)
     Rubyoshka::Compiler.convert_instructions_to_ruby(instructions, 0)
@@ -606,6 +606,25 @@ class CompilerTest < MiniTest::Test
         __buffer__ << "<h3>bar</h3>"
       end
       __buffer__ << "<footer>bye</footer>"
+    RUBY
+    assert_equal expected, code
+  end
+
+  def test_compiler_conditional_3
+    a = true
+    template = H {
+      h1 'hi' if a
+      h2 'bye' unless a
+    }
+
+    code = template_compiled_body(template)
+    expected = <<~RUBY
+      if (a)
+        __buffer__ << "<h1>hi</h1>"
+      end
+      unless (a)
+        __buffer__ << "<h2>bye</h2>"
+      end
     RUBY
     assert_equal expected, code
   end

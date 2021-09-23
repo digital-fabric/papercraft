@@ -62,10 +62,24 @@ class Rubyoshka
       buffer
     end
 
-    def self.translate_if(if_hash, buffer, level)
-      then_part = translate_instructions(if_hash[:then], String.new(capacity: 4096), level + 1)
-      else_part = translate_instructions(if_hash[:else], String.new(capacity: 4096), level + 1)
-      buffer << "#{'  ' * level}if (#{if_hash[:cond]})\n#{then_part}#{'  ' * level}else\n#{else_part}#{'  ' * level}end\n"
+    def self.translate_if(hash, buffer, level)
+      then_part = translate_instructions(hash[:then], String.new(capacity: 4096), level + 1)
+      if hash[:else]
+        else_part = translate_instructions(hash[:else], String.new(capacity: 4096), level + 1)
+        buffer << "#{'  ' * level}if (#{hash[:cond]})\n#{then_part}#{'  ' * level}else\n#{else_part}#{'  ' * level}end\n"
+      else
+        buffer << "#{'  ' * level}if (#{hash[:cond]})\n#{then_part}#{'  ' * level}end\n"
+      end
+    end
+
+    def self.translate_unless(hash, buffer, level)
+      then_part = translate_instructions(hash[:then], String.new(capacity: 4096), level + 1)
+      if hash[:else]
+        else_part = translate_instructions(hash[:else], String.new(capacity: 4096), level + 1)
+        buffer << "#{'  ' * level}unless (#{hash[:cond]})\n#{then_part}#{'  ' * level}else\n#{else_part}#{'  ' * level}end\n"
+      else
+        buffer << "#{'  ' * level}unless (#{hash[:cond]})\n#{then_part}#{'  ' * level}end\n"
+      end
     end
 
     def self.template_ast_to_instructions(ast)
@@ -152,11 +166,35 @@ class Rubyoshka
       cond = c[0].children[0]
       then_instructions = []
       convert_ast_to_instructions(c[1], then_instructions)
-      else_instructions = []
-      convert_ast_to_instructions(c[2], else_instructions)
+      if c[2]
+        else_instructions = []
+        convert_ast_to_instructions(c[2], else_instructions)
+      else
+        else_instructions = nil
+      end
 
       instructions << {
         type: :if,
+        cond: cond,
+        then: then_instructions,
+        else: else_instructions
+      }
+    end
+
+    def self.convert_unless(node, instructions)
+      c = node.children
+      cond = c[0].children[0]
+      then_instructions = []
+      convert_ast_to_instructions(c[1], then_instructions)
+      if c[2]
+        else_instructions = []
+        convert_ast_to_instructions(c[2], else_instructions)
+      else
+        else_instructions = nil
+      end
+
+      instructions << {
+        type: :unless,
         cond: cond,
         then: then_instructions,
         else: else_instructions
