@@ -534,3 +534,41 @@ class HTMLTest < MiniTest::Test
     )
   end
 end
+
+class CompilerTest < MiniTest::Test
+  def test_compiler_simple
+    templ = H {
+      h1 'foo'
+      h2 'bar'
+    }
+
+    code = Rubyoshka::Compiler.compile_template_proc_code(templ)
+    expected = <<~RUBY.chomp
+      ->(__buffer__) {
+        __buffer__ << "<h1>foo</h1><h2>bar</h2>"
+      }
+    RUBY
+    assert_equal expected, code
+  end
+
+  def test_compiler_simple_with_attributes
+    templ = H {
+      h1 'foo', class: 'foo'
+      h2 'bar', id: 'bar', onclick: "f('abc', 'def')"
+    }
+
+    code = Rubyoshka::Compiler.compile_template_proc_code(templ)
+    expected = <<~RUBY.chomp
+      ->(__buffer__) {
+        __buffer__ << "<h1 class=\\"foo\\">foo</h1><h2 id=\\"bar\\" onclick=\\"f('abc', 'def')\\">bar</h2>"
+      }
+    RUBY
+    assert_equal expected, code
+
+    template_proc = eval(code)
+    buffer = +''
+    template_proc.(buffer)
+    assert_equal '<h1 class="foo">foo</h1><h2 id="bar" onclick="f(\'abc\', \'def\')">bar</h2>', buffer
+  end
+
+end

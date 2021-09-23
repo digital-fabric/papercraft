@@ -3,6 +3,7 @@
 require 'escape_utils'
 
 require_relative 'rubyoshka/renderer'
+require_relative 'rubyoshka/compiler'
 
 # A Rubyoshka is a template representing a piece of HTML
 class Rubyoshka
