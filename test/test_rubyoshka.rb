@@ -571,4 +571,42 @@ class CompilerTest < MiniTest::Test
     assert_equal '<h1 class="foo">foo</h1><h2 id="bar" onclick="f(\'abc\', \'def\')">bar</h2>', buffer
   end
 
+  def template_compiled_body(tmpl)
+    ast = RubyVM::AbstractSyntaxTree.of(tmpl.block)
+    # Rubyoshka::Compiler.pp_node(ast)
+
+    instructions = Rubyoshka::Compiler.template_ast_to_instructions(ast)
+    Rubyoshka::Compiler.convert_instructions_to_ruby(instructions, 0)
+  end
+
+  def test_compiler_conditional_1
+    a = true
+    template = H {
+      h1 (a ? 'foo' : 'bar')
+    }
+
+    code = template_compiled_body(template)
+    assert_equal "__buffer__ << \"<h1>\#{(a) ? (\"foo\") : (\"bar\")}</h1>\"\n", code
+  end
+
+  def test_compiler_conditional_2
+    a = true
+    template = H {
+      header 'hi'
+      a ? (p 'foo') : (h3 'bar')
+      footer 'bye'
+    }
+
+    code = template_compiled_body(template)
+    expected = <<~RUBY
+      __buffer__ << "<header>hi</header>"
+      if (a)
+        __buffer__ << "<p>foo</p>"
+      else
+        __buffer__ << "<h3>bar</h3>"
+      end
+      __buffer__ << "<footer>bye</footer>"
+    RUBY
+    assert_equal expected, code
+  end
 end

@@ -28,12 +28,12 @@ class Rubyoshka
       instructions = template_ast_to_instructions(ast)
       # puts '*' * 40
       # pp instructions
-      "->(__buffer__) {\n#{convert_instructions_to_ruby(instructions)}\n}"
+      "->(__buffer__) {\n#{convert_instructions_to_ruby(instructions)}}"
     end
 
-    def self.convert_instructions_to_ruby(instructions)
+    def self.convert_instructions_to_ruby(instructions, level = 1)
       String.new(capacity: 4096).tap do |buffer|
-        translate_instructions(instructions, buffer)
+        translate_instructions(instructions, buffer, level)
       end
     end
 
@@ -42,18 +42,30 @@ class Rubyoshka
       instructions.each do |i|
         case i
         when String
-          static ? (static << i) : (static = i.dup)
-        else
+          static ? (static << i.inspect[1..-2]) : (static = i.inspect[1..-2])
+        when Array # represents an interpolated expression
+          code = "\#{#{i.first}}"
+          static ? (static << code) : (static = code.dup)
+        when Hash
           if static
-            buffer << "#{'  ' * level}__buffer__ << #{static.inspect}"
+            buffer << "#{'  ' * level}__buffer__ << \"#{static}\"\n"
             static = nil
           end
-          send(:"translate_#{i[:type]}", buffer, level + 1)
+          send(:"translate_#{i[:type]}", i, buffer, level)
+        else
+          raise "Unsupported instruction type #{i.class}"
         end
       end
       if static
-        buffer << "#{'  ' * level}__buffer__ << #{static.inspect}"
+        buffer << "#{'  ' * level}__buffer__ << \"#{static}\"\n"
       end
+      buffer
+    end
+
+    def self.translate_if(if_hash, buffer, level)
+      then_part = translate_instructions(if_hash[:then], String.new(capacity: 4096), level + 1)
+      else_part = translate_instructions(if_hash[:else], String.new(capacity: 4096), level + 1)
+      buffer << "#{'  ' * level}if (#{if_hash[:cond]})\n#{then_part}#{'  ' * level}else\n#{else_part}#{'  ' * level}end\n"
     end
 
     def self.template_ast_to_instructions(ast)
@@ -120,13 +132,35 @@ class Rubyoshka
         case c.type
         when :STR
           c.children.first
-          # "\#{#{c.children.first}}"
         when :HASH
           c.children.first
+        when :IF
+          convert_fcall_if_arg(c)
         else
           raise "Unsupported fcall_arg #{c.type}"
         end
       end
+    end
+
+    def self.convert_fcall_if_arg(ast)
+      c = ast.children
+      ["(#{c[0].children[0]}) ? (#{c[1].children[0].inspect}) : (#{c[2].children[0].inspect})"]
+    end
+
+    def self.convert_if(node, instructions)
+      c = node.children
+      cond = c[0].children[0]
+      then_instructions = []
+      convert_ast_to_instructions(c[1], then_instructions)
+      else_instructions = []
+      convert_ast_to_instructions(c[2], else_instructions)
+
+      instructions << {
+        type: :if,
+        cond: cond,
+        then: then_instructions,
+        else: else_instructions
+      }
     end
   end
 end
