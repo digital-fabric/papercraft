@@ -3,202 +3,409 @@
 class Rubyoshka
   # The Compiler class compiles Rubyoshka templates
   class Compiler
-    def self.compile_template_proc_code(template)
-      ast = RubyVM::AbstractSyntaxTree.of(template.block)
-      template_ast_to_ruby_code(ast)
+    DEFAULT_CODE_BUFFER_CAPACITY = 8192
+    DEFAULT_EMIT_BUFFER_CAPACITY = 4096
+
+    def initialize(encoder_proc)
+      @level = 1
+      @code_buffer = String.new(capacity: DEFAULT_CODE_BUFFER_CAPACITY)
+      @encoder_proc = encoder_proc
     end
 
-    def self.pp_node(node, level = 0)
+    def emit_output
+      @output_mode = true
+      yield
+      @output_mode = false
+    end
+
+    def emit_code_line_break
+      return if @code_buffer.empty?
+
+      @code_buffer << "\n" if @code_buffer[-1] != "\n"
+      @line_break = nil
+    end
+
+    def emit_literal(lit)
+      if @output_mode
+        emit_code_line_break if @line_break
+        @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
+        @emit_buffer << lit
+      else
+        emit_code(lit)
+      end
+    end
+
+    def emit_text(str)
+      emit_code_line_break if @line_break
+      @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
+      @emit_buffer << @encoder_proc.(str).inspect[1..-2]
+    end
+
+    def emit_expression
+      if @output_mode
+        emit_literal('#{__html_encode__(')
+        yield
+        emit_literal(')}')
+      else
+        yield
+      end
+    end
+
+    def flush_emit_buffer
+      return if !@emit_buffer
+
+      @code_buffer << "#{'  ' * @level}__buffer__ << \"#{@emit_buffer}\"\n"
+      @emit_buffer = nil
+      true
+    end
+
+    def emit_code(code)
+      if flush_emit_buffer || @line_break
+        emit_code_line_break if @line_break
+        @code_buffer << "#{'  ' * @level}#{code}"
+      else
+        if @code_buffer.empty? || (@code_buffer[-1] == "\n")
+          @code_buffer << "#{'  ' * @level}#{code}"
+        else
+          @code_buffer << "#{code}"
+        end
+      end
+    end
+
+    def compile(template)
+      @block = template.block
+      ast = RubyVM::AbstractSyntaxTree.of(@block)
+      # Compiler.pp_ast(ast)
+      parse(ast)
+      flush_emit_buffer
+      self
+    end
+
+    attr_reader :code_buffer
+
+    def to_code
+      "->(__buffer__, __context__) do\n#{@code_buffer}end"
+    end
+
+    def to_proc
+      @block.binding.eval(to_code)
+    end
+
+    def parse(node)
+      @line_break = @last_node && node.first_lineno != @last_node.first_lineno
+      @last_node = node
+      # puts "- parse(#{node.type}) (break: #{@line_break.inspect})"
+      send(:"parse_#{node.type.downcase}", node)
+    end
+
+    def parse_scope(node)
+      parse(node.children[2])
+    end
+
+    def parse_iter(node)
+      call, scope = node.children
+      if call.type == :FCALL
+        parse_fcall(call, scope)
+      else
+        parse(call)
+        emit_code(" do")
+        args = scope.children[0]
+        emit_code(" |#{args.join(', ')}|") if args
+        emit_code("\n")
+        @level += 1
+        parse(scope)
+        flush_emit_buffer
+        @level -= 1
+        emit_code("end\n")
+      end
+    end
+
+    def parse_ivar(node)
+      ivar = node.children.first.match(/^@(.+)*/)[1]
+      emit_literal("__context__[:#{ivar}]")
+    end
+
+    def parse_fcall(node, block = nil)
+      tag, args = node.children
+      args = args.children.compact if args
+      text = fcall_inner_text_from_args(args)
+      atts = fcall_attributes_from_args(args)
+      if block
+        emit_tag(tag, atts) { parse(block) }
+      elsif text
+        emit_tag(tag, atts) do
+          emit_output do
+            if text.is_a?(String)
+              emit_text(text)
+            else
+              emit_expression { parse(text) }
+            end
+          end
+        end
+      else
+        emit_tag(tag, atts)
+      end
+    end
+
+    def fcall_inner_text_from_args(args)
+      return nil if !args
+
+      first = args.first
+      case first.type
+      when :STR
+        first.children.first
+      when :LIT
+        first.children.first.to_s
+      when :HASH
+        nil
+      else
+        first
+      end
+    end
+
+    def fcall_attributes_from_args(args)
+      return nil if !args
+
+      last = args.last
+      (last.type == :HASH) ? last : nil
+    end
+
+    def emit_tag(tag, atts, &block)
+      emit_output do
+        if atts
+          emit_literal("<#{tag}")
+          emit_tag_attributes(atts)
+          emit_literal(block ? '>' : '/>')
+        else
+          emit_literal(block ? "<#{tag}>" : "<#{tag}/>")
+        end
+      end
+      if block
+        block.call
+        emit_output { emit_literal("</#{tag}>") }
+      end
+    end
+
+    def emit_tag_attributes(atts)
+      list = atts.children.first.children
+      while true
+        key = list.shift
+        break unless key
+
+        value = list.shift
+        emit_literal(' ')
+        emit_tag_attribute_key(key)
+        if value.type != :NIL
+          emit_literal('=\"')
+          emit_tag_attribute_value(value)
+          emit_literal('\"')
+        end
+      end
+    end
+
+    def emit_tag_attribute_key(key)
+      case key.type
+      when :STR
+        emit_literal(key.children.first)
+      when :LIT
+        emit_literal(key.children.first.to_s)
+      when :NIL
+        emit_literal('nil')
+      else
+        emit_expression { parse(key) }
+      end
+    end
+
+    def emit_tag_attribute_value(value)
+      case value.type
+      when :STR
+        emit_text(value.children.first)
+      when :LIT
+        emit_text(value.children.first.to_s)
+      else
+        emit_expression { parse(value) }
+      end
+    end
+
+    def parse_call(node)
+      receiver, method, args = node.children
+      if receiver.type == :VCALL && receiver.children == [:context]
+        emit_literal('__context__')
+      else
+        parse(receiver)
+      end
+      if method == :[]
+        emit_literal('[')
+        args = args.children.compact
+        while true
+          arg = args.shift
+          break unless arg
+
+          parse(arg)
+          emit_literal(', ') if !args.empty?
+        end
+        emit_literal(']')
+      else
+        emit_literal('.')
+        emit_literal(method.to_s)
+        if args
+          emit_literal('(')
+          args = args.children.compact
+          while true
+            arg = args.shift
+            break unless arg
+
+            parse(arg)
+            emit_literal(', ') if !args.empty?
+          end
+          emit_literal(')')
+        end
+      end
+    end
+
+    def parse_str(node)
+      str = node.children.first
+      emit_literal(str.inspect)
+    end
+
+    def parse_lit(node)
+      value = node.children.first
+      emit_literal(value.inspect)
+    end
+
+    def parse_true(node)
+      emit_expression { emit_literal('true') }
+    end
+
+    def parse_false(node)
+      emit_expression { emit_literal('true') }
+    end
+
+    def parse_list(node)
+      emit_literal('[')
+      items = node.children.compact
+      while true
+        item = items.shift
+        break unless item
+
+        parse(item)
+        emit_literal(', ') if !items.empty?
+      end
+      emit_literal(']')
+    end
+
+    def parse_vcall(node)
+      tag = node.children.first
+      emit_tag(tag, nil)
+    end
+
+    def parse_opcall(node)
+      left, op, right = node.children
+      parse(left)
+      emit_literal(" #{op} ")
+      right.children.compact.each { |c| parse(c) }
+    end
+
+    def parse_block(node)
+      node.children.each { |c| parse(c) }
+    end
+
+    def parse_if(node)
+      cond, then_branch, else_branch = node.children
+      if @output_mode
+        emit_if_output(cond, then_branch, else_branch)
+      else
+        emit_if_code(cond, then_branch, else_branch)
+      end
+    end
+
+    def parse_unless(node)
+      cond, then_branch, else_branch = node.children
+      if @output_mode
+        emit_unless_output(cond, then_branch, else_branch)
+      else
+        emit_unless_code(cond, then_branch, else_branch)
+      end
+    end
+
+    def emit_if_output(cond, then_branch, else_branch)
+      parse(cond)
+      emit_literal(" ? ")
+      parse(then_branch)
+      emit_literal(" : ")
+      if else_branch
+        parse(else_branch)
+      else
+        emit_literal(nil)
+      end
+    end
+
+    def emit_unless_output(cond, then_branch, else_branch)
+      parse(cond)
+      emit_literal(" ? ")
+      if else_branch
+        parse(else_branch)
+      else
+        emit_literal(nil)
+      end
+      emit_literal(" : ")
+      parse(then_branch)
+    end
+
+    def emit_if_code(cond, then_branch, else_branch)
+      emit_code('if ')
+      parse(cond)
+      emit_code("\n")
+      @level += 1
+      parse(then_branch)
+      flush_emit_buffer
+      @level -= 1
+      if else_branch
+        emit_code("else\n")
+        @level += 1
+        parse(else_branch)
+        flush_emit_buffer
+        @level -= 1
+      end
+      emit_code("end\n")
+    end
+
+    def emit_unless_code(cond, then_branch, else_branch)
+      emit_code('unless ')
+      parse(cond)
+      emit_code("\n")
+      @level += 1
+      parse(then_branch)
+      flush_emit_buffer
+      @level -= 1
+      if else_branch
+        emit_code("else\n")
+        @level += 1
+        parse(else_branch)
+        flush_emit_buffer
+        @level -= 1
+      end
+      emit_code("end\n")
+    end
+
+    def parse_dvar(node)
+      
+      emit_literal(node.children.first.to_s)
+    end
+
+    def self.pp_ast(node, level = 0)
       case node
       when RubyVM::AbstractSyntaxTree::Node
         puts "#{'  ' * level}#{node.type.inspect}"
-        node.children.each { |c| pp_node(c, level + 1) }
+        node.children.each { |c| pp_ast(c, level + 1) }
       when Array
         puts "#{'  ' * level}["
-        node.each { |c| pp_node(c, level + 1) }
+        node.each { |c| pp_ast(c, level + 1) }
         puts "#{'  ' * level}]"
       else
         puts "#{'  ' * level}#{node.inspect}"
         return
       end
-    end
-    
-    def self.template_ast_to_ruby_code(ast)
-      # pp_node(ast)
-      instructions = template_ast_to_instructions(ast)
-      # puts '*' * 40
-      # pp instructions
-      "->(__buffer__) {\n#{convert_instructions_to_ruby(instructions)}}"
-    end
-
-    def self.convert_instructions_to_ruby(instructions, level = 1)
-      String.new(capacity: 4096).tap do |buffer|
-        translate_instructions(instructions, buffer, level)
-      end
-    end
-
-    def self.translate_instructions(instructions, buffer, level = 1)
-      static = nil
-      instructions.each do |i|
-        case i
-        when String
-          static ? (static << i.inspect[1..-2]) : (static = i.inspect[1..-2])
-        when Array # represents an interpolated expression
-          code = "\#{#{i.first}}"
-          static ? (static << code) : (static = code.dup)
-        when Hash
-          if static
-            buffer << "#{'  ' * level}__buffer__ << \"#{static}\"\n"
-            static = nil
-          end
-          send(:"translate_#{i[:type]}", i, buffer, level)
-        else
-          raise "Unsupported instruction type #{i.class}"
-        end
-      end
-      if static
-        buffer << "#{'  ' * level}__buffer__ << \"#{static}\"\n"
-      end
-      buffer
-    end
-
-    def self.translate_if(hash, buffer, level)
-      then_part = translate_instructions(hash[:then], String.new(capacity: 4096), level + 1)
-      if hash[:else]
-        else_part = translate_instructions(hash[:else], String.new(capacity: 4096), level + 1)
-        buffer << "#{'  ' * level}if (#{hash[:cond]})\n#{then_part}#{'  ' * level}else\n#{else_part}#{'  ' * level}end\n"
-      else
-        buffer << "#{'  ' * level}if (#{hash[:cond]})\n#{then_part}#{'  ' * level}end\n"
-      end
-    end
-
-    def self.translate_unless(hash, buffer, level)
-      then_part = translate_instructions(hash[:then], String.new(capacity: 4096), level + 1)
-      if hash[:else]
-        else_part = translate_instructions(hash[:else], String.new(capacity: 4096), level + 1)
-        buffer << "#{'  ' * level}unless (#{hash[:cond]})\n#{then_part}#{'  ' * level}else\n#{else_part}#{'  ' * level}end\n"
-      else
-        buffer << "#{'  ' * level}unless (#{hash[:cond]})\n#{then_part}#{'  ' * level}end\n"
-      end
-    end
-
-    def self.template_ast_to_instructions(ast)
-      [].tap { |a| convert_ast_to_instructions(ast, a) }
-    end
-
-    def self.convert_ast_to_instructions(ast, instructions)
-      case ast
-      when RubyVM::AbstractSyntaxTree::Node
-        case (type = ast.type)
-        when :SCOPE
-          convert_ast_to_instructions(ast.children[2], instructions)
-        when :BLOCK
-          ast.children.each { |c| convert_ast_to_instructions(c, instructions) }
-        else
-          send(:"convert_#{ast.type.downcase}", ast, instructions)
-        end
-      when Array
-        ast.each { |c| convert_ast_to_instructions(c, instructions) }
-      when nil
-        # ignore
-      else
-        raise "Unsupported node class #{ast.class}"
-      end
-    end
-
-    def self.convert_fcall(ast, instructions)
-      c = ast.children
-      tag = c[0]
-      args = convert_fcall_args(c[1])
-      if args.empty?
-        instructions << "<#{tag}/>"
-      else
-        text, hash = args
-        if hash
-          instructions << "<#{tag} #{convert_tag_hash(hash)}>"
-        else
-          instructions << "<#{tag}>"
-        end
-        instructions << text
-        instructions << "</#{tag}>"
-      end
-    end
-
-    def self.convert_tag_hash(hash)
-      parts = []
-      items = hash.children
-      idx = 0
-      while true
-        item = items[idx]
-        break unless item
-
-        k = item.children[0]
-        v = items[idx + 1].children[0]
-        parts << "#{k}=\"#{v}\""
-        idx += 2
-      end
-      parts.join(' ')
-    end
-
-    def self.convert_fcall_args(ast)
-      ast.children.map do |c|
-        next unless c
-        case c.type
-        when :STR
-          c.children.first
-        when :HASH
-          c.children.first
-        when :IF
-          convert_fcall_if_arg(c)
-        else
-          raise "Unsupported fcall_arg #{c.type}"
-        end
-      end
-    end
-
-    def self.convert_fcall_if_arg(ast)
-      c = ast.children
-      ["(#{c[0].children[0]}) ? (#{c[1].children[0].inspect}) : (#{c[2].children[0].inspect})"]
-    end
-
-    def self.convert_if(node, instructions)
-      c = node.children
-      cond = c[0].children[0]
-      then_instructions = []
-      convert_ast_to_instructions(c[1], then_instructions)
-      if c[2]
-        else_instructions = []
-        convert_ast_to_instructions(c[2], else_instructions)
-      else
-        else_instructions = nil
-      end
-
-      instructions << {
-        type: :if,
-        cond: cond,
-        then: then_instructions,
-        else: else_instructions
-      }
-    end
-
-    def self.convert_unless(node, instructions)
-      c = node.children
-      cond = c[0].children[0]
-      then_instructions = []
-      convert_ast_to_instructions(c[1], then_instructions)
-      if c[2]
-        else_instructions = []
-        convert_ast_to_instructions(c[2], else_instructions)
-      else
-        else_instructions = nil
-      end
-
-      instructions << {
-        type: :unless,
-        cond: cond,
-        then: then_instructions,
-        else: else_instructions
-      }
     end
   end
 end
