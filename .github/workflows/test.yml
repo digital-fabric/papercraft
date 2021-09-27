@@ -24,4 +24,4 @@ jobs:
         gem install bundler
         bundle install
     - name: Run tests
-      run:  bundle exec ruby test/test_rubyoshka.rb
+      run:  bundle exec ruby test/run.rb
