@@ -506,7 +506,7 @@ class HTMLTest < MiniTest::Test
   end
 end
 
-class HTMLTest < MiniTest::Test
+class XMLTest < MiniTest::Test
   def test_generic_xml
     xml = H.xml {
       rss(version: '2.0') {
