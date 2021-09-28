@@ -6,10 +6,9 @@ class Rubyoshka
     DEFAULT_CODE_BUFFER_CAPACITY = 8192
     DEFAULT_EMIT_BUFFER_CAPACITY = 4096
 
-    def initialize(encoder_proc)
+    def initialize
       @level = 1
       @code_buffer = String.new(capacity: DEFAULT_CODE_BUFFER_CAPACITY)
-      @encoder_proc = encoder_proc
     end
 
     def emit_output
@@ -35,10 +34,21 @@ class Rubyoshka
       end
     end
 
-    def emit_text(str)
+    def emit_text(str, encoding: :html)
       emit_code_line_break if @line_break
       @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
-      @emit_buffer << @encoder_proc.(str).inspect[1..-2]
+      @emit_buffer << encode(str, encoding).inspect[1..-2]
+    end
+
+    def encode(str, encoding)
+      case encoding
+      when :html
+        __html_encode__(str)
+      when :uri
+        __uri_encode__(str)
+      else
+        raise "Invalid encoding #{encoding.inspect}"
+      end
     end
 
     def emit_expression
@@ -193,13 +203,19 @@ class Rubyoshka
         break unless key
 
         value = list.shift
+        value_type = value.type
+        case value_type
+        when :FALSE, :NIL
+          next
+        end
+
         emit_literal(' ')
         emit_tag_attribute_key(key)
-        if value.type != :NIL
-          emit_literal('=\"')
-          emit_tag_attribute_value(value)
-          emit_literal('\"')
-        end
+        next if value_type == :TRUE
+        
+        emit_literal('=\"')
+        emit_tag_attribute_value(value, key)
+        emit_literal('\"')
       end
     end
 
@@ -216,14 +232,15 @@ class Rubyoshka
       end
     end
 
-    def emit_tag_attribute_value(value)
+    def emit_tag_attribute_value(value, key)
       case value.type
       when :STR
-        emit_text(value.children.first)
+        encoding = (key.type == :LIT) && (key.children.first == :href) ? :uri : :html
+        emit_text(value.children.first, encoding: encoding)
       when :LIT
         emit_text(value.children.first.to_s)
       else
-        emit_expression { parse(value) }
+        parse(value)
       end
     end
 

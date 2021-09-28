@@ -7,6 +7,16 @@ require_relative 'rubyoshka/compiler'
 
 # A Rubyoshka is a template representing a piece of HTML
 class Rubyoshka
+  module Encoding
+    def __html_encode__(text)
+      EscapeUtils.escape_html(text.to_s)
+    end
+
+    def __uri_encode__(text)
+      EscapeUtils.escape_uri(text.to_s)
+    end
+  end  
+  
   attr_reader :block
 
   # Initializes a Rubyoshka with the given block
@@ -38,6 +48,10 @@ class Rubyoshka
     end
   end
 
+  def compile
+    Rubyoshka::Compiler.new.compile(self)
+  end
+
   @@cache = {}
 
   def self.cache
@@ -54,6 +68,7 @@ class Rubyoshka
 end
 ::H = Rubyoshka
 
+# Kernel extensions
 module ::Kernel
   # Convenience method for creating a new Rubyoshka
   # @param ctx [Hash] local context
@@ -62,4 +77,9 @@ module ::Kernel
   def H(**ctx, &block)
     Rubyoshka.new(**ctx, &block)
   end
+end
+
+# Object extensions
+class Object
+  include Rubyoshka::Encoding
 end

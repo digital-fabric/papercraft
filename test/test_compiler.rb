@@ -3,13 +3,12 @@ require 'minitest/autorun'
 require 'rubyoshka'
 
 class CompilerTest < MiniTest::Test
-  HTML_ENCODER = ->(t) { EscapeUtils.escape_html(t.to_s) }
   class Rubyoshka::Compiler
     attr_accessor :level
   end
 
   def compiled_template(tmpl, level = 1)
-    c = Rubyoshka::Compiler.new(HTML_ENCODER)
+    c = Rubyoshka::Compiler.new
     c.level = level
     c.compile(tmpl)
   end
@@ -109,5 +108,147 @@ class CompilerTest < MiniTest::Test
       end
     RUBY
     assert_equal expected, code
+  end
+
+  def test_compiler_conditional_4
+    a = true
+    b = true
+    template = H {
+      if a
+        h1 'foo'
+      elsif b
+        h2 'bar'
+      else
+        h3 'baz'
+      end
+    }
+
+    code = compiled_template_body(template)
+    expected = <<~RUBY
+      if a
+        __buffer__ << "<h1>foo</h1>"
+      else
+        if b
+          __buffer__ << "<h2>bar</h2>"
+        else
+          __buffer__ << "<h3>baz</h3>"
+        end
+      end
+    RUBY
+    assert_equal expected, code
+  end
+end
+
+class CompiledTemplateTest < MiniTest::Test
+  def test_compile
+    t = H { h1 'foo' }
+    c = t.compile
+
+    assert_kind_of Rubyoshka::Compiler, c
+    p = c.to_proc
+    b = +''
+    p.(b, nil)
+
+    assert_equal '<h1>foo</h1>', b
+  end
+
+  module ::Kernel
+    def C(**ctx, &block)
+      Rubyoshka.new(**ctx, &block).compile.tap { |c| puts '*' * 40; puts c.to_code; puts }.to_proc
+    end
+  end
+
+  class ::Proc
+    def render(context = {})
+      +''.tap { |b| call(b, context) }
+    end
+  end
+
+  def test_simple_html
+    h = C { div { p 'foo'; p 'bar' } }
+    assert_equal(
+      '<div><p>foo</p><p>bar</p></div>',
+      h.render
+    )
+  end
+
+  def test_that_attributes_are_supported_and_escaped
+    assert_equal(
+      '<div class="blue and green"/>',
+      C { div class: 'blue and green' }.render
+    )
+
+    assert_equal(
+      '<div onclick="return doit();"/>',
+      C { div onclick: 'return doit();' }.render
+    )
+
+    assert_equal(
+      '<a href="/?q=a%20b"/>',
+      C { a href: '/?q=a b' }.render
+    )
+  end
+
+  def test_that_valueless_attributes_are_supported
+    assert_equal(
+      '<input type="checkbox" checked/>',
+      C { input type: 'checkbox', checked: true }.render
+    )
+
+    assert_equal(
+      '<input type="checkbox"/>',
+      C { input type: 'checkbox', checked: false }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_no_arguments
+    assert_equal(
+      '<div/>',
+      C { div() }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_text_argument
+    assert_equal(
+      '<p>lorem ipsum</p>',
+      C { p "lorem ipsum" }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_non_string_text_argument
+    assert_equal(
+      '<p>lorem</p>',
+      C { p :lorem }.render
+    )
+  end
+
+  def test_that_tag_method_escapes_string_text_argument
+    assert_equal(
+      '<p>lorem &amp; ipsum</p>',
+      C { p 'lorem & ipsum' }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_text_and_attributes
+    assert_equal(
+      '<p class="hi">lorem ipsum</p>',
+      C { p "lorem ipsum", class: 'hi' }.render
+    )
+  end
+
+  # A1 = H { a 'foo', href: '/' }
+
+  # def test_that_tag_method_accepts_rubyoshka_argument
+  #   assert_equal(
+  #     '<p><a href="/">foo</a></p>',
+  #     C { p A1 }.render
+  #   )
+  # end
+
+  def test_that_tag_method_accepts_block
+    assert_equal(
+      '<div><p><a href="/">foo</a></p></div>',
+      C { div { p { a 'foo', href: '/' } } }.render
+    )
   end
 end
