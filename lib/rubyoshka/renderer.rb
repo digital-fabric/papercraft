@@ -11,10 +11,10 @@ class Rubyoshka
     # @param context [Hash] rendering context
     # @param block [Proc] template block
     # @return [void]
-    def initialize(context, &block)
+    def initialize(context, template)
       @context = context
       @buffer = +''
-      instance_eval(&block)
+      instance_eval(&template)
     end
   
     # Returns the result of the rendering
@@ -103,7 +103,7 @@ class Rubyoshka
       when ::Proc
         instance_eval(&o)
       when Rubyoshka
-        instance_eval(&o.block)
+        instance_eval(&o.template)
       when Module
         # If module is given, the component is expected to be a const inside the module
         emit(o::Component)
@@ -113,6 +113,13 @@ class Rubyoshka
       end
     end
     alias_method :e, :emit
+
+    def emit_yield
+      block = @context[:__block__]
+      raise LocalJumpError, "no block given (emit_yield)" unless block
+
+      instance_eval(&block)
+    end
   
     S_LT              = '<'
     S_GT              = '>'

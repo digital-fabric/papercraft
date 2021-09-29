@@ -83,7 +83,7 @@ class Rubyoshka
     end
 
     def compile(template)
-      @block = template.block
+      @block = template.to_proc
       ast = RubyVM::AbstractSyntaxTree.of(@block)
       # Compiler.pp_ast(ast)
       parse(ast)

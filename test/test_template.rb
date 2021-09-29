@@ -8,7 +8,7 @@ class EntryPointTest < MiniTest::Test
     h = H(&block)
 
     assert_kind_of(H, h)
-    assert_equal(block, h.block)
+    assert_equal(block, h.template)
   end
 end
 
@@ -148,6 +148,25 @@ class EmitTest < MiniTest::Test
       H { div { e r} }.render
     )
   end
+
+  def test_emit_yield
+    r = H { body { emit_yield } }
+    assert_raises { r.render(foo: 'bar') }
+
+    assert_equal(
+      '<body><p>foo</p><hr/></body>',
+      r.render { p 'foo'; hr; }
+    )
+  end
+
+  def test_emit_yield_with_sub_template
+    outer = H { body { div(id: 'content') { emit_yield } } }
+    inner = H { p 'foo' }
+    assert_equal(
+      '<body><div id="content"><p>foo</p></div></body>',
+      outer.render(&inner)
+    )
+  end
 end
 
 class ComponentTest < MiniTest::Test
@@ -274,7 +293,7 @@ class ContextTest < MiniTest::Test
   end
 end
 
-class BlockTest < MiniTest::Test
+class ScopeTest < MiniTest::Test
   def test_that_template_block_has_access_to_local_variables
     text = 'foobar'
     assert_equal(
