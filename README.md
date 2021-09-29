@@ -284,6 +284,43 @@ H {
 }
 ```
 
+## Layout templates
+
+Rubyoshka templates can also be used to implement layout templates by using
+`#emit_yield`:
+
+```ruby
+layout = H {
+  html5 {
+    head { ... }
+    body {
+      header { ... }
+      body {
+        emit_yield
+      }
+      footer { ... }
+    }
+  }
+}
+```
+
+To use the layout, supply a block when calling `#render`:
+
+```ruby
+layout.render {
+  h1 'foo'
+  p 'bar'
+}
+
+# you can also pass a template as the block
+inner = H {
+  h1 'foo'
+  p 'bar'
+}
+
+layout.render(&inner)
+```
+
 ## Fragment caching
 
 Any part of a Rubyoshka template can be cached - a fragment, a component, or a

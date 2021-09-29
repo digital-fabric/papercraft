@@ -1,41 +1,39 @@
-0.6.1 2021-03-03
-----------------
+## 0.7 2021-09-29
 
-* Remove support for Ruby 2.6
+- Add `#emit_yield` for rendering layouts
+- Add experimental template compilation (WIP)
 
-0.6 2021-03-03
---------------
+## 0.6.1 2021-03-03
 
-* Fix Rubyoshka on Ruby 3.0
-* Refactor and add more tests
+- Remove support for Ruby 2.6
 
-0.5 2021-02-27
---------------
+## 0.6 2021-03-03
 
-* Add support for rendering XML
-* Add Rubyoshka.component method
-* Remove Modulation dependency
+- Fix Rubyoshka on Ruby 3.0
+- Refactor and add more tests
 
-0.4 2019-02-05
---------------
+## 0.5 2021-02-27
 
-* Add support for emitting component modules
+- Add support for rendering XML
+- Add Rubyoshka.component method
+- Remove Modulation dependency
 
-0.3 2019-01-13
---------------
+## 0.4 2019-02-05
 
-* Implement caching
-* Improve performance
-* Handle attributes with `false` value correctly
+- Add support for emitting component modules
 
-0.2 2019-01-07
---------------
+## 0.3 2019-01-13
 
-* Better documentation
-* Fix #text
-* Add local context
+- Implement caching
+- Improve performance
+- Handle attributes with `false` value correctly
 
-0.1 2019-01-06
---------------
+## 0.2 2019-01-07
 
-* First working version
+- Better documentation
+- Fix #text
+- Add local context
+
+## 0.1 2019-01-06
+
+- First working version
