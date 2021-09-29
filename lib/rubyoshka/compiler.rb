@@ -212,7 +212,7 @@ class Rubyoshka
         emit_literal(' ')
         emit_tag_attribute_key(key)
         next if value_type == :TRUE
-        
+
         emit_literal('=\"')
         emit_tag_attribute_value(value, key)
         emit_literal('\"')
@@ -406,7 +406,7 @@ class Rubyoshka
     end
 
     def parse_dvar(node)
-      
+
       emit_literal(node.children.first.to_s)
     end
 

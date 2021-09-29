@@ -15,8 +15,8 @@ class Rubyoshka
     def __uri_encode__(text)
       EscapeUtils.escape_uri(text.to_s)
     end
-  end  
-  
+  end
+
   attr_reader :template
 
   # Initializes a Rubyoshka with the given block

@@ -24,7 +24,7 @@ features:
 
 With Rubyoshka you can structure your templates like a Russian doll, each
 component containing any number of nested components, in a somewhat similar
-fashion to React. The name *Rubyoshka* is a nod to 
+fashion to React. The name *Rubyoshka* is a nod to
 [Matryoshka](https://en.wikipedia.org/wiki/Matryoshka_doll), the Russian
 nesting doll.
 
@@ -207,7 +207,7 @@ H(name: @name) { span "Hello, #{name}" }
 ## Global context
 
 In addition to the local context, Rubyoshka also provides a way to set a global
-context, accessible from anywhere in the template, and also in sub-components 
+context, accessible from anywhere in the template, and also in sub-components
 used in the template.
 
 The global context is a simple hash that can be accessed from within the
@@ -324,7 +324,7 @@ layout.render(&inner)
 ## Fragment caching
 
 Any part of a Rubyoshka template can be cached - a fragment, a component, or a
-whole template. It is up to you, the user, to determine which parts of the 
+whole template. It is up to you, the user, to determine which parts of the
 template to cache. By default, a call to `#cache` creates a cache entry based on
 the source location of the cached block:
 
@@ -359,8 +359,8 @@ App = H {
 }
 ```
 
-In the above example a separate cache entry will be created for each name. The 
-use of caching in components is especially beneficial since components may be 
+In the above example a separate cache entry will be created for each name. The
+use of caching in components is especially beneficial since components may be
 reused in multiple different templates in your app.
 
 ### Changing the cache store
@@ -462,7 +462,7 @@ List = ->(items, item_component) {
   H {
     ul {
       items.each { |item|
-        with(item: item) { 
+        with(item: item) {
           li { emit item_component }
         }
       }
@@ -488,7 +488,7 @@ end
 - `context`: local context hash
 - `block`: template block
 
-Initializes a new Rubyoshka instance. This method takes a block of template 
+Initializes a new Rubyoshka instance. This method takes a block of template
 code, and an optional [local context](#local-context) in the form of a hash.
 The `Kernel#H` method serves as a shortcut for creating Rubyoshka instances.
 

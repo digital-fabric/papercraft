@@ -110,7 +110,7 @@ class EmitTest < MiniTest::Test
   def test_that_emit_accepts_block
     # rubyoshka emits the value returned from the block
     block = proc { emit 'foobar' }
-    
+
     assert_equal(
       'foobar',
       H { emit block }.render
@@ -172,9 +172,9 @@ end
 class ComponentTest < MiniTest::Test
   H::C1 = H { article { h1 'title'; p 'body' } }
   H::C2 = H { footer { a 1; a 2 } }
-  
+
   def test_that_components_can_be_composed
-  
+
     assert_equal(
       '<div><article><h1>title</h1><p>body</p></article><footer><a>1</a><a>2</a></footer></div>',
       H { div { C1(); C2() } }.render
@@ -412,7 +412,7 @@ class CacheTest < MiniTest::Test
       H::C9.render(global)
     )
     assert_nil(global[:meaning])
-    
+
     global[:name] = 'dolly'
     assert_equal(
       '<div><span>hello, dolly</span></div>',
@@ -432,7 +432,7 @@ class CacheTest < MiniTest::Test
 
   def test_that_multiple_cache_blocks_work_correctly
     H.cache.clear
-    
+
     template = H {
       C10(name: 'world')
       C10(name: 'dolly')

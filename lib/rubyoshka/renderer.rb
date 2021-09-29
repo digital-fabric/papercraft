@@ -6,7 +6,7 @@ class Rubyoshka
   # A Renderer is a rendering of a Rubyoshka
   class Renderer
     attr_reader :context
-  
+
     # Initializes attributes and renders the given block
     # @param context [Hash] rendering context
     # @param block [Proc] template block
@@ -16,7 +16,7 @@ class Rubyoshka
       @buffer = +''
       instance_eval(&template)
     end
-  
+
     # Returns the result of the rendering
     # @return [String]
     def to_s
@@ -35,11 +35,11 @@ class Rubyoshka
     S_TAG_METHOD = <<~EOF
       S_TAG_%<TAG>s_PRE = '<%<tag>s'
       S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'
-      
+
       def %<tag>s(text = nil, **props, &block)
         @buffer << S_TAG_%<TAG>s_PRE
         emit_props(props) unless props.empty?
-      
+
         if block
           @buffer << S_GT
           instance_eval(&block)
@@ -57,7 +57,7 @@ class Rubyoshka
     EOF
 
     R_CONST_SYM = /^[A-Z]/
-  
+
     # Catches undefined tag method call and handles them by defining the method
     # @param sym [Symbol] HTML tag or component identifier
     # @param args [Array] method call arguments
@@ -94,7 +94,7 @@ class Rubyoshka
         send(sym, *args, **opts, &block)
       end
     end
-  
+
     # Emits the given object into the rendering buffer
     # @param o [Proc, Rubyoshka, Module, String] emitted object
     # @return [void]
@@ -120,7 +120,7 @@ class Rubyoshka
 
       instance_eval(&block)
     end
-  
+
     S_LT              = '<'
     S_GT              = '>'
     S_LT_SLASH        = '</'
@@ -190,7 +190,7 @@ class Rubyoshka
 
   class HTMLRenderer < Renderer
     include HTML
-    
+
     def escape_text(text)
       EscapeUtils.escape_html(text.to_s)
     end

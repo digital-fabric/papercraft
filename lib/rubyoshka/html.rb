@@ -3,7 +3,7 @@
 require_relative './html'
 
 class Rubyoshka
-  # Markup extensions 
+  # Markup extensions
   module HTML
     # Emits the p tag (overrides Object#p)
     # @param text [String] text content of tag
@@ -13,9 +13,9 @@ class Rubyoshka
     def p(text = nil, **props, &block)
       method_missing(:p, text, **props, &block)
     end
-  
+
     S_HTML5_DOCTYPE = '<!DOCTYPE html>'
-  
+
     # Emits an HTML5 doctype tag and an html tag with the given block
     # @param block [Proc] nested HTML block
     # @return [void]

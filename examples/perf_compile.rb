@@ -23,7 +23,7 @@ T = H {
           a(href: '/') {
             img src: '/assets/nf-icon-black.png'
             span 'noteflakes'
-          } 
+          }
         }
         ul {
           li 'by Sharon Rosner', class: 'byline'

@@ -5,7 +5,7 @@ List = ->(items, item_component) {
   H {
     ul {
       items.each { |item|
-        with(item: item) { 
+        with(item: item) {
           li { emit item_component }
         }
       }
