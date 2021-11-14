@@ -88,7 +88,7 @@ class Rubyoshka
           raise e
         end
       else
-        tag = sym.to_s
+        tag = sym.to_s.tr("_", "-")
         code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
         self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
         send(sym, *args, **opts, &block)
@@ -142,11 +142,11 @@ class Rubyoshka
         else
           case v
           when true
-            @buffer << S_SPACE << k.to_s
+            @buffer << S_SPACE << k.to_s.tr("_", "-")
           when false, nil
             # emit nothing
           else
-            @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE << v << S_QUOTE
+            @buffer << S_SPACE << k.to_s.tr("_", "-") << S_EQUAL_QUOTE << v << S_QUOTE
           end
         end
       }
