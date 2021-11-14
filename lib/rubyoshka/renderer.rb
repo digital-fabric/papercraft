@@ -33,8 +33,8 @@ class Rubyoshka
 
     S_TAG_METHOD_LINE = __LINE__ + 1
     S_TAG_METHOD = <<~EOF
-      S_TAG_%<TAG>s_PRE = '<%<tag>s'
-      S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'
+      S_TAG_%<TAG>s_PRE = '<%<tag>s'.tr("_", "-")
+      S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'.tr("_", "-")
 
       def %<tag>s(text = nil, **props, &block)
         @buffer << S_TAG_%<TAG>s_PRE
@@ -88,7 +88,7 @@ class Rubyoshka
           raise e
         end
       else
-        tag = sym.to_s.tr("_", "-")
+        tag = sym.to_s
         code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
         self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
         send(sym, *args, **opts, &block)
