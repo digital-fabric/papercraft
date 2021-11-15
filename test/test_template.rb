@@ -82,10 +82,29 @@ class TagsTest < MiniTest::Test
     )
   end
 
+  def test_tag_underscore_to_hyphen_conversion
+    assert_equal(
+      '<my-nifty-tag>foo</my-nifty-tag>',
+      H { my_nifty_tag 'foo' }.render
+    )
+
+    assert_equal(
+      '<my-nifty-tag/>',
+      H { my_nifty_tag }.render
+    )
+  end
+
   def test_that_tag_method_accepts_text_and_attributes
     assert_equal(
       '<p class="hi">lorem ipsum</p>',
       H { p "lorem ipsum", class: 'hi' }.render
+    )
+  end
+
+  def test_attribute_underscore_to_hyphen_conversion
+    assert_equal(
+      '<p data-foo="bar">hello</p>',
+      H { p 'hello', data_foo: 'bar' }.render
     )
   end
 
