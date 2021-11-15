@@ -33,8 +33,8 @@ class Rubyoshka
 
     S_TAG_METHOD_LINE = __LINE__ + 1
     S_TAG_METHOD = <<~EOF
-      S_TAG_%<TAG>s_PRE = '<%<tag>s'
-      S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'
+      S_TAG_%<TAG>s_PRE = '<%<tag>s'.tr('_', '-')
+      S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'.tr('_', '-')
 
       def %<tag>s(text = nil, **props, &block)
         @buffer << S_TAG_%<TAG>s_PRE
@@ -142,11 +142,12 @@ class Rubyoshka
         else
           case v
           when true
-            @buffer << S_SPACE << k.to_s
+            @buffer << S_SPACE << k.to_s.tr('_', '-')
           when false, nil
             # emit nothing
           else
-            @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE << v << S_QUOTE
+            @buffer << S_SPACE << k.to_s.tr('_', '-') <<
+              S_EQUAL_QUOTE << v << S_QUOTE
           end
         end
       }
