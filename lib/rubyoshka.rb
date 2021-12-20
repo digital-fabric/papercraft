@@ -7,6 +7,9 @@ require_relative 'rubyoshka/compiler'
 
 # A Rubyoshka is a template representing a piece of HTML
 class Rubyoshka
+  class Error < RuntimeError
+  end
+
   module Encoding
     def __html_encode__(text)
       EscapeUtils.escape_html(text.to_s)
