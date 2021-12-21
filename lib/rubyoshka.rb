@@ -2,11 +2,12 @@
 
 require 'escape_utils'
 
+require_relative 'rubyoshka/component'
 require_relative 'rubyoshka/renderer'
-require_relative 'rubyoshka/compiler'
+# require_relative 'rubyoshka/compiler'
 
 # A Rubyoshka is a template representing a piece of HTML
-class Rubyoshka
+module Rubyoshka
   class Error < RuntimeError
   end
 
@@ -20,64 +21,11 @@ class Rubyoshka
     end
   end
 
-  attr_reader :template
-
-  # Initializes a Rubyoshka with the given block
-  # @param ctx [Hash] local context
-  # @param block [Proc] nested HTML block
-  # @param [void]
-  def initialize(mode: :html, **ctx, &block)
-    @mode = mode
-    @template = ctx.empty? ? block : proc { with(**ctx, &block) }
-  end
-
-  H_EMPTY = {}.freeze
-
-  # Renders the associated block and returns the string result
-  # @param context [Hash] context
-  # @return [String]
-  def render(context = H_EMPTY, &block)
-    if block
-      context = context.dup if context.frozen?
-      context[:__block__] = block
-    end
-    renderer_class.new(context, @template).to_s
-  end
-
-  def renderer_class
-    case @mode
-    when :html
-      HTMLRenderer
-    when :xml
-      XMLRenderer
-    else
-      raise "Invalid mode #{@mode.inspect}"
-    end
-  end
-
-  def compile
-    Rubyoshka::Compiler.new.compile(self)
-  end
-
-  def to_proc
-    @template
-  end
-
-  @@cache = {}
-
-  def self.cache
-    @@cache
-  end
-
   def self.component(&block)
-    proc { |*args| new { instance_exec(*args, &block) } }
-  end
-
-  def self.xml(**ctx, &block)
-    new(mode: :xml, **ctx, &block)
+    proc { |*args| Component.new { instance_exec(*args, &block) } }
   end
 end
-::H = Rubyoshka
+::H = Rubyoshka::Component
 
 # Kernel extensions
 module ::Kernel
@@ -86,7 +34,7 @@ module ::Kernel
   # @param template [Proc] template block
   # @return [Rubyoshka] Rubyoshka template
   def H(**ctx, &template)
-    Rubyoshka.new(**ctx, &template)
+    Rubyoshka::Component.new(**ctx, &template)
   end
 end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Rubyoshka
+module Rubyoshka
   # The Compiler class compiles Rubyoshka templates
   class Compiler
     DEFAULT_CODE_BUFFER_CAPACITY = 8192

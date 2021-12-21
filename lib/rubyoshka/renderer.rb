@@ -2,8 +2,8 @@
 
 require_relative './html'
 
-class Rubyoshka
-  # A Renderer is a rendering of a Rubyoshka
+module Rubyoshka
+  # A Renderer renders a Rubyoshka component into a string
   class Renderer
     attr_reader :context
 
@@ -44,7 +44,7 @@ class Rubyoshka
           @buffer << S_GT
           instance_eval(&block)
           @buffer << S_TAG_%<TAG>s_CLOSE
-        elsif Rubyoshka === text
+        elsif Rubyoshka::Component === text
           @buffer << S_GT
           emit(text)
           @buffer << S_TAG_%<TAG>s_CLOSE
@@ -69,13 +69,13 @@ class Rubyoshka
 
       if sym =~ R_CONST_SYM
         # Component reference (capitalized method name)
-        o = instance_eval(sym.to_s) rescue Rubyoshka.const_get(sym) \
+        o = instance_eval(sym.to_s) rescue Rubyoshka::Component.const_get(sym) \
             rescue Object.const_get(sym)
         case o
         when ::Proc
           self.class.define_method(sym) { |*a, **c, &b| emit(o.(*a, **c, &b)) }
           emit(o.(*args, **opts, &block))
-        when Rubyoshka
+        when Rubyoshka::Component
           self.class.define_method(sym) do |**ctx|
             ctx.empty? ? emit(o) : with(**ctx) { emit(o) }
           end
@@ -96,13 +96,13 @@ class Rubyoshka
     end
 
     # Emits the given object into the rendering buffer
-    # @param o [Proc, Rubyoshka, Module, String] emitted object
+    # @param o [Proc, Rubyoshka::Component, Module, String] emitted object
     # @return [void]
     def emit(o)
       case o
       when ::Proc
         instance_eval(&o)
-      when Rubyoshka
+      when Rubyoshka::Component
         instance_eval(&o.template)
       when Module
         # If module is given, the component is expected to be a const inside the module
@@ -177,7 +177,7 @@ class Rubyoshka
     def cache(*vary, **opts, &block)
       key = [block.source_location.hash, vary.hash, opts.hash]
 
-      if (cached = Rubyoshka.cache[key])
+      if (cached = Rubyoshka::Component.cache[key])
         @buffer << cached
         return
       end
@@ -185,7 +185,7 @@ class Rubyoshka
       cache_pos = @buffer.length
       instance_eval(&block)
       diff = @buffer[cache_pos..-1]
-      Rubyoshka.cache[key] = diff
+      Rubyoshka::Component.cache[key] = diff
     end
   end
 

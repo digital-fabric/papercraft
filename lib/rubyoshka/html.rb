@@ -2,7 +2,7 @@
 
 require_relative './html'
 
-class Rubyoshka
+module Rubyoshka
   # Markup extensions
   module HTML
     # Emits the p tag (overrides Object#p)
