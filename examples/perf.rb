@@ -1,5 +1,5 @@
 require 'bundler/setup'
-require 'rubyoshka'
+require 'papercraft'
 require 'erubis'
 require 'erb'
 require 'benchmark/ips'
@@ -103,25 +103,25 @@ class Renderer
   end
 
 
-  def render_rubyoshka_app
+  def render_papercraft_app
     App.render(title: 'title from context')
   end
 
-  def render_rubyoshka_content
+  def render_papercraft_content
     Content.render(title: 'title from context')
   end
 end
 
 r = Renderer.new
 
-puts r.render_rubyoshka_app
-puts r.render_rubyoshka_app
+puts r.render_papercraft_app
+puts r.render_papercraft_app
 
 puts "=== Template with 2 partials"
 Benchmark.ips do |x|
   x.config(:time => 3, :warmup => 1)
 
-  x.report("rubyoshka") { r.render_rubyoshka_app }
+  x.report("papercraft") { r.render_papercraft_app }
   x.report("erubis") { r.render_erubis_app }
   x.report("erb") { r.render_erb_app }
 
@@ -132,7 +132,7 @@ end
 # Benchmark.ips do |x|
 #   x.config(:time => 3, :warmup => 1)
 
-#   x.report("rubyoshka") { r.render_rubyoshka_content }
+#   x.report("papercraft") { r.render_papercraft_content }
 #   x.report("erubis") { r.render_erubis_content }
 #   # x.report("erb") { r.render_erb_content }
 

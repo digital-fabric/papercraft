@@ -1,6 +1,6 @@
 # require 'bundler/setup'
 # require 'minitest/autorun'
-# require 'rubyoshka'
+# require 'papercraft'
 
 # class ParametersTest < MiniTest::Test
 #   def test_ordinal_parameters

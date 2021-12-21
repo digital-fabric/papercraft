@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rubyoshka (0.7)
+    papercraft (0.7)
       escape_utils (= 1.2.1)
 
 GEM
@@ -20,7 +20,7 @@ DEPENDENCIES
   benchmark-ips (= 2.7.2)
   erubis (= 2.7.0)
   minitest (= 5.11.3)
-  rubyoshka!
+  papercraft!
   tilt (= 2.0.9)
 
 BUNDLED WITH

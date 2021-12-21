@@ -1,5 +1,5 @@
 require 'bundler/setup'
-require 'rubyoshka'
+require 'papercraft'
 require 'escape_utils'
 require 'benchmark/ips'
 

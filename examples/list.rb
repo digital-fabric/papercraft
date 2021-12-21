@@ -1,5 +1,5 @@
 require 'bundler'
-require 'rubyoshka'
+require 'papercraft'
 
 List = ->(items, item_component) {
   H {

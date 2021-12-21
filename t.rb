@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'lib/rubyoshka/compiler'
+require_relative 'lib/papercraft/compiler'
 require 'escape_utils'
 
 class T

@@ -1,6 +1,6 @@
 require 'bundler/setup'
 require 'minitest/autorun'
-require 'rubyoshka'
+require 'papercraft'
 
 class EntryPointTest < MiniTest::Test
   def test_that_entry_point_creates_new_instance
@@ -108,7 +108,7 @@ class TagsTest < MiniTest::Test
     )
   end
 
-  def test_that_tag_method_accepts_rubyoshka_argument
+  def test_that_tag_method_accepts_papercraft_argument
     a = H { a 'foo', href: '/' }
 
     assert_equal(
@@ -127,7 +127,7 @@ end
 
 class EmitTest < MiniTest::Test
   def test_that_emit_accepts_block
-    # rubyoshka emits the value returned from the block
+    # papercraft emits the value returned from the block
     block = proc { emit 'foobar' }
 
     assert_equal(
@@ -136,7 +136,7 @@ class EmitTest < MiniTest::Test
     )
   end
 
-  def test_that_emit_accepts_rubyoshka
+  def test_that_emit_accepts_papercraft
     r = H { p 'foobar' }
 
     assert_equal(
@@ -237,14 +237,14 @@ class ComponentTest < MiniTest::Test
     )
   end
 
-  H::BlogPost = Rubyoshka.component do |title, content|
+  H::BlogPost = Papercraft.component do |title, content|
     article(id: '42') do
       h1 title
       p content
     end
   end
 
-  def test_rubyoshka_component_method
+  def test_papercraft_component_method
     assert_equal(
       '<div><article id="42"><h1>foo</h1><p>bar</p></article></div>',
       H {
@@ -368,7 +368,7 @@ class ArgumentsTest < MiniTest::Test
 
   H::C7 = H { span foo }
 
-  def test_that_rubyoshka_calls_accept_local_context
+  def test_that_papercraft_calls_accept_local_context
     assert_equal(
       '<span>bar</span>',
       H { C7(foo: 'bar') }.render

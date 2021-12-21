@@ -1,5 +1,5 @@
 require 'bundler/setup'
-require 'rubyoshka'
+require 'papercraft'
 
 App = H {
   html5 {

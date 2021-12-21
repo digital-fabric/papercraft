@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Rubyoshka
-  # The Compiler class compiles Rubyoshka templates
+module Papercraft
+  # The Compiler class compiles Papercraft templates
   class Compiler
     DEFAULT_CODE_BUFFER_CAPACITY = 8192
     DEFAULT_EMIT_BUFFER_CAPACITY = 4096

@@ -2,12 +2,12 @@
 
 require 'escape_utils'
 
-require_relative 'rubyoshka/component'
-require_relative 'rubyoshka/renderer'
-# require_relative 'rubyoshka/compiler'
+require_relative 'papercraft/component'
+require_relative 'papercraft/renderer'
+# require_relative 'papercraft/compiler'
 
-# A Rubyoshka is a template representing a piece of HTML
-module Rubyoshka
+# A Papercraft is a template representing a piece of HTML
+module Papercraft
   class Error < RuntimeError
   end
 
@@ -25,20 +25,20 @@ module Rubyoshka
     proc { |*args| Component.new { instance_exec(*args, &block) } }
   end
 end
-::H = Rubyoshka::Component
+::H = Papercraft::Component
 
 # Kernel extensions
 module ::Kernel
-  # Convenience method for creating a new Rubyoshka
+  # Convenience method for creating a new Papercraft
   # @param ctx [Hash] local context
   # @param template [Proc] template block
-  # @return [Rubyoshka] Rubyoshka template
+  # @return [Papercraft] Papercraft template
   def H(**ctx, &template)
-    Rubyoshka::Component.new(**ctx, &template)
+    Papercraft::Component.new(**ctx, &template)
   end
 end
 
 # Object extensions
 class Object
-  include Rubyoshka::Encoding
+  include Papercraft::Encoding
 end

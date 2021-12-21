@@ -2,7 +2,7 @@
 
 require_relative './html'
 
-module Rubyoshka
+module Papercraft
   # Markup extensions
   module HTML
     # Emits the p tag (overrides Object#p)

@@ -1,6 +1,6 @@
 # require 'bundler/setup'
 # require 'minitest/autorun'
-# require 'rubyoshka'
+# require 'papercraft'
 
 # class CompilerTest < MiniTest::Test
 #   class Rubyoshka::Compiler
@@ -238,7 +238,7 @@
 
 #   # A1 = H { a 'foo', href: '/' }
 
-#   # def test_that_tag_method_accepts_rubyoshka_argument
+#   # def test_that_tag_method_accepts_papercraft_argument
 #   #   assert_equal(
 #   #     '<p><a href="/">foo</a></p>',
 #   #     C { p A1 }.render

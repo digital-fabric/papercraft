@@ -2,7 +2,7 @@
 
 require_relative './html'
 
-module Rubyoshka
+module Papercraft
   class Component
     attr_reader :template
 
@@ -40,7 +40,7 @@ module Rubyoshka
     end
   
     # def compile
-    #   Rubyoshka::Compiler.new.compile(self)
+    #   Papercraft::Compiler.new.compile(self)
     # end
   
     def to_proc
