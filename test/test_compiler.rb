@@ -3,12 +3,12 @@
 # require 'papercraft'
 
 # class CompilerTest < MiniTest::Test
-#   class Rubyoshka::Compiler
+#   class Papercraft::Compiler
 #     attr_accessor :level
 #   end
 
 #   def compiled_template(tmpl, level = 1)
-#     c = Rubyoshka::Compiler.new
+#     c = Papercraft::Compiler.new
 #     c.level = level
 #     c.compile(tmpl)
 #   end
@@ -144,7 +144,7 @@
 #     t = H { h1 'foo' }
 #     c = t.compile
 
-#     assert_kind_of Rubyoshka::Compiler, c
+#     assert_kind_of Papercraft::Compiler, c
 #     p = c.to_proc
 #     b = +''
 #     p.(b, nil)
@@ -154,7 +154,7 @@
 
 #   module ::Kernel
 #     def C(**ctx, &block)
-#       Rubyoshka.new(**ctx, &block).compile.tap { |c| puts '*' * 40; puts c.to_code; puts }.to_proc
+#       Papercraft.new(**ctx, &block).compile.tap { |c| puts '*' * 40; puts c.to_code; puts }.to_proc
 #     end
 #   end
 

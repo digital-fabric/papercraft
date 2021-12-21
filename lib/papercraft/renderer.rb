@@ -11,8 +11,7 @@ module Papercraft
     # @param context [Hash] rendering context
     # @param block [Proc] template block
     # @return [void]
-    def initialize(context, template)
-      @context = context
+    def initialize(&template)
       @buffer = +''
       instance_eval(&template)
     end
@@ -96,17 +95,14 @@ module Papercraft
     end
 
     # Emits the given object into the rendering buffer
-    # @param o [Proc, Papercraft::Component, Module, String] emitted object
+    # @param o [Proc, Papercraft::Component, String] emitted object
     # @return [void]
-    def emit(o)
+    def emit(o, *a, **b)
       case o
       when ::Proc
-        instance_eval(&o)
+        instance_eval(*a, **b, &o)
       when Papercraft::Component
         instance_eval(&o.template)
-      when Module
-        # If module is given, the component is expected to be a const inside the module
-        emit(o::Component)
       when nil
       else
         @buffer << o.to_s
@@ -114,13 +110,20 @@ module Papercraft
     end
     alias_method :e, :emit
 
-    def emit_yield
-      block = @context[:__block__]
-      raise LocalJumpError, "no block given (emit_yield)" unless block
-
-      instance_eval(&block)
+    def with_block(block, &run_block)
+      old_block = @inner_block
+      @inner_block = block
+      instance_eval(&run_block)
+    ensure
+      @inner_block = old_block
     end
-
+  
+    def emit_yield(*a, **b)
+      raise Papercraft::Error, "No block given" unless @inner_block
+      
+      instance_exec(*a, **b, &@inner_block)
+    end
+    
     S_LT              = '<'
     S_GT              = '>'
     S_LT_SLASH        = '</'
@@ -157,35 +160,6 @@ module Papercraft
     # @param data [String] text
     def text(data)
       @buffer << escape_text(data)
-    end
-
-    # Sets a local context for the given block
-    # @param ctx [Hash] context hash
-    # @param block [Proc] nested HTML block
-    # @return [void]
-    def with(**ctx, &block)
-      old_local, @local = @local, ctx
-      instance_eval(&block)
-    ensure
-      @local = old_local
-    end
-
-    # Caches the given block with the given arguments as cache key
-    # @param vary [*Object] cache key
-    # @param block [Proc] nested HTML block
-    # @return [void]
-    def cache(*vary, **opts, &block)
-      key = [block.source_location.hash, vary.hash, opts.hash]
-
-      if (cached = Papercraft::Component.cache[key])
-        @buffer << cached
-        return
-      end
-
-      cache_pos = @buffer.length
-      instance_eval(&block)
-      diff = @buffer[cache_pos..-1]
-      Papercraft::Component.cache[key] = diff
     end
   end
 

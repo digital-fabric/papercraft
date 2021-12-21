@@ -1,13 +1,13 @@
-# Rubyoshka - Composable HTML templating for Ruby
+# Papercraft - Composable HTML templating for Ruby
 
-[INSTALL](#installing-rubyoshka) |
+[INSTALL](#installing-papercraft) |
 [TUTORIAL](#getting-started) |
 [EXAMPLES](examples) |
 [REFERENCE](#api-reference)
 
-## What is Rubyoshka
+## What is Papercraft?
 
-Rubyoshka is an HTML templating engine for Ruby that offers the following
+Papercraft is an HTML templating engine for Ruby that offers the following
 features:
 
 - HTML templating using plain Ruby syntax
@@ -15,51 +15,43 @@ features:
 - Mix logic and tags freely
 - Use global and local contexts to pass values to reusable components
 - Automatic HTML escaping
-- Composable nested components
-- Template caching from fragments to whole templates
+- Composable components
+- Higher order components
+- Built-in support for rendering Markdown
 
-> **Note** Rubyoshka is a new library and as such may be missing features and
+> **Note** Papercraft is a new library and as such may be missing features and
 > contain bugs. Also, its API may change unexpectedly. Your issue reports and
 > code contributions are most welcome!
 
-With Rubyoshka you can structure your templates like a Russian doll, each
-component containing any number of nested components, in a somewhat similar
-fashion to React. The name *Rubyoshka* is a nod to
-[Matryoshka](https://en.wikipedia.org/wiki/Matryoshka_doll), the Russian
-nesting doll.
+With Papercraft you can structure your templates as nested HTML components, in a
+somewhat similar fashion to React.
 
-## Installing Rubyoshka
+## Installing Papercraft
 
 Using bundler:
 
 ```ruby
-gem 'rubyoshka'
+gem 'papercraft'
 ```
 
 Or manually:
 
 ```bash
-$ gem install rubyoshka
+$ gem install papercraft
 ```
 
 ## Getting started
 
-To use Rubyoshka in your code just require it:
+To use Papercraft in your code just require it:
 
 ```ruby
-require 'rubyoshka'
+require 'papercraft'
 ```
 
-Alternatively, you can import it using [Modulation](https://github.com/digital-fabric/modulation):
+To create a template use `Papercraft.new` or the global method `Kernel#H`:
 
 ```ruby
-Rubyoshka = import('rubyoshka')
-```
-
-To create a template use `Rubyoshka.new` or the global method `Kernel#H`:
-
-```ruby
-# can also use Rubyoshka.new
+# can also use Papercraft.new
 html = H {
   div { p 'hello' }
 }
@@ -67,7 +59,7 @@ html = H {
 
 ## Rendering a template
 
-To render a Rubyoshka template use the `#render` method:
+To render a Papercraft template use the `#render` method:
 
 ```ruby
 H { span 'best span' }.render  #=> "<span>best span</span>"
@@ -120,162 +112,112 @@ H { img src: '/my.gif' }.render #=> "<img src="/my.gif"/>
 H { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</p>"
 ```
 
+## Template parameters
+
+Template parameters are specified as block parameters, and are passed to the
+template on rendering:
+
+```ruby
+greeting = H { |name| h1 "Hello, #{name}!" }
+greeting.render('world') #=> "<h1>Hello, world!</h1>"
+```
+
+Templates can also accept named parameters:
+
+```ruby
+greeting = H { |name:| h1 "Hello, #{name}!" }
+greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
+```
+
 ## Logic in templates
 
-Since Rubyoshka templates are just a bunch of Ruby, you can easily write your
+Since Papercraft templates are just a bunch of Ruby, you can easily write your
 view logic right in the template:
 
 ```ruby
-def user_message(user)
-  H {
-    if user
-      span "Hello, #{user.name}!"
-    else
-      span "Hello, guest!"
-    end
-  }
-end
-```
-
-## Local context
-
-When writing logic and referring to application values in you templates, there
-are some ground rules to obey. Since the template code is evaluated using
-`#instance_eval` that means that you will not be able to directly use instance
-variables or do unqualified method calls (calls to `self`).
-
-In order to facilitate exposing values to your template logic, Rubyoshka
-provides an API for setting a local context. The local context is simply a set
-of values that are accessible for a given block of code, and to any nested
-blocks within it. The local context is primarily set using the `#with` method:
-
-```ruby
-H {
-  with(name: 'world') {
-    div {
-      span "Hello, #{name}"
-    }
-  }
-}
-```
-
-The local context can alternatively be set by passing hash values to `#H`:
-
-```ruby
-H(name: 'world') {
-  div { span "Hello, #{name}" }
-}
-```
-
-A local context can also be set for a component (see the next section) simply by
-passing arguments to the component call:
-
-```ruby
-Greeting = H { span "Hello, #{name}" }
-
-H {
-  div {
-    Greeting(name: 'world')
-  }
-}
-```
-
-### Tip: accessing `self` and instance variables from a template
-
-In order to be able to access the object in the context of which the template is
-defined or any of its methods, you can pass it in the local context:
-
-```ruby
-class User
-  ...
-  def greeting_template
-    H(user: self) {
-      ...
-      span "Hello, #{user.name}"
-      span "your email: #{user.email}"
-    }
+H { |user = nil|
+  if user
+    span "Hello, #{user.name}!"
+  else
+    span "Hello, guest!"
   end
-end
+}
 ```
 
-Instance variables can be passed to the template in a similar fashion:
+## Template blocks
+
+Templates can also accept and render blocks by using `emit_yield`:
 
 ```ruby
-H(name: @name) { span "Hello, #{name}" }
+page = H {
+  html {
+    body { emit_yield }
+  }
+}
+
+# we pass the inner HTML
+page.render { h1 'hi' }
 ```
 
-## Global context
+## Plain procs as components
 
-In addition to the local context, Rubyoshka also provides a way to set a global
-context, accessible from anywhere in the template, and also in sub-components
-used in the template.
-
-The global context is a simple hash that can be accessed from within the
-template with the `#context` method:
+With Papercraft you can write a template as a plain Ruby proc, and later render
+it by passing it as a block to `H`:
 
 ```ruby
-greeting = H { span "Hello, #{context[:name]}" }
+greeting = proc { |name| h1 "Hello, #{name}!" }
+H(&greeting).render('world')
 ```
 
-The global context can be set upon rendering the template:
+Components can also be expressed using lambda notation:
 
 ```ruby
-greeting.render(name: 'world')
+greeting = ->(name) { h1 "Hello, #{name}!" }
+H(&greeting).render('world')
 ```
 
-## Templates as components
+## Component composition
 
-Rubyoshka makes it easy to compose multiple separate templates into a whole HTML
-document. Each template can be defined as a self-contained component that can be
-reused inside other components. Components can be defined as either a Rubyoshka
-instance (using `#H`), a `proc` that returns a Rubyoshka instance, or using
-`Rubyoshka.component`:
+Papercraft makes it easy to compose multiple components into a whole HTML
+document. A Papercraft component can contain other components, as the following
+example shows.
 
 ```ruby
-# Simple component relying on global/local context
-Title = H { h1 title }
+Title = ->(title) { h1 title }
 
-# Proc component that returns a template
-# Notice how the lambda expression takes keyword arguments
 Item = ->(id:, text:, checked:) {
-  H {
-    li {
-      input name: id, type: 'checkbox', checked: checked
-      label text, for: id
+  li {
+    input name: id, type: 'checkbox', checked: checked
+    label text, for: id
+  }
+}
+
+ItemList = ->(items) {
+  ul {
+    items.each { |i|
+      Item(**i)
     }
   }
 }
 
-# Components using Rubyoshka.component (or H.component) are a bit more compact.
-# Any parameters are passed as arguments to the block.
-NavBar = Rubyoshka.component do |links|
-  div {
-    links.each { |l| a l[:title], href: l[:url] }
+page = H { |title, items|
+  html5 {
+    head { Title(title) }
+    body { ItemList(items) }
   }
-end
+}
 
-def render_items(items, links)
-  html = H {
-    Title()
-    NavBar(links)
-    ul {
-      items.each { |id, attributes|
-        Item id: id, text: attributes[:text], checked: attributes[:active]
-      }
-    }
-  }.render(title: 'Hello from components')
-end
+page.render('Hello from components', [
+  { id: 1, text: 'foo', checked: false },
+  { id: 2, text: 'bar', checked: true }
+])
 ```
-
-Note that a component is invoked as a method, which means that if no arguments
-are passed, you must add an empty pair of parens, as shown in the example
-above.
 
 In addition to using components defined as constants, you can also use
 non-constant components by invoking the `#emit` method:
 
 ```ruby
-greeting = H { span "Hello, world" }
+greeting = -> { span "Hello, world" }
 
 H {
   div {
@@ -284,172 +226,119 @@ H {
 }
 ```
 
-## Layout templates
+## Parameter and block application
 
-Rubyoshka templates can also be used to implement layout templates by using
-`#emit_yield`:
+Parameters and blocks can be applied to a template without it being rendered, by
+using `#apply`. This mechanism is what allows component composition and the
+creation of higher-order components.
+
+The `#apply` method returns a new component which applies the given parameters and
+or block to the original component:
 
 ```ruby
-layout = H {
+# parameter application
+hello = H { |name| h1 "Hello, #{name}!" }
+hello_world = hello.apply('world')
+hello_world.render #=> "<h1>Hello, world!</h1>"
+
+# block application
+div_wrap = H { div { emit_yield } }
+wrapped_h1 = div_wrap.apply { h1 'hi' }
+wrapped_h1.render #=> "<div><h1>hi</h1></div>"
+
+# wrap a component
+wrapped_hello_world = div_wrap.apply(&hello_world)
+wrapped_hello_world.render #=> "<div><h1>Hello, world!</h1></div>"
+```
+
+## Higher-order components
+
+Papercraft also lets you create higher-order components (HOCs), that is,
+components that take other components as parameters, or as blocks. Higher-order
+components are handy for creating layouts, wrapping components in arbitrary
+markup, enhancing components or injecting component parameters.
+
+Here is a HOC that takes a component as parameter:
+
+```ruby
+div_wrap = H { |inner| div { emit inner } }
+greeter = H { h1 'hi' }
+wrapped_greeter = div_wrap.apply(greeter)
+wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
+```
+
+The inner component can also be passed as a block, as shown above:
+
+```ruby
+div_wrap = H { div { emit_yield } }
+wrapped_greeter = div_wrap.apply { h1 'hi' }
+wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
+```
+
+## Layout template composition
+
+One of the principal uses of higher-order components is the creation of nested
+layouts. Suppose we have a website with a number of different layouts, and we'd
+like to avoid having to repeat the same code in the different layouts. We can do
+this by creating a `default` page template that takes a block, then use `#apply`
+to create the other templates:
+
+```ruby
+default_layout = H { |**params|
   html5 {
-    head { ... }
-    body {
-      header { ... }
-      body {
-        emit_yield
-      }
-      footer { ... }
-    }
-  }
-}
-```
-
-To use the layout, supply a block when calling `#render`:
-
-```ruby
-layout.render {
-  h1 'foo'
-  p 'bar'
-}
-
-# you can also pass a template as the block
-inner = H {
-  h1 'foo'
-  p 'bar'
-}
-
-layout.render(&inner)
-```
-
-## Fragment caching
-
-Any part of a Rubyoshka template can be cached - a fragment, a component, or a
-whole template. It is up to you, the user, to determine which parts of the
-template to cache. By default, a call to `#cache` creates a cache entry based on
-the source location of the cached block:
-
-```ruby
-Head = H {
-  cache {
     head {
-      title 'My app'
-      style "@import '/app.css';"
+      title: params[:title]
     }
-  }
-}
-```
-
-However, if your template references local or global variables, you'll want to
-take those into account when caching. This is done by passing any variables used
-in the template to `#cache` in order to create separate cache entries for each
-discrete value or combination of values:
-
-```ruby
-Greeting = H {
-  cache(name) {
-    div {
-      span "Hello, #{name}"
+    body {
+      emit_yield(**params)
     }
   }
 }
 
-names = %w{tommy dolly world}
-App = H {
-  names.each { |n| Greeting(name: n) }
-}
-```
-
-In the above example a separate cache entry will be created for each name. The
-use of caching in components is especially beneficial since components may be
-reused in multiple different templates in your app.
-
-### Changing the cache store
-
-Rubyoshka ships with a naïve in-memory cache store built-in. You can use
-another cache store by overriding the `Rubyoshka.cache` method (see API
-[reference](#rubyoshkacache)).
-
-## Wrapping arbitrary HTML with a component
-
-Components can also be used to wrap arbitrary HTML with addional markup. This is
-done by implementing the component as a `proc` that takes a block:
-
-```ruby
-Header = ->(&inner_html) {
-  header {
-    h1 'This is a title'
-    emit inner_html
+article_layout = default_layout.apply { |title:, body:|
+  article {
+    h1 title
+    emit_markdown body
   }
 }
 
-Greeting = H { span "Hello, #{name}" }
+article_layout.render(
+  title: 'This is a title',
+  body: 'Hello from *markdown body*'
+)
+```
 
-H { Header { Greeting(name: 'world') }.render #=> "<header><h1>This is a title</h1><span>Hello, world</span></header>"
+## Emitting raw HTML
+
+Raw HTML can be emitted using `#emit`:
+
+```ruby
+wrapped = H { |html| div { emit html } }
+wrapped.render("<h1>hi</h1>") #=> "<div><h1>hi</h1></div>"
+```
+
+## Emitting a string with HTML Encoding
+
+To emit a string with proper HTML encoding, without wrapping it in an HTML
+element, use `#text`:
+
+```ruby
+H { str 'hi&lo' }.render #=> "hi&amp;lo"
+```
+
+## Emitting Markdown
+
+To emit Markdown, use `#emit_markdown`:
+
+```ruby
+template = H { |md| div { emit_markdown md } }
+template.render("Here's some *Markdown*") #=> "<div>Here's some <em>Markdown</em></div>"
 ```
 
 ## Some interesting use cases
 
-Rubyoshka opens up all kinds of new possibilities when it comes to putting
+Papercraft opens up all kinds of new possibilities when it comes to putting
 together pieces of HTML. Feel free to explore the API!
-
-### Routing in the view
-
-The following example demonstrates a router component implemented as a pure
-function. The router simply returns the correct component for the given path:
-
-```ruby
-Router = ->(path) {
-  case path
-  when '/'
-    PostIndex()
-  when /^posts\/(.+)$/
-    Post(get_post($1))
-  end
-}
-
-Blog = H {
-  html {
-    head {
-      title: 'My blog'
-    }
-    body {
-      Topbar()
-      Sidebar()
-      div id: 'content' { Router(context[:path]) }
-    }
-  }
-}
-```
-
-### A general purpose router
-
-A more flexible, reusable approach could be achieved by implementing a
-higher-order routing component, in a similar fashion to
-[React Router](https://reacttraining.com/react-router/web/guides/quick-start):
-
-```ruby
-Route = ->(path, &block) {
-  match = path.is_a?(Regexp) ?
-    context[:path] =~ path : context[:path] == /^#{path}/
-  emit block if match
-}
-
-Blog = H {
-  html {
-    head {
-      title: 'My blog'
-    }
-    body {
-      Topbar()
-      Sidebar()
-      div id: 'content' {
-        Route '/'             { PostIndex() }
-        Route /^posts\/(.+)$/ { Post(get_post($1)) }
-      }
-    }
-  }
-}
-```
 
 ### A higher-order list component
 
@@ -483,16 +372,16 @@ end
 
 ## API Reference
 
-#### `Rubyoshka#initialize(**context, &block)` a.k.a. `Kernel#H`
+#### `Papercraft#initialize(**context, &block)` a.k.a. `Kernel#H`
 
 - `context`: local context hash
 - `block`: template block
 
-Initializes a new Rubyoshka instance. This method takes a block of template
+Initializes a new Papercraft instance. This method takes a block of template
 code, and an optional [local context](#local-context) in the form of a hash.
-The `Kernel#H` method serves as a shortcut for creating Rubyoshka instances.
+The `Kernel#H` method serves as a shortcut for creating Papercraft instances.
 
-#### `Rubyoshka#render(**context)`
+#### `Papercraft#render(**context)`
 
 - `context`: global context hash
 
@@ -503,7 +392,7 @@ hash.
 
 #### `#<tag/component>(*args, **props, &block)`
 
-- `args`: tag arguments. For an HTML tag Rubyoshka expects a single `String`
+- `args`: tag arguments. For an HTML tag Papercraft expects a single `String`
   argument containing the inner text of the tag.
 - `props`: hash of tag attributes
 - `block`: inner HTML block
@@ -519,7 +408,7 @@ If a text argument is given for a tag, it will be escaped.
   create a separate cache entry.
 - `block`: inner HTML block
 
-Caches the markup in the given block, storing it in the Rubyoshka cache store.
+Caches the markup in the given block, storing it in the Papercraft cache store.
 If a cache entry for the given block is found, it will be used instead of
 invoking the block. If one or more variables given, those will be used to create
 a separate cache entry.
@@ -530,7 +419,7 @@ Accesses the [global context](#global-context).
 
 #### `#emit(object)` a.k.a. `#e(object)`
 
-- `object`: `Proc`, `Rubyoshka` instance or `String`
+- `object`: `Proc`, `Papercraft` instance or `String`
 
 Adds the given object to the current template. If a `String` is given, it is
 rendered verbatim, i.e. without escaping.
@@ -555,7 +444,7 @@ Adds text without wrapping it in a tag. The text will be escaped.
 Sets a [local context](#local-context) for use inside the given block. The
 previous local context will be restored upon exiting the given block.
 
-#### `Rubyoshka.cache`
+#### `Papercraft.cache`
 
 Returns the cache store. A cache store should implement two methods - `#[]` and
 `#[]=`. Here's an example implementing a Redis-based cache store:
@@ -578,7 +467,7 @@ end
 
 TEMPLATE_CACHE = RedisTemplaceCache.new(redis_conn, "templates:cache")
 
-def Rubyoshka.cache
+def Papercraft.cache
   TEMPLATE_CACHE
 end
 ```

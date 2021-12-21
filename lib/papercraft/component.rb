@@ -7,12 +7,11 @@ module Papercraft
     attr_reader :template
 
     # Initializes a component with the given block
-    # @param ctx [Hash] local context
+    # @param mode [Symbol] local context
     # @param block [Proc] nested HTML block
-    # @param [void]
-    def initialize(mode: :html, **ctx, &block)
+    def initialize(mode: :html, &block)
       @mode = mode
-      @template = ctx.empty? ? block : proc { with(**ctx, &block) }
+      @template = block
     end
   
     H_EMPTY = {}.freeze
@@ -20,12 +19,48 @@ module Papercraft
     # Renders the associated block and returns the string result
     # @param context [Hash] context
     # @return [String]
-    def render(context = H_EMPTY, &block)
+    def render(*a, **b, &block)
+      template = @template
+      verify_template_parameters(template, a, b)
+      renderer_class.new do
+        if block
+          with_block(block) { instance_exec(*a, **b, &template) }
+        else
+          instance_exec(*a, **b, &template)
+        end
+      end.to_s
+    rescue ArgumentError => e
+      raise Papercraft::Error, e.message
+    end
+  
+    def apply(*a, **b, &block)
+      template = @template
       if block
-        context = context.dup if context.frozen?
-        context[:__block__] = block
+        Component.new(&proc do |*x, **y|
+          with_block(block) { instance_exec(*x, **y, &template) }
+        end)
+      else
+        Component.new(&proc do |*x, **y|
+          instance_exec(*a, **b, &template)
+        end)
       end
-      renderer_class.new(context, @template).to_s
+    end
+
+    def verify_template_parameters(template, args, named_args)
+      param_count = 0
+      template.parameters.each do |(type, name)|
+        case type
+        when :req
+          param_count += 1
+        when :keyreq
+          if !named_args.has_key?(name)
+            raise Papercraft::Error, "Missing template parameter #{name.inspect}"
+          end
+        end
+      end
+      if param_count > args.size
+        raise Papercraft::Error, "Missing template parameters"
+      end
     end
   
     def renderer_class
@@ -45,12 +80,6 @@ module Papercraft
   
     def to_proc
       @template
-    end
-  
-    @@cache = {}
-  
-    def self.cache
-      @@cache
     end
 
     def self.xml(**ctx, &block)
