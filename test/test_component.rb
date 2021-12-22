@@ -42,10 +42,10 @@ class ParametersTest < MiniTest::Test
 
   def test_mixed_parameters
     h = H { |foo, bar:, baz:| h1 foo; h2 bar; h3 baz }
-    # assert_raises(Papercraft::Error) { h.render }
-    # assert_raises(Papercraft::Error) { h.render(1) }
-    # assert_raises(Papercraft::Error) { h.render(1, foo: 2) }
-    assert_raises(Papercraft::Error) { h.render(bar: 3, baz: 4) }
+    assert_raises(Papercraft::Error) { h.render }
+    assert_raises(Papercraft::Error) { h.render(1) }
+    assert_raises(Papercraft::Error) { h.render(1, foo: 2) }
+    assert_raises(Papercraft::Error) { h.render(baz: 4) }
     assert_equal '<h1>1</h1><h2>2</h2><h3>3</h3>',
       h.render(1, bar: 2, baz: 3)
     
