@@ -6,11 +6,11 @@ require 'papercraft'
 
 class EntryPointTest < MiniTest::Test
   def test_that_entry_point_creates_new_instance
-    block = proc { }
+    block = proc { :foo }
     h = H(&block)
 
     assert_kind_of(H, h)
-    assert_equal(block, h.template)
+    assert_equal :foo, h.call
   end
 end
 

@@ -2,16 +2,15 @@
 
 require_relative './html'
 
+# Papercraft is a component-based HTML templating library
 module Papercraft
-  class Component
-    attr_reader :template
-
+  class Component < Proc
     # Initializes a component with the given block
     # @param mode [Symbol] local context
     # @param block [Proc] nested HTML block
     def initialize(mode: :html, &block)
       @mode = mode
-      @template = block
+      super(&block)
     end
   
     H_EMPTY = {}.freeze
@@ -20,7 +19,7 @@ module Papercraft
     # @param context [Hash] context
     # @return [String]
     def render(*a, **b, &block)
-      template = @template
+      template = self
       Renderer.verify_proc_parameters(template, a, b)
       renderer_class.new do
         if block
@@ -34,7 +33,7 @@ module Papercraft
     end
   
     def apply(*a, **b, &block)
-      template = @template
+      template = self
       if block
         Component.new(&proc do |*x, **y|
           with_block(block) { instance_exec(*x, **y, &template) }
@@ -61,10 +60,6 @@ module Papercraft
     #   Papercraft::Compiler.new.compile(self)
     # end
   
-    def to_proc
-      @template
-    end
-
     def self.xml(**ctx, &block)
       new(mode: :xml, **ctx, &block)
     end

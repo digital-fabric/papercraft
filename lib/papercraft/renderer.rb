@@ -62,7 +62,7 @@ module Papercraft
           @buffer << S_GT
           instance_eval(&block)
           @buffer << S_TAG_%<TAG>s_CLOSE
-        elsif Papercraft::Component === text
+        elsif Proc === text
           @buffer << S_GT
           emit(text)
           @buffer << S_TAG_%<TAG>s_CLOSE
@@ -121,10 +121,10 @@ module Papercraft
       when ::Proc
         Renderer.verify_proc_parameters(o, a, b)
         instance_exec(*a, **b, &o)
-      when Papercraft::Component
-        o = o.template
-        Renderer.verify_proc_parameters(o, a, b)
-        instance_exec(*a, **b, &o)
+      # when Papercraft::Component
+      #   o = o.template
+      #   Renderer.verify_proc_parameters(o, a, b)
+      #   instance_exec(*a, **b, &o)
       when nil
       else
         @buffer << o.to_s
