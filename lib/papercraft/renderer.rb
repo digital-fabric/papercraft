@@ -119,9 +119,12 @@ module Papercraft
     def emit(o, *a, **b)
       case o
       when ::Proc
-        instance_eval(*a, **b, &o)
+        Renderer.verify_proc_parameters(o, a, b)
+        instance_exec(*a, **b, &o)
       when Papercraft::Component
-        instance_eval(&o.template)
+        o = o.template
+        Renderer.verify_proc_parameters(o, a, b)
+        instance_exec(*a, **b, &o)
       when nil
       else
         @buffer << o.to_s
