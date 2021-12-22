@@ -5,6 +5,25 @@ require_relative './html'
 module Papercraft
   # A Renderer renders a Papercraft component into a string
   class Renderer
+    class << self
+      def verify_proc_parameters(template, args, named_args)
+        param_count = 0
+        template.parameters.each do |(type, name)|
+          case type
+          when :req
+            param_count += 1
+          when :keyreq
+            if !named_args.has_key?(name)
+              raise Papercraft::Error, "Missing template parameter #{name.inspect}"
+            end
+          end
+        end
+        if param_count > args.size
+          raise Papercraft::Error, "Missing template parameters"
+        end
+      end  
+    end
+
     attr_reader :context
 
     # Initializes attributes and renders the given block
