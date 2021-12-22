@@ -20,12 +20,7 @@ module Papercraft
       EscapeUtils.escape_uri(text.to_s)
     end
   end
-
-  def self.component(&block)
-    proc { |*args| Component.new { instance_exec(*args, &block) } }
-  end
 end
-::H = Papercraft::Component
 
 # Kernel extensions
 module ::Kernel
@@ -33,8 +28,12 @@ module ::Kernel
   # @param ctx [Hash] local context
   # @param template [Proc] template block
   # @return [Papercraft] Papercraft template
-  def H(**ctx, &template)
-    Papercraft::Component.new(**ctx, &template)
+  def H(&template)
+    Papercraft::Component.new(&template)
+  end
+
+  def X(&template)
+    Papercraft::Component.new(mode: :xml, &template)
   end
 end
 

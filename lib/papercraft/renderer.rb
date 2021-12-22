@@ -74,8 +74,6 @@ module Papercraft
       end
     EOF
 
-    R_CONST_SYM = /^[A-Z]/
-
     # Catches undefined tag method call and handles them by defining the method
     # @param sym [Symbol] HTML tag or component identifier
     # @param args [Array] method call arguments
@@ -85,32 +83,10 @@ module Papercraft
       value = @local && @local[sym]
       return value if value
 
-      if sym =~ R_CONST_SYM
-        # Component reference (capitalized method name)
-        o = instance_eval(sym.to_s) rescue Papercraft::Component.const_get(sym) \
-            rescue Object.const_get(sym)
-        case o
-        when ::Proc
-          self.class.define_method(sym) { |*a, **c, &b| emit(o.(*a, **c, &b)) }
-          emit(o.(*args, **opts, &block))
-        when Papercraft::Component
-          self.class.define_method(sym) do |**ctx|
-            ctx.empty? ? emit(o) : with(**ctx) { emit(o) }
-          end
-          Hash === opts.empty? ? emit(o) : with(**opts) { emit(o) }
-        when ::String
-          @buffer << o
-        else
-          e = StandardError.new "Cannot render #{o.inspect}"
-          e.set_backtrace(caller)
-          raise e
-        end
-      else
-        tag = sym.to_s
-        code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
-        self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
-        send(sym, *args, **opts, &block)
-      end
+      tag = sym.to_s
+      code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
+      self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
+      send(sym, *args, **opts, &block)
     end
 
     # Emits the given object into the rendering buffer

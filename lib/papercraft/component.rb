@@ -59,9 +59,5 @@ module Papercraft
     # def compile
     #   Papercraft::Compiler.new.compile(self)
     # end
-  
-    def self.xml(**ctx, &block)
-      new(mode: :xml, **ctx, &block)
-    end
   end
 end

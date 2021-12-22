@@ -9,7 +9,7 @@ class EntryPointTest < MiniTest::Test
     block = proc { :foo }
     h = H(&block)
 
-    assert_kind_of(H, h)
+    assert_kind_of(Papercraft::Component, h)
     assert_equal :foo, h.call
   end
 end
@@ -252,7 +252,7 @@ end
 
 class XMLTest < MiniTest::Test
   def test_generic_xml
-    xml = H.xml {
+    xml = X {
       rss(version: '2.0') {
         channel {
           item 'foo'
@@ -268,7 +268,7 @@ class XMLTest < MiniTest::Test
   end
 
   def test_xml_encoding
-    xml = H.xml {
+    xml = X {
       link 'http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp'
     }
 
