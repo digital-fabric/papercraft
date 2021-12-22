@@ -4,22 +4,13 @@ require 'escape_utils'
 
 require_relative 'papercraft/component'
 require_relative 'papercraft/renderer'
+require_relative 'papercraft/encoding'
 # require_relative 'papercraft/compiler'
 
-# A Papercraft is a template representing a piece of HTML
+# Papercraft is a component-based HTML templating library
 module Papercraft
-  class Error < RuntimeError
-  end
-
-  module Encoding
-    def __html_encode__(text)
-      EscapeUtils.escape_html(text.to_s)
-    end
-
-    def __uri_encode__(text)
-      EscapeUtils.escape_uri(text.to_s)
-    end
-  end
+  # Exception class used to signal templating-related errors
+  class Error < RuntimeError; end
 end
 
 # Kernel extensions
