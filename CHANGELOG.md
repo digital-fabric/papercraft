@@ -1,3 +1,7 @@
+## 0.8.1 2021-12-22
+
+- Fix gemspec
+
 ## 0.8 2021-12-22
 
 - Cleanup and refactor code
