@@ -1,3 +1,12 @@
+## 0.8 2021-12-22
+
+- Cleanup and refactor code
+- Add X global method for XML templates
+- Make `Component` a descendant of `Proc`
+- Introduce new component API
+- Rename Rubyoshka to Papercraft
+- Convert underscores to dashes for tag  and attribute names (@jaredcwhite)
+
 ## 0.7 2021-09-29
 
 - Add `#emit_yield` for rendering layouts
