@@ -394,7 +394,7 @@ The deafult options can be configured by accessing
 Papercraft::HTML.kramdown_options[:auto_ids] = false
 ```
 
-## Documentation
+## API Reference
 
-The complete documentation for this library can be found
+The API reference for this library can be found
 [here](https://www.rubydoc.info/gems/papercraft).
