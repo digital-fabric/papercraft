@@ -1,3 +1,9 @@
+## 0.9 2021-12-23
+
+- Add support for emitting Markdown
+- Add support for passing proc as argument to `#H` and `#X`
+- Deprecate `Encoding` module
+
 ## 0.8.1 2021-12-22
 
 - Fix gemspec
