@@ -15,15 +15,32 @@ end
 
 # Kernel extensions
 module ::Kernel
-  # Convenience method for creating a new Papercraft
-  # @param ctx [Hash] local context
+  
+  # Creates a new papercraft component. `#H` can take either a proc argument or
+  # a block. In both cases, the proc is converted to a `Papercraft::Component`.
+  #
+  # H(proc { h1 'hi' }).render #=> "<h1>hi</h1>"
+  # H { h1 'hi' }.render #=> "<h1>hi</h1>"
+  #
   # @param template [Proc] template block
-  # @return [Papercraft] Papercraft template
-  def H(&template)
-    Papercraft::Component.new(&template)
+  # @return [Papercraft::Component] Papercraft component
+  def H(o = nil, &template)
+    return o if o.is_a?(Papercraft::Component)
+    template ||= o
+    Papercraft::Component.new(mode: :html, &template)
   end
 
-  def X(&template)
+  # Creates a new papercraft component in XML mode. `#X` can take either a proc argument or
+  # a block. In both cases, the proc is converted to a `Papercraft::Component`.
+  #
+  # X(proc { item 'foo' }).render #=> "<item>foo</item>"
+  # X { item 'foo' }.render #=> "<item>foo</item>"
+  #
+  # @param template [Proc] template block
+  # @return [Papercraft::Component] Papercraft component
+  def X(o = nil, &template)
+    return o if o.is_a?(Papercraft::Component)
+    template ||= o
     Papercraft::Component.new(mode: :xml, &template)
   end
 end
