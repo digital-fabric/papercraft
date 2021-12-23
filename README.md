@@ -1,8 +1,26 @@
-# Papercraft - Composable HTML templating for Ruby
+<h1 align="center">
+  Papercraft
+</h1>
 
-[INSTALL](#installing-papercraft) |
-[TUTORIAL](#getting-started) |
-[DOCS](https://www.rubydoc.info/gems/papercraft)
+<h4 align="center">Composable HTML templating for Ruby</h4>
+
+<p align="center">
+  <a href="http://rubygems.org/gems/papercraft">
+    <img src="https://badge.fury.io/rb/papercraft.svg" alt="Ruby gem">
+  </a>
+  <a href="https://github.com/digital-fabric/papercraft/actions?query=workflow%3ATests">
+    <img src="https://github.com/digital-fabric/papercraft/workflows/Tests/badge.svg" alt="Tests">
+  </a>
+  <a href="https://github.com/digital-fabric/papercraft/blob/master/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.rubydoc.info/gems/papercraft">API reference</a>
+</p>
+
+# Papercraft - Composable HTML templating for Ruby
 
 ## What is Papercraft?
 
