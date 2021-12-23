@@ -27,8 +27,3 @@ module ::Kernel
     Papercraft::Component.new(mode: :xml, &template)
   end
 end
-
-# Object extensions
-class Object
-  include Papercraft::Encoding
-end

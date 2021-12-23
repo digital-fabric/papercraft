@@ -45,10 +45,6 @@ module Papercraft
       raise NotImplementedError
     end
 
-    def escape_uri(uri)
-      EscapeUtils.escape_uri(v)
-    end
-
     S_TAG_METHOD_LINE = __LINE__ + 1
     S_TAG_METHOD = <<~EOF
       S_TAG_%<TAG>s_PRE = '<%<tag>s'.tr('_', '-')
