@@ -14,8 +14,8 @@ module Papercraft
   # Components are usually created using the global methods `H` or `X`, for HTML
   # or XML templates, respectively:
   #
-  #   greeter = H { |name| h1 "Hello, #{name}!" } greeter.render('world') #=>
-  #   "<h1>Hello, world!</h1>"
+  #   greeter = H { |name| h1 "Hello, #{name}!" }
+  #   greeter.render('world') #=> "<h1>Hello, world!</h1>"
   #
   # Components can also be created using the normal constructor:
   #
@@ -25,7 +25,10 @@ module Papercraft
   # In the component block, HTML elements are created by simply calling
   # unqualified methods:
   #
-  #   page_layout = H { html5 { head { title 'foo'
+  #   page_layout = H {
+  #     html5 {
+  #       head {
+  #         title 'foo'
   #       }
   #       body {
   #         h1 "Hello, world!"
@@ -75,7 +78,11 @@ module Papercraft
   #     anchor.apply(uri: '/about', text: 'About')
   #   ])
   #   links_with_anchors.render
+  #
   class Component < Proc
+    
+    # Determines the rendering mode: `:html` or `:xml`.
+    attr_accessor :mode
 
     # Initializes a component with the given block. The rendering mode (HTML or
     # XML) can be passed in the `mode:` parameter. If `mode:` is not specified,
@@ -113,15 +120,15 @@ module Papercraft
     # current one. Application is one of the principal methods of composing
     # components, particularly when passing inner components as blocks:
     #
-    # article_wrapper = H {
-    #   article {
-    #     emit_yield
+    #   article_wrapper = H {
+    #     article {
+    #       emit_yield
+    #     }
     #   }
-    # }
-    # wrapped_article = article_wrapper.apply {
-    #   h1 'Article title'
-    # }
-    # wrapped_article.render #=> "<article><h1>Article title</h1></article>"
+    #   wrapped_article = article_wrapper.apply {
+    #     h1 'Article title'
+    #   }
+    #   wrapped_article.render #=> "<article><h1>Article title</h1></article>"
     #
     # @param *a [<any>] normal parameters
     # @param **b [Hash] named parameters
