@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require_relative './html'
+require 'kramdown'
+require 'rouge'
+require 'kramdown-parser-gfm'
 
-module Papercraft
-  
+module Papercraft  
   # HTML Markup extensions
   module HTML
     # Emits the p tag (overrides Object#p)
@@ -41,6 +42,29 @@ module Papercraft
         attributes = custom_attributes.merge(attributes)
       end
       link(**attributes)
+    end
+
+    def emit_markdown(markdown, **opts)
+      emit Kramdown::Document.new(markdown, **kramdown_options(opts)).to_html
+    end
+
+    def kramdown_options(opts)
+      HTML.kramdown_options.merge(**opts)
+    end
+
+    class << self
+      def kramdown_options
+        @kramdown_options ||= {
+          entity_output: :numeric,
+          syntax_highlighter: :rouge,
+          input: 'GFM',
+          hard_wrap: false  
+        }
+      end
+
+      def kramdown_options=(opts)
+        @kramdown_options = opts
+      end
     end
   end
 end

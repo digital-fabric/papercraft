@@ -31,7 +31,7 @@ features:
 - Composable components
 - Explicit parameter passing to nested components
 - Higher order components
-- Built-in support for rendering Markdown
+- Built-in support for rendering [Markdown](#emitting-markdown)
 
 With Papercraft you can structure your templates as nested HTML components, in a
 somewhat similar fashion to React.
@@ -340,9 +340,43 @@ H { str 'hi&lo' }.render #=> "hi&amp;lo"
 
 ## Emitting Markdown
 
-To emit Markdown, use `#emit_markdown`:
+Markdown is rendered using the
+[Kramdown](https://kramdown.gettalong.org/index.html) gem. To emit Markdown, use
+`#emit_markdown`:
 
 ```ruby
 template = H { |md| div { emit_markdown md } }
-template.render("Here's some *Markdown*") #=> "<div>Here's some <em>Markdown</em></div>"
+template.render("Here's some *Markdown*") #=> "<div><p>Here's some <em>Markdown</em><p>\n</div>"
 ```
+
+[Kramdown
+options](https://kramdown.gettalong.org/options.html#available-options) can be
+specified by adding them to the `#emit_markdown` call:
+
+```ruby
+template = H { |md| div { emit_markdown md, auto_ids: false } }
+template.render("# title") #=> "<div><h1>title</h1></div>"
+```
+
+The default Kramdown options are:
+
+```ruby
+{
+  entity_output: :numeric,
+  syntax_highlighter: :rouge,
+  input: 'GFM',
+  hard_wrap: false  
+}
+```
+
+The deafult options can be configured by accessing
+`Papercraft::HTML.kramdown_options`:
+
+```ruby
+Papercraft::HTML.kramdown_options[:auto_ids] = false
+```
+
+## Documentation
+
+The complete documentation for this library can be found
+[here](https://www.rubydoc.info/gems/papercraft).

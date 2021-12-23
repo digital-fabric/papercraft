@@ -21,7 +21,10 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.required_ruby_version = '>= 2.7'
 
-  s.add_runtime_dependency      'escape_utils',   '1.2.1'
+  s.add_runtime_dependency      'escape_utils',         '1.2.1'
+  s.add_runtime_dependency      'kramdown',             '~>2.3.0'
+  s.add_runtime_dependency      'rouge',                '~>3.26.0'
+  s.add_runtime_dependency      'kramdown-parser-gfm',  '~>1.1.0'
 
   s.add_development_dependency  'minitest',       '5.11.3'
   s.add_development_dependency  'benchmark-ips',  '2.7.2'
