@@ -3,9 +3,11 @@
 require_relative './html'
 
 module Papercraft
-  # Markup extensions
+  
+  # HTML Markup extensions
   module HTML
     # Emits the p tag (overrides Object#p)
+    #
     # @param text [String] text content of tag
     # @param props [Hash] tag attributes
     # @para block [Proc] nested HTML block
@@ -16,7 +18,8 @@ module Papercraft
 
     S_HTML5_DOCTYPE = '<!DOCTYPE html>'
 
-    # Emits an HTML5 doctype tag and an html tag with the given block
+    # Emits an HTML5 doctype tag and an html tag with the given block.
+    #
     # @param block [Proc] nested HTML block
     # @return [void]
     def html5(&block)
@@ -24,6 +27,11 @@ module Papercraft
       self.html(&block)
     end
 
+    # Emits a link element with a stylesheet.
+    #
+    # @param href [String] stylesheet URL
+    # @param custom_attributes [Hash] optional custom attributes for the link element
+    # @return [void]
     def link_stylesheet(href, custom_attributes = nil)
       attributes = {
         rel: 'stylesheet',
