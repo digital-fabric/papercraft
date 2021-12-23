@@ -4,13 +4,45 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class EntryPointTest < MiniTest::Test
-  def test_that_entry_point_creates_new_instance
+class HnXTest < MiniTest::Test
+  def test_H_with_block
     block = proc { :foo }
     h = H(&block)
 
     assert_kind_of(Papercraft::Component, h)
     assert_equal :foo, h.call
+  end
+
+  def test_H_with_argument
+    o = proc { :foo }
+    h = H(o)
+
+    assert_kind_of(Papercraft::Component, h)
+    assert_equal :foo, h.call
+
+    h2 = H(h)
+    assert_equal h2, h
+  end
+
+  def test_X_with_block
+    block = proc { :foo }
+    x = X(&block)
+
+    assert_kind_of(Papercraft::Component, x)
+    assert_equal :xml, x.mode
+    assert_equal :foo, x.call
+  end
+
+  def test_X_with_argument
+    o = proc { :foo }
+    x = X(o)
+
+    assert_kind_of(Papercraft::Component, x)
+    assert_equal :xml, x.mode
+    assert_equal :foo, x.call
+
+    x2 = X(x)
+    assert_equal x2, x
   end
 end
 
