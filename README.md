@@ -2,26 +2,36 @@
 
 [INSTALL](#installing-papercraft) |
 [TUTORIAL](#getting-started) |
-[EXAMPLES](examples) |
-[REFERENCE](#api-reference)
+[DOCS](https://www.rubydoc.info/gems/papercraft)
 
 ## What is Papercraft?
+
+```ruby
+require 'papercraft'
+
+page = H { |*args|
+  html {
+    head { }
+    body { emit_yield *args }
+  }
+}
+
+hello = H.apply { |name| h1 "Hello, #{name}!" }
+hello.render('world')
+#=> "<html><head/><body><h1>Hello, world!</h1></body></html>"
+```
 
 Papercraft is an HTML templating engine for Ruby that offers the following
 features:
 
-- HTML templating using plain Ruby syntax
+- HTML and XML templating using plain Ruby syntax
 - Minimal boilerplate
 - Mix logic and tags freely
-- Use global and local contexts to pass values to reusable components
-- Automatic HTML escaping
+- Automatic HTML and XML escaping
 - Composable components
+- Explicit parameter passing to nested components
 - Higher order components
 - Built-in support for rendering Markdown
-
-> **Note** Papercraft is a new library and as such may be missing features and
-> contain bugs. Also, its API may change unexpectedly. Your issue reports and
-> code contributions are most welcome!
 
 With Papercraft you can structure your templates as nested HTML components, in a
 somewhat similar fashion to React.
@@ -48,7 +58,8 @@ To use Papercraft in your code just require it:
 require 'papercraft'
 ```
 
-To create a template use `Papercraft.new` or the global method `Kernel#H`:
+To create a template use `Papercraft::Component.new` or the global method
+`Kernel#H`:
 
 ```ruby
 # can also use Papercraft.new
@@ -114,8 +125,9 @@ H { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</
 
 ## Template parameters
 
-Template parameters are specified as block parameters, and are passed to the
-template on rendering:
+In Papercraft, parameters are always passed explicitly. This means that template
+parameters are specified as block parameters, and are passed to the template on
+rendering:
 
 ```ruby
 greeting = H { |name| h1 "Hello, #{name}!" }
@@ -334,104 +346,3 @@ To emit Markdown, use `#emit_markdown`:
 template = H { |md| div { emit_markdown md } }
 template.render("Here's some *Markdown*") #=> "<div>Here's some <em>Markdown</em></div>"
 ```
-
-## Some interesting use cases
-
-Papercraft opens up all kinds of new possibilities when it comes to putting
-together pieces of HTML. Feel free to explore the API!
-
-### A higher-order list component
-
-Here's another demonstration of a higher-order component, a list component that
-takes an item component as an argument. The `List` component can be reused for
-rendering any kind of unordered list, and with any kind of item component:
-
-```ruby
-List = ->(items, item_component) {
-  H {
-    ul {
-      items.each { |item|
-        with(item: item) {
-          li { emit item_component }
-        }
-      }
-    }
-  }
-}
-
-TodoItem = H {
-  span item.text, class: item.completed ? 'completed' : 'pending'
-}
-
-def todo_list(items)
-  H {
-    div { List(items, TodoItem) }
-  }
-end
-```
-
-## API Reference
-
-#### `Papercraft#initialize(**context, &block)` a.k.a. `Kernel#H`
-
-- `context`: local context hash
-- `block`: template block
-
-Initializes a new Papercraft instance. This method takes a block of template
-code, and an optional [local context](#local-context) in the form of a hash.
-The `Kernel#H` method serves as a shortcut for creating Papercraft instances.
-
-#### `Papercraft#render(**context)`
-
-- `context`: global context hash
-
-Renders the template with an optional [global context](#global-context)
-hash.
-
-#### Methods accessible inside template blocks
-
-#### `#<tag/component>(*args, **props, &block)`
-
-- `args`: tag arguments. For an HTML tag Papercraft expects a single `String`
-  argument containing the inner text of the tag.
-- `props`: hash of tag attributes
-- `block`: inner HTML block
-
-Adds a tag or component to the current template. If the method name starts with
-an upper-case letter, it is considered a [component](#templates-as-components).
-
-If a text argument is given for a tag, it will be escaped.
-
-#### `#cache(*vary, &block)`
-
-- `vary`: variables used in cached block. The given values will be used to
-  create a separate cache entry.
-- `block`: inner HTML block
-
-Caches the markup in the given block, storing it in the Papercraft cache store.
-If a cache entry for the given block is found, it will be used instead of
-invoking the block. If one or more variables given, those will be used to create
-a separate cache entry.
-
-#### `#context`
-
-Accesses the [global context](#global-context).
-
-#### `#emit(object)` a.k.a. `#e(object)`
-
-- `object`: `Proc`, `Papercraft` instance or `String`
-
-Adds the given object to the current template. If a `String` is given, it is
-rendered verbatim, i.e. without escaping.
-
-#### `html5(&block)`
-
-- `block`: inner HTML block
-
-Adds an HTML5 `doctype` tag, followed by an `html` tag with the given block.
-
-#### `#text(data)`
-
-- `data` - text to add
-
-Adds text without wrapping it in a tag. The text will be escaped.
