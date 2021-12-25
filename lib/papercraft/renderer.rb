@@ -79,6 +79,11 @@ module Papercraft
       S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'.tr('_', '-')
 
       def %<tag>s(text = nil, **props, &block)
+        if text.is_a?(Hash) && props.empty?
+          props = text
+          text = nil
+        end
+
         @buffer << S_TAG_%<TAG>s_PRE
         emit_props(props) unless props.empty?
 
