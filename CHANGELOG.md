@@ -1,3 +1,5 @@
+- Add support for extensions
+
 ## 0.9 2021-12-23
 
 - Add support for emitting Markdown

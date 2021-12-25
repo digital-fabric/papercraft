@@ -50,9 +50,7 @@ features:
 - Explicit parameter passing to nested components
 - Higher order components
 - Built-in support for rendering [Markdown](#emitting-markdown)
-
-With Papercraft you can structure your templates as nested HTML components, in a
-somewhat similar fashion to React.
+- Support for namespaced extensions
 
 ## Installing Papercraft
 
@@ -70,43 +68,25 @@ $ gem install papercraft
 
 ## Getting started
 
-To use Papercraft in your code just require it:
+To create a template use the global method `Kernel#H`:
 
 ```ruby
 require 'papercraft'
-```
 
-To create a template use `Papercraft::Component.new` or the global method
-`Kernel#H`:
-
-```ruby
-# can also use Papercraft.new
 html = H {
-  div { p 'hello' }
+  div(id: 'greeter') { p 'Hello!' }
 }
 ```
 
-## Rendering a template
-
-To render a Papercraft template use the `#render` method:
+Rendering a template is done using `#render`:
 
 ```ruby
-H { span 'best span' }.render  #=> "<span>best span</span>"
-```
-
-The render method accepts an arbitrary context variable:
-
-```ruby
-html = H {
-  h1 context[:title]
-}
-
-html.render(title: 'My title') #=> "<h1>My title</h1>"
+html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
 
 ## All about tags
 
-Tags are added using unqualified method calls, and are nested using blocks:
+Tags are added using unqualified method calls, and can be nested using blocks:
 
 ```ruby
 H {
@@ -392,6 +372,72 @@ The deafult options can be configured by accessing
 
 ```ruby
 Papercraft::HTML.kramdown_options[:auto_ids] = false
+```
+
+## Papercraft extensions
+
+Papercraft extensions are modules that contain one or more methods that can be
+used to render complex HTML components. Extension modules can be used by
+installing them as a namespaced extension using `Papercraft.extension`.
+Extensions are particularly useful when you work with CSS frameworks such as
+[Bootstrap](https://getbootstrap.com/), [Tailwind](https://tailwindui.com/) or
+[Primer](https://primer.style/).
+
+For example, to create a Bootstrap card component, the following HTML markup is
+needed (example taken from the [Bootstrap
+docs](https://getbootstrap.com/docs/5.1/components/card/#titles-text-and-links)):
+
+```html
+<div class="card" style="width: 18rem;">
+  <div class="card-body">
+    <h5 class="card-title">Card title</h5>
+    <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+    <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+    <a href="#" class="card-link">Card link</a>
+    <a href="#" class="card-link">Another link</a>
+  </div>
+</div>
+```
+
+With Papercraft, we could create a `Bootstrap` extension with a `#card` method
+and other associated methods:
+
+```ruby
+module BootstrapComponents
+  ...
+
+  def card(**props)
+    div(class: 'card', **props) {
+      div(class: 'card-body') {
+        emit_yield
+      }
+    }
+  end
+
+  def card_title(title)
+    h5 title, class: 'card-title'
+  end
+
+  ...
+end
+
+Papercraft.extension(bootstrap: BootstrapComponents)
+```
+
+The call to `Papercraft.extension` lets us access the different methods of
+`BootstrapComponents` by calling `#bootstrap` inside a template. With this,
+we'll be able to express the above markup as follows:
+
+```ruby
+H {
+  bootstrap.card(style: 'width: 18rem') {
+    bootstrap.card_title 'Card title'
+    bootstrap.card_subtitle 'Card subtitle'
+    bootstrap.card_text 'Some quick example text to build on the card title and make up the bulk of the card''s content.'
+    bootstrap.card_link '#', 'Card link'
+    bootstrap.card_link '#', 'Another link'
+  }
+}
 ```
 
 ## API Reference

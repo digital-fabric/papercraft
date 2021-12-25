@@ -11,6 +11,14 @@ require_relative 'papercraft/encoding'
 module Papercraft
   # Exception class used to signal templating-related errors
   class Error < RuntimeError; end
+
+  # Installs one or more extensions. Extensions enhance templating capabilities
+  # by adding namespaced methods to emplates. An extension is implemented as a
+  # Ruby module containing one or more methods. Each method in the extension
+  # module can be used to render a specific HTML element or a set of elements.
+  def self.extension(map)
+    Renderer.extension(map)
+  end
 end
 
 # Kernel extensions

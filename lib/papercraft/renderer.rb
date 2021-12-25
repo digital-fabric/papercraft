@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './html'
+require_relative './extension_proxy'
 
 module Papercraft
   
@@ -31,7 +32,19 @@ module Papercraft
         if param_count > args.size
           raise Papercraft::Error, "Missing template parameters"
         end
-      end  
+      end
+
+      def extension(map)
+        map.each do |sym, mod|
+          define_extension_method(sym, mod)
+        end
+      end
+
+      def define_extension_method(sym, mod)
+        define_method(sym) do
+          (@extension_proxies ||= {})[mod] ||= ExtensionProxy.new(self, mod)
+        end
+      end
     end
 
     # Initializes the renderer and evaulates the given template in the
