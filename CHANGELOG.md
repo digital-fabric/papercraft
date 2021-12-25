@@ -1,3 +1,7 @@
+## 0.10.1 2021-12-25
+
+- Fix tag rendering with empty text in Ruby 3.0
+
 ## 0.10 2021-12-25
 
 - Add support for extensions

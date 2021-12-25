@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    papercraft (0.10)
+    papercraft (0.10.1)
       escape_utils (= 1.2.1)
       kramdown (~> 2.3.0)
       kramdown-parser-gfm (~> 1.1.0)
@@ -33,4 +33,4 @@ DEPENDENCIES
   tilt (= 2.0.9)
 
 BUNDLED WITH
-   2.1.4
+   2.2.32
