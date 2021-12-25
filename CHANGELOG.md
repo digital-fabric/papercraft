@@ -1,3 +1,5 @@
+## 0.10 2021-12-25
+
 - Add support for extensions
 
 ## 0.9 2021-12-23

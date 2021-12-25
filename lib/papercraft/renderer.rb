@@ -34,12 +34,22 @@ module Papercraft
         end
       end
 
+      # Installs the given extensions, mapping a method name to the extension
+      # module.
+      # @param map [Hash] hash mapping methods to extension modules
+      # @return [void]
       def extension(map)
         map.each do |sym, mod|
           define_extension_method(sym, mod)
         end
       end
 
+      private
+
+      # Defines a method returning an extension proxy for the given module
+      # @param sym [Symbol] method name
+      # @param mod [Module] extension module
+      # @return [void]
       def define_extension_method(sym, mod)
         define_method(sym) do
           (@extension_proxies ||= {})[mod] ||= ExtensionProxy.new(self, mod)
@@ -210,6 +220,7 @@ module Papercraft
 
     private
 
+    # Escapes the given text using HTML entities.
     def escape_text(text)
       EscapeUtils.escape_html(text.to_s)
     end
@@ -219,6 +230,7 @@ module Papercraft
   class XMLRenderer < Renderer
     private
 
+    # Escapes the given text using XML entities.
     def escape_text(text)
       EscapeUtils.escape_xml(text.to_s)
     end
