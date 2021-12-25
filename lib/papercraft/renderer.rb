@@ -83,9 +83,6 @@ module Papercraft
     # @param &block [Proc] block passed to method
     # @return [void]
     def method_missing(sym, *args, **opts, &block)
-      value = @local && @local[sym]
-      return value if value
-
       tag = sym.to_s
       code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
       self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
