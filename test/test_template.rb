@@ -310,3 +310,102 @@ class XMLTest < MiniTest::Test
     )
   end
 end
+
+class DeferTest < MiniTest::Test
+  def test_defer
+    buffer = []
+
+    html = H {
+      div {
+        buffer << :before
+        defer {
+          buffer << :defer_block
+          h1 @foo
+        }
+        @foo = 'bar'
+      }
+    }
+
+    assert_equal "<div><h1>bar</h1></div>", html.render
+  end
+
+  def test_deferred_title
+    layout = H {
+      html {
+        head {
+          defer {
+            title @title
+          }
+        }
+        body { emit_yield }
+      }
+    }
+
+    html = layout.render {
+      @title = 'My super page'
+      h1 'foo'
+    }
+
+    assert_equal "<html><head><title>My super page</title></head><body><h1>foo</h1></body></html>",
+      html
+  end
+
+  def test_multiple_defer
+    layout = H {
+      html {
+        head {
+          defer { title @title }
+        }
+        body { emit_yield }
+      }
+    }
+    form = H {
+      form {
+        defer {
+          h3 @error_message if @error_message
+        }
+        emit_yield
+      }
+    }
+
+    user_form = form.apply {
+      @title = 'Awesome user form'
+      @error_message = 'Syntax error!'
+
+      p 'Welcome to the awesome user form'
+    }
+
+    html = layout.render(&user_form)
+
+    assert_equal "<html><head><title>Awesome user form</title></head><body><form><h3>Syntax error!</h3><p>Welcome to the awesome user form</p></form></body></html>",
+      html
+  end
+
+  def test_nested_defer
+    layout = H { |foo, bar|
+      h1 'foo'
+      defer { emit foo }
+      h1 'bar'
+      defer { emit bar }
+
+      @foo = 1
+      @bar = 2
+      @baz = 3
+    }
+
+    foo = H {
+      p 'foo'
+      p @foo
+      defer { p @baz }
+      p 'nomorefoo'
+    }
+
+    bar = H {
+      p 'bar'
+      p @bar
+      p 'nomorebar'
+    }
+
+    assert_equal "<h1>foo</h1><p>foo</p><p>1</p><p>3</p><p>nomorefoo</p><h1>bar</h1><p>bar</p><p>2</p><p>nomorebar</p>", layout.render(foo, bar)
+  end
+end

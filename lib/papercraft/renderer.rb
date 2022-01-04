@@ -57,12 +57,14 @@ module Papercraft
       end
     end
 
+    INITIAL_BUFFER_CAPACITY = 8192
+
     # Initializes the renderer and evaulates the given template in the
     # renderer's scope.
     #
     # @param &template [Proc] template block
     def initialize(&template)
-      @buffer = +''
+      @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
       instance_eval(&template)
     end
 
@@ -70,6 +72,20 @@ module Papercraft
     #
     # @return [String]
     def to_s
+      if @parts
+        last = @buffer
+        @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+        parts = @parts
+        @parts = nil
+        parts.each do |p|
+          if Proc === p
+            render_deferred_proc(&p)
+          else
+            @buffer << p
+          end
+        end
+        @buffer << last unless last.empty?
+      end
       @buffer
     end
 
@@ -160,6 +176,42 @@ module Papercraft
       
       instance_exec(*a, **b, &@inner_block)
     end
+
+    # Defers the given block to be evaluated later. Deferred evaluation allows
+    # Papercraft components to inject state into sibling components, regardless
+    # of the component's order in the container component. For example, a nested
+    # component may set an instance variable used by another component. This is
+    # an elegant solution to the problem of setting the HTML page's title, or
+    # adding elements to the `<head>` section. Here's how a title can be
+    # controlled from a nested component:
+    #
+    #   layout = H {
+    #     html {
+    #       head {
+    #         defer { title @title }
+    #       }
+    #       body {
+    #         emit_yield
+    #       }
+    #     }
+    #   }
+    #
+    #   html.render {
+    #     @title = 'My super page'
+    #     h1 'content'
+    #   }
+    #
+    # @param &block [Proc] Deferred block to be emitted
+    # @return [void]
+    def defer(&block)
+      if !@parts
+        @parts = [@buffer, block]
+      else
+        @parts << @buffer unless @buffer.empty?
+        @parts << block
+      end
+      @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+    end
     
     S_LT              = '<'
     S_GT              = '>'
@@ -216,6 +268,23 @@ module Papercraft
           end
         end
       }
+    end
+
+    # Renders a deferred proc by evaluating it, then adding the rendered result
+    # to the buffer.
+    #
+    # @param &block [Proc] deferred proc
+    # @return [void]
+    def render_deferred_proc(&block)
+      old_buffer = @buffer
+      
+      @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+      @parts = nil
+
+      instance_eval(&block)
+
+      old_buffer << to_s
+      @buffer = old_buffer
     end
   end
 

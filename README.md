@@ -374,6 +374,58 @@ The deafult options can be configured by accessing
 Papercraft::HTML.kramdown_options[:auto_ids] = false
 ```
 
+## Deferred evaluation
+
+Deferred evaluation allows deferring the rendering of parts of a template until
+the last moment, thus allowing an inner component to manipulate the state of the
+outer component. To in order to defer a part of a template, use `#defer`, and
+include any markup in the provided block. This technique, in in conjunction with
+holding state in instance variables, is an alternative to passing parameters,
+which can be limiting in some situations.
+
+A few use cases for deferred evaulation come to mind:
+
+- Setting the page title.
+- Adding a flash message to a page.
+- Using components that dynamically add static dependencies (JS and CSS) to the
+  page.
+
+The last use case is particularly interesting. Imagine a `DependencyMananger`
+class that can collect JS and CSS dependencies from the different components
+integrated into the page, and adds them to the page's `<head>` element:
+
+```ruby
+default_layout = H { |**args|
+  @dependencies = DependencyMananger.new
+  head {
+    defer { emit @dependencies.head_markup }
+  }
+  body { emit_yield **args }
+}
+
+button = proc { |text, onclick|
+  @dependencies.js '/static/js/button.js'
+  @dependencies.css '/static/css/button.css'
+
+  button text, onclick: onclick
+}
+
+heading = proc { |text|
+  @dependencies.js '/static/js/heading.js'
+  @dependencies.css '/static/css/heading.css'
+
+  h1 text
+}
+
+page = default_layout.apply {
+  emit heading, "What's your favorite cheese?"
+
+  emit button, 'Beaufort', 'eat_beaufort()'
+  emit button, 'Mont d''or', 'eat_montdor()'
+  emit button, 'Époisses', 'eat_epoisses()'
+}
+```
+
 ## Papercraft extensions
 
 Papercraft extensions are modules that contain one or more methods that can be

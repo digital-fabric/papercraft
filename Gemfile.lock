@@ -23,7 +23,7 @@ GEM
     tilt (2.0.9)
 
 PLATFORMS
-  ruby
+  x86_64-linux
 
 DEPENDENCIES
   benchmark-ips (= 2.7.2)
@@ -33,4 +33,4 @@ DEPENDENCIES
   tilt (= 2.0.9)
 
 BUNDLED WITH
-   2.2.32
+   2.3.3
