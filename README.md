@@ -20,8 +20,6 @@
   <a href="https://www.rubydoc.info/gems/papercraft">API reference</a>
 </p>
 
-# Papercraft - Composable HTML templating for Ruby
-
 ## What is Papercraft?
 
 ```ruby
