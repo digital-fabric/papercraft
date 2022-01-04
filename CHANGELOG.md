@@ -1,3 +1,7 @@
+## 0.11 2022-01-04
+
+- Add deferred evaluation
+
 ## 0.10.1 2021-12-25
 
 - Fix tag rendering with empty text in Ruby 3.0
