@@ -262,10 +262,33 @@ class HTMLTest < MiniTest::Test
     html = H {
       style <<~CSS.chomp
         * { color: red }
+        a & b { color: green }
       CSS
     }
     assert_equal(
-      '<style>* { color: red }</style>',
+      "<style>* { color: red }\na & b { color: green }</style>",
+      html.render
+    )
+  end
+
+  def test_script
+    html = H {
+      script <<~JS.chomp
+        if (a && b) c();
+      JS
+    }
+    assert_equal(
+      "<script>if (a && b) c();</script>",
+      html.render
+    )
+  end
+
+  def test_empty_script
+    html = H {
+      script src: '/static/stuff.js'
+    }
+    assert_equal(
+      "<script src=\"/static/stuff.js\"></script>",
       html.render
     )
   end
