@@ -89,10 +89,12 @@ module Papercraft
       @buffer
     end
 
+    # The tag method template below is optimized for performance. Do not touch!
+
     S_TAG_METHOD_LINE = __LINE__ + 1
     S_TAG_METHOD = <<~EOF
-      S_TAG_%<TAG>s_PRE = '<%<tag>s'.tr('_', '-')
-      S_TAG_%<TAG>s_CLOSE = '</%<tag>s>'.tr('_', '-')
+      S_TAG_%<TAG>s_PRE = %<tag_pre>s
+      S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
       def %<tag>s(text = nil, **props, &block)
         if text.is_a?(Hash) && props.empty?
@@ -128,7 +130,12 @@ module Papercraft
     # @return [void]
     def method_missing(sym, *args, **opts, &block)
       tag = sym.to_s
-      code = S_TAG_METHOD % { tag: tag, TAG: tag.upcase }
+      code = S_TAG_METHOD % {
+        tag: tag,
+        TAG: tag.upcase,
+        tag_pre: "<#{tag.tr('_', '-')}".inspect,
+        tag_close: "</#{tag.tr('_', '-')}>".inspect
+      }
       self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
       send(sym, *args, **opts, &block)
     end
