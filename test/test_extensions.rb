@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class ComponentLibraryTest < MiniTest::Test
+class ExtensionsTest < MiniTest::Test
   module FancySchmancy
     def test
       :foo
@@ -68,5 +68,21 @@ class ComponentLibraryTest < MiniTest::Test
       fancy_div(id: 'd2') { text 'foo' }
     }
     assert_equal '<div id="d1"></div><div id="d2">foo</div>', h.render
+  end
+
+  module SameNameExtensions
+    def button(text)
+      tag :button, "foo:#{text}"
+    end
+  end
+
+  def test_same_name_extension_method
+    Papercraft.extension(same_name: SameNameExtensions)
+
+    h = H {
+      same_name.button('bar')
+    }
+
+    assert_equal "<button>foo:bar</button>", h.render
   end
 end
