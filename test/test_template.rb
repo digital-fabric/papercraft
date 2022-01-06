@@ -87,36 +87,36 @@ class AttributesTest < MiniTest::Test
   end
 end
 
-class TagsTest < MiniTest::Test
-  def test_that_tag_method_accepts_no_arguments
+class DynamicTagMethodTest < MiniTest::Test
+  def test_that_dynamic_tag_method_accepts_no_arguments
     assert_equal(
       '<div/>',
       H { div() }.render
     )
   end
 
-  def test_that_tag_method_accepts_text_argument
+  def test_that_dynamic_tag_method_accepts_text_argument
     assert_equal(
       '<p>lorem ipsum</p>',
       H { p "lorem ipsum" }.render
     )
   end
 
-  def test_that_tag_method_accepts_non_string_text_argument
+  def test_that_dynamic_tag_method_accepts_non_string_text_argument
     assert_equal(
       '<p>lorem</p>',
       H { p :lorem }.render
     )
   end
 
-  def test_that_tag_method_escapes_string_text_argument
+  def test_that_dynamic_tag_method_escapes_string_text_argument
     assert_equal(
       '<p>lorem &amp; ipsum</p>',
       H { p 'lorem & ipsum' }.render
     )
   end
 
-  def test_tag_underscore_to_hyphen_conversion
+  def test_dynamic_tag_underscore_to_hyphen_conversion
     assert_equal(
       '<my-nifty-tag>foo</my-nifty-tag>',
       H { my_nifty_tag 'foo' }.render
@@ -128,21 +128,21 @@ class TagsTest < MiniTest::Test
     )
   end
 
-  def test_that_tag_method_accepts_text_and_attributes
+  def test_that_dynamic_tag_method_accepts_text_and_attributes
     assert_equal(
       '<p class="hi">lorem ipsum</p>',
       H { p "lorem ipsum", class: 'hi' }.render
     )
   end
 
-  def test_attribute_underscore_to_hyphen_conversion
+  def test_dynamic_tag_attribute_underscore_to_hyphen_conversion
     assert_equal(
       '<p data-foo="bar">hello</p>',
       H { p 'hello', data_foo: 'bar' }.render
     )
   end
 
-  def test_that_tag_method_accepts_papercraft_argument
+  def test_that_dynamic_tag_method_accepts_papercraft_argument
     a = H { a 'foo', href: '/' }
 
     assert_equal(
@@ -151,13 +151,86 @@ class TagsTest < MiniTest::Test
     )
   end
 
-  def test_that_tag_method_accepts_block
+  def test_that_dynamic_tag_method_accepts_block
     assert_equal(
       '<div><p><a/></p></div>',
       H { div { p { a() } } }.render
     )
   end
 end
+
+class TagMethodTest < MiniTest::Test
+  def test_that_tag_method_accepts_no_arguments
+    assert_equal(
+      '<div/>',
+      H { tag(:div) }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_text_argument
+    assert_equal(
+      '<p>lorem ipsum</p>',
+      H { tag :p, "lorem ipsum" }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_non_string_text_argument
+    assert_equal(
+      '<p>lorem</p>',
+      H { tag :p, :lorem }.render
+    )
+  end
+
+  def test_that_tag_method_escapes_string_text_argument
+    assert_equal(
+      '<p>lorem &amp; ipsum</p>',
+      H { tag :p, 'lorem & ipsum' }.render
+    )
+  end
+
+  def test_tag_underscore_to_hyphen_conversion
+    assert_equal(
+      '<my-nifty-tag>foo</my-nifty-tag>',
+      H { tag :my_nifty_tag, 'foo' }.render
+    )
+
+    assert_equal(
+      '<my-nifty-tag/>',
+      H { tag :my_nifty_tag }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_text_and_attributes
+    assert_equal(
+      '<p class="hi">lorem ipsum</p>',
+      H { tag :p, "lorem ipsum", class: 'hi' }.render
+    )
+  end
+
+  def test_attribute_underscore_to_hyphen_conversion
+    assert_equal(
+      '<p data-foo="bar">hello</p>',
+      H { tag :p, 'hello', data_foo: 'bar' }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_papercraft_argument
+    a = H { tag :a, 'foo', href: '/' }
+
+    assert_equal(
+      '<p><a href="/">foo</a></p>',
+      H { tag :p, a }.render
+    )
+  end
+
+  def test_that_tag_method_accepts_block
+    assert_equal(
+      '<div><p><a/></p></div>',
+      H { tag(:div) { tag(:p) { tag :a } } }.render
+    )
+  end
+end
+
 
 class EmitTest < MiniTest::Test
   def test_that_emit_accepts_block

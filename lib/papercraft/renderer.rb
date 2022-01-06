@@ -121,6 +121,48 @@ module Papercraft
       end
     EOF
 
+    # Emits an HTML tag with the given content, properties and optional block.
+    # This method is an alternative to emitting HTML tags using dynamically
+    # created methods. This is particularly useful when using extensions that
+    # have method names that clash with HTML tags, such as `button` or `a`, or
+    # when you need to override the behaviour of a particular HTML tag.
+    #
+    # The following two method calls have the same effect:
+    #
+    # button 'text', id: 'button1'
+    # tag :button, 'text', id: 'button1'
+    #
+    # @param sym [Symbol, String] HTML tag
+    # @param text [String, nil] tag content
+    # @param **props [Hash] tag attributes
+    # @param &block [Proc] optional inner HTML
+    # @return [void]
+    def tag(sym, text = nil, **props, &block)
+      if text.is_a?(Hash) && props.empty?
+        props = text
+        text = nil
+      end
+
+      tag = sym.to_s.tr('_', '-')
+
+      @buffer << S_LT << tag
+      emit_props(props) unless props.empty?
+
+      if block
+        @buffer << S_GT
+        instance_eval(&block)
+        @buffer << S_LT_SLASH << tag << S_GT
+      elsif Proc === text
+        @buffer << S_GT
+        emit(text)
+        @buffer << S_LT_SLASH << tag << S_GT
+      elsif text
+        @buffer << S_GT << escape_text(text.to_s) << S_LT_SLASH << tag << S_GT
+      else
+        @buffer << S_SLASH_GT
+      end
+    end
+
     # Catches undefined tag method call and handles it by defining the method.
     #
     # @param sym [Symbol] HTML tag or component identifier
