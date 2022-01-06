@@ -16,6 +16,12 @@ module Papercraft
   # by adding namespaced methods to emplates. An extension is implemented as a
   # Ruby module containing one or more methods. Each method in the extension
   # module can be used to render a specific HTML element or a set of elements.
+  #
+  # This is a convenience method. For more information on using Papercraft
+  # extensions, see `Papercraft::Renderer::extension`
+  #
+  # @param map [Hash] hash mapping methods to extension modules
+  # @return [void]
   def self.extension(map)
     Renderer.extension(map)
   end

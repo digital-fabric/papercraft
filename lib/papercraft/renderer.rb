@@ -34,8 +34,29 @@ module Papercraft
         end
       end
 
-      # Installs the given extensions, mapping a method name to the extension
-      # module.
+      # call_seq:
+      #   Papercraft::Renderer.extension(name => mod, ...)
+      #   Papercraft.extension(name => mod, ...)
+      #
+      # Installs the given extensions, passed in the form of a Ruby hash mapping
+      # methods to extension modules. The methods will be available to all
+      # Papercraft components. Extension methods are executed in the context of
+      # the the renderer instance, so they can look just like normal proc
+      # components. In cases where method names in the module clash with HTML
+      # tag names, you can use the `#tag` method to emit the relevant tag.
+      # 
+      # module ComponentLibrary
+      #   def card(title, content)
+      #     div(class: 'card') {
+      #       h3 title
+      #       div(class: 'card-content') { emit_markdown content }
+      #     }
+      #   end
+      # end
+      #
+      # Papercraft.extension(components: ComponentLibrary)
+      # H { components.card('Foo', '**Bar**') }
+      #
       # @param map [Hash] hash mapping methods to extension modules
       # @return [void]
       def extension(map)

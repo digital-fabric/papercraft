@@ -366,7 +366,7 @@ The default Kramdown options are:
 ```
 
 The deafult options can be configured by accessing
-`Papercraft::HTML.kramdown_options`:
+`Papercraft::HTML.kramdown_options`, e.g.:
 
 ```ruby
 Papercraft::HTML.kramdown_options[:auto_ids] = false
@@ -428,7 +428,7 @@ page = default_layout.apply {
 
 Papercraft extensions are modules that contain one or more methods that can be
 used to render complex HTML components. Extension modules can be used by
-installing them as a namespaced extension using `Papercraft.extension`.
+installing them as a namespaced extension using `Papercraft::extension`.
 Extensions are particularly useful when you work with CSS frameworks such as
 [Bootstrap](https://getbootstrap.com/), [Tailwind](https://tailwindui.com/) or
 [Primer](https://primer.style/).
@@ -474,7 +474,7 @@ end
 Papercraft.extension(bootstrap: BootstrapComponents)
 ```
 
-The call to `Papercraft.extension` lets us access the different methods of
+The call to `Papercraft::extension` lets us access the different methods of
 `BootstrapComponents` by calling `#bootstrap` inside a template. With this,
 we'll be able to express the above markup as follows:
 
