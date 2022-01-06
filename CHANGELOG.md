@@ -1,3 +1,9 @@
+## 0.12 2022-01-06
+
+- Improve documentation
+- Add `Renderer#tag` method
+- Add `HTML#style`, `HTML#script` methods
+
 ## 0.11 2022-01-04
 
 - Add deferred evaluation
