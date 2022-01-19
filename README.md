@@ -1,4 +1,6 @@
 <h1 align="center">
+  <img src="papercraft.png">
+  <br>
   Papercraft
 </h1>
 
