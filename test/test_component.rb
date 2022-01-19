@@ -111,4 +111,21 @@ class ApplyTest < MiniTest::Test
     assert_equal '<body><p>hi</p></body>', b.render('hi')
     assert_equal (a.render('foo') { |foo| p foo }), b.render('foo')
   end
+
+  def test_apply_with_parameters_and_block
+    a = H { |a:, b:| foo(a); body { emit_yield b } }
+    b = a.apply(a: 'bar', b: 'baz') { |b| p b }
+
+    assert_kind_of Papercraft::Component, b
+    assert_equal '<foo>bar</foo><body><p>baz</p></body>', b.render
+  end
+
+  def test_apply_with_partial_parameters
+    a = H { |foo:, bar:| p foo; p bar }
+    b = a.apply(foo: 'aaa')
+
+    assert_raises { b.render }
+    
+    assert_equal '<p>aaa</p><p>bbb</p>', b.render(bar: 'bbb')
+  end
 end

@@ -138,11 +138,11 @@ module Papercraft
       template = self
       if block
         Component.new(&proc do |*x, **y|
-          with_block(block) { instance_exec(*x, **y, &template) }
+          with_block(block) { instance_exec(*a, *x, **b, **y, &template) }
         end)
       else
         Component.new(&proc do |*x, **y|
-          instance_exec(*a, **b, &template)
+          instance_exec(*a, *x, **b, **y, &template)
         end)
       end
     end
