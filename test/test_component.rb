@@ -128,4 +128,12 @@ class ApplyTest < MiniTest::Test
     
     assert_equal '<p>aaa</p><p>bbb</p>', b.render(bar: 'bbb')
   end
+
+  def test_apply_with_block_with_emit_yield
+    a = H { body { emit_yield } }
+    b = a.apply { article { emit_yield } }
+
+    c = b.render { h1 'foo' }
+    assert_equal '<body><article><h1>foo</h1></article></body>', c
+  end
 end

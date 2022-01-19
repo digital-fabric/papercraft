@@ -106,11 +106,8 @@ module Papercraft
       template = self
       Renderer.verify_proc_parameters(template, a, b)
       renderer_class.new do
-        if block
-          with_block(block) { instance_exec(*a, **b, &template) }
-        else
-          instance_exec(*a, **b, &template)
-        end
+        push_emit_yield_block(block) if block
+        instance_exec(*a, **b, &template)
       end.to_s
     rescue ArgumentError => e
       raise Papercraft::Error, e.message
@@ -136,15 +133,10 @@ module Papercraft
     # @return [Papercraft::Component] applied component
     def apply(*a, **b, &block)
       template = self
-      if block
-        Component.new(&proc do |*x, **y|
-          with_block(block) { instance_exec(*a, *x, **b, **y, &template) }
-        end)
-      else
-        Component.new(&proc do |*x, **y|
-          instance_exec(*a, *x, **b, **y, &template)
-        end)
-      end
+      Component.new(&proc do |*x, **y|
+        push_emit_yield_block(block) if block
+        instance_exec(*a, *x, **b, **y, &template)
+      end)
     end
   
     # Returns the Renderer class used for rendering the templates, according to

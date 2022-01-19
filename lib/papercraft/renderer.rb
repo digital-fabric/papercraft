@@ -242,9 +242,10 @@ module Papercraft
     # @param **b [Hash] named arguments to pass to a proc
     # @return [void]
     def emit_yield(*a, **b)
-      raise Papercraft::Error, "No block given" unless @inner_block
+      block = @emit_yield_stack&.pop
+      raise Papercraft::Error, "No block given" unless block
       
-      instance_exec(*a, **b, &@inner_block)
+      instance_exec(*a, **b, &block)
     end
 
     # Defers the given block to be evaluated later. Deferred evaluation allows
@@ -304,19 +305,19 @@ module Papercraft
     private
 
     # Escapes text. This method must be overriden in descendant classes.
+    #
+    # @param text [String] text to be escaped
     def escape_text(text)
       raise NotImplementedError
     end
 
-    # Sets up a block to be called with `#emit_yield`
-    def with_block(block, &run_block)
-      old_block = @inner_block
-      @inner_block = block
-      instance_eval(&run_block)
-    ensure
-      @inner_block = old_block
+    # Pushes the given block onto the emit_yield stack.
+    #
+    # @param block [Proc] block
+    def push_emit_yield_block(block)
+      (@emit_yield_stack ||= []) << block
     end
-  
+
     # Emits tag attributes into the rendering buffer
     # @param props [Hash] tag attributes
     # @return [void]
