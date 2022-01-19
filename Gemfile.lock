@@ -2,10 +2,10 @@ PATH
   remote: .
   specs:
     papercraft (0.14)
-      escape_utils (= 1.2.1)
-      kramdown (~> 2.3.0)
+      escape_utils (~> 1.2.1)
+      kramdown (~> 2.3.1)
       kramdown-parser-gfm (~> 1.1.0)
-      rouge (~> 3.26.0)
+      rouge (~> 3.27.0)
 
 GEM
   remote: https://rubygems.org/
@@ -17,20 +17,20 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    minitest (5.11.3)
+    minitest (5.15.0)
     rexml (3.2.5)
-    rouge (3.26.1)
-    tilt (2.0.9)
+    rouge (3.27.0)
+    tilt (2.0.10)
 
 PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  benchmark-ips (= 2.7.2)
-  erubis (= 2.7.0)
-  minitest (= 5.11.3)
+  benchmark-ips (~> 2.7.2)
+  erubis (~> 2.7.0)
+  minitest (~> 5.15)
   papercraft!
-  tilt (= 2.0.9)
+  tilt (~> 2.0.9)
 
 BUNDLED WITH
    2.3.3
