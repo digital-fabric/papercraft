@@ -1,3 +1,7 @@
+## 0.13 2022-01-19
+
+- Add support for partial parameter application (#3)
+
 ## 0.12 2022-01-06
 
 - Improve documentation
