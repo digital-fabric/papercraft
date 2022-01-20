@@ -1,3 +1,8 @@
+## 0.15 2022-01-20
+
+- Fix tag method line reference
+- Don't clobber ArgumentError exception
+
 ## 0.14 2022-01-19
 
 - Add support for #emit_yield in applied component (#4)
