@@ -112,7 +112,7 @@ module Papercraft
 
     # The tag method template below is optimized for performance. Do not touch!
 
-    S_TAG_METHOD_LINE = __LINE__ + 1
+    S_TAG_METHOD_LINE = __LINE__ + 2
     S_TAG_METHOD = <<~EOF
       S_TAG_%<TAG>s_PRE = %<tag_pre>s
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
