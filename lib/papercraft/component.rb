@@ -109,8 +109,6 @@ module Papercraft
         push_emit_yield_block(block) if block
         instance_exec(*a, **b, &template)
       end.to_s
-    rescue ArgumentError => e
-      raise Papercraft::Error, e.message
     end
   
     # Creates a new component, applying the given parameters and or block to the
