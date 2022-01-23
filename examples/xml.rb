@@ -10,7 +10,7 @@ content = {
 }
 
 RSSItem = ->(item) {
-  H(mode: :xml) {
+  Papercraft.html(mode: :xml) {
     item {
       title item[:title]
       link item[:link]
@@ -20,7 +20,7 @@ RSSItem = ->(item) {
   }
 }
 
-RSS = H(mode: :xml) {
+RSS = Papercraft.html(mode: :xml) {
   rss(version: '2.0') {
     channel {
       title 'Liftoff News'

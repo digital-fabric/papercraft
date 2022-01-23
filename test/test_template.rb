@@ -5,50 +5,50 @@ require 'minitest/autorun'
 require 'papercraft'
 
 class HnXTest < MiniTest::Test
-  def test_H_with_block
+  def test_html_method_with_block
     block = proc { :foo }
-    h = H(&block)
+    h = Papercraft.html(&block)
 
     assert_kind_of(Papercraft::Component, h)
     assert_equal :foo, h.call
   end
 
-  def test_H_with_argument
+  def test_html_method_with_argument
     o = proc { :foo }
-    h = H(o)
+    h = Papercraft.html(o)
 
     assert_kind_of(Papercraft::Component, h)
     assert_equal :foo, h.call
 
-    h2 = H(h)
+    h2 = Papercraft.html(h)
     assert_equal h2, h
   end
 
-  def test_X_with_block
+  def test_xml_method_with_block
     block = proc { :foo }
-    x = X(&block)
+    x = Papercraft.xml(&block)
 
     assert_kind_of(Papercraft::Component, x)
     assert_equal :xml, x.mode
     assert_equal :foo, x.call
   end
 
-  def test_X_with_argument
+  def test_xml_method_with_argument
     o = proc { :foo }
-    x = X(o)
+    x = Papercraft.xml(o)
 
     assert_kind_of(Papercraft::Component, x)
     assert_equal :xml, x.mode
     assert_equal :foo, x.call
 
-    x2 = X(x)
+    x2 = Papercraft.xml(x)
     assert_equal x2, x
   end
 end
 
 class RenderTest < MiniTest::Test
   def test_that_render_returns_rendered_html
-    h = H { div { p 'foo'; p 'bar' } }
+    h = Papercraft.html { div { p 'foo'; p 'bar' } }
     assert_equal(
       '<div><p>foo</p><p>bar</p></div>',
       h.render
@@ -60,29 +60,29 @@ class AttributesTest < MiniTest::Test
   def test_that_attributes_are_supported_and_escaped
     assert_equal(
       '<div class="blue and green"/>',
-      H { div class: 'blue and green' }.render
+      Papercraft.html { div class: 'blue and green' }.render
     )
 
     assert_equal(
       '<div onclick="return doit();"/>',
-      H { div onclick: 'return doit();' }.render
+      Papercraft.html { div onclick: 'return doit();' }.render
     )
 
     assert_equal(
       '<a href="/?q=a%20b"/>',
-      H { a href: '/?q=a b' }.render
+      Papercraft.html { a href: '/?q=a b' }.render
     )
   end
 
   def test_that_valueless_attributes_are_supported
     assert_equal(
       '<input type="checkbox" checked/>',
-      H { input type: 'checkbox', checked: true }.render
+      Papercraft.html { input type: 'checkbox', checked: true }.render
     )
 
     assert_equal(
       '<input type="checkbox"/>',
-      H { input type: 'checkbox', checked: false }.render
+      Papercraft.html { input type: 'checkbox', checked: false }.render
     )
   end
 end
@@ -91,70 +91,70 @@ class DynamicTagMethodTest < MiniTest::Test
   def test_that_dynamic_tag_method_accepts_no_arguments
     assert_equal(
       '<div/>',
-      H { div() }.render
+      Papercraft.html { div() }.render
     )
   end
 
   def test_that_dynamic_tag_method_accepts_text_argument
     assert_equal(
       '<p>lorem ipsum</p>',
-      H { p "lorem ipsum" }.render
+      Papercraft.html { p "lorem ipsum" }.render
     )
   end
 
   def test_that_dynamic_tag_method_accepts_non_string_text_argument
     assert_equal(
       '<p>lorem</p>',
-      H { p :lorem }.render
+      Papercraft.html { p :lorem }.render
     )
   end
 
   def test_that_dynamic_tag_method_escapes_string_text_argument
     assert_equal(
       '<p>lorem &amp; ipsum</p>',
-      H { p 'lorem & ipsum' }.render
+      Papercraft.html { p 'lorem & ipsum' }.render
     )
   end
 
   def test_dynamic_tag_underscore_to_hyphen_conversion
     assert_equal(
       '<my-nifty-tag>foo</my-nifty-tag>',
-      H { my_nifty_tag 'foo' }.render
+      Papercraft.html { my_nifty_tag 'foo' }.render
     )
 
     assert_equal(
       '<my-nifty-tag/>',
-      H { my_nifty_tag }.render
+      Papercraft.html { my_nifty_tag }.render
     )
   end
 
   def test_that_dynamic_tag_method_accepts_text_and_attributes
     assert_equal(
       '<p class="hi">lorem ipsum</p>',
-      H { p "lorem ipsum", class: 'hi' }.render
+      Papercraft.html { p "lorem ipsum", class: 'hi' }.render
     )
   end
 
   def test_dynamic_tag_attribute_underscore_to_hyphen_conversion
     assert_equal(
       '<p data-foo="bar">hello</p>',
-      H { p 'hello', data_foo: 'bar' }.render
+      Papercraft.html { p 'hello', data_foo: 'bar' }.render
     )
   end
 
   def test_that_dynamic_tag_method_accepts_papercraft_argument
-    a = H { a 'foo', href: '/' }
+    a = Papercraft.html { a 'foo', href: '/' }
 
     assert_equal(
       '<p><a href="/">foo</a></p>',
-      H { p a }.render
+      Papercraft.html { p a }.render
     )
   end
 
   def test_that_dynamic_tag_method_accepts_block
     assert_equal(
       '<div><p><a/></p></div>',
-      H { div { p { a() } } }.render
+      Papercraft.html { div { p { a() } } }.render
     )
   end
 end
@@ -163,70 +163,70 @@ class TagMethodTest < MiniTest::Test
   def test_that_tag_method_accepts_no_arguments
     assert_equal(
       '<div/>',
-      H { tag(:div) }.render
+      Papercraft.html { tag(:div) }.render
     )
   end
 
   def test_that_tag_method_accepts_text_argument
     assert_equal(
       '<p>lorem ipsum</p>',
-      H { tag :p, "lorem ipsum" }.render
+      Papercraft.html { tag :p, "lorem ipsum" }.render
     )
   end
 
   def test_that_tag_method_accepts_non_string_text_argument
     assert_equal(
       '<p>lorem</p>',
-      H { tag :p, :lorem }.render
+      Papercraft.html { tag :p, :lorem }.render
     )
   end
 
   def test_that_tag_method_escapes_string_text_argument
     assert_equal(
       '<p>lorem &amp; ipsum</p>',
-      H { tag :p, 'lorem & ipsum' }.render
+      Papercraft.html { tag :p, 'lorem & ipsum' }.render
     )
   end
 
   def test_tag_underscore_to_hyphen_conversion
     assert_equal(
       '<my-nifty-tag>foo</my-nifty-tag>',
-      H { tag :my_nifty_tag, 'foo' }.render
+      Papercraft.html { tag :my_nifty_tag, 'foo' }.render
     )
 
     assert_equal(
       '<my-nifty-tag/>',
-      H { tag :my_nifty_tag }.render
+      Papercraft.html { tag :my_nifty_tag }.render
     )
   end
 
   def test_that_tag_method_accepts_text_and_attributes
     assert_equal(
       '<p class="hi">lorem ipsum</p>',
-      H { tag :p, "lorem ipsum", class: 'hi' }.render
+      Papercraft.html { tag :p, "lorem ipsum", class: 'hi' }.render
     )
   end
 
   def test_attribute_underscore_to_hyphen_conversion
     assert_equal(
       '<p data-foo="bar">hello</p>',
-      H { tag :p, 'hello', data_foo: 'bar' }.render
+      Papercraft.html { tag :p, 'hello', data_foo: 'bar' }.render
     )
   end
 
   def test_that_tag_method_accepts_papercraft_argument
-    a = H { tag :a, 'foo', href: '/' }
+    a = Papercraft.html { tag :a, 'foo', href: '/' }
 
     assert_equal(
       '<p><a href="/">foo</a></p>',
-      H { tag :p, a }.render
+      Papercraft.html { tag :p, a }.render
     )
   end
 
   def test_that_tag_method_accepts_block
     assert_equal(
       '<div><p><a/></p></div>',
-      H { tag(:div) { tag(:p) { tag :a } } }.render
+      Papercraft.html { tag(:div) { tag(:p) { tag :a } } }.render
     )
   end
 end
@@ -239,44 +239,44 @@ class EmitTest < MiniTest::Test
 
     assert_equal(
       'foobar',
-      H { emit block }.render
+      Papercraft.html { emit block }.render
     )
   end
 
   def test_that_emit_accepts_papercraft
-    r = H { p 'foobar' }
+    r = Papercraft.html { p 'foobar' }
 
     assert_equal(
       '<div><p>foobar</p></div>',
-      H { div { emit r} }.render
+      Papercraft.html { div { emit r} }.render
     )
   end
 
   def test_that_emit_accepts_string
     assert_equal(
       '<div>foobar</div>',
-      H { div { emit 'foobar' } }.render
+      Papercraft.html { div { emit 'foobar' } }.render
     )
   end
 
   def test_that_emit_doesnt_escape_string
     assert_equal(
       '<div>foo&bar</div>',
-      H { div { emit 'foo&bar' } }.render
+      Papercraft.html { div { emit 'foo&bar' } }.render
     )
   end
 
   def test_that_e_is_alias_to_emit
-    r = H { p 'foobar' }
+    r = Papercraft.html { p 'foobar' }
 
     assert_equal(
       '<div><p>foobar</p></div>',
-      H { div { e r} }.render
+      Papercraft.html { div { e r} }.render
     )
   end
 
   def test_emit_yield
-    r = H { body { emit_yield } }
+    r = Papercraft.html { body { emit_yield } }
     assert_raises { r.render(foo: 'bar') }
 
     assert_equal(
@@ -286,8 +286,8 @@ class EmitTest < MiniTest::Test
   end
 
   def test_emit_yield_with_sub_template
-    outer = H { body { div(id: 'content') { emit_yield } } }
-    inner = H { p 'foo' }
+    outer = Papercraft.html { body { div(id: 'content') { emit_yield } } }
+    inner = Papercraft.html { p 'foo' }
     assert_equal(
       '<body><div id="content"><p>foo</p></div></body>',
       outer.render(&inner)
@@ -300,7 +300,7 @@ class ScopeTest < MiniTest::Test
     text = 'foobar'
     assert_equal(
       '<p>foobar</p>',
-      H { p text }.render
+      Papercraft.html { p text }.render
     )
   end
 end
@@ -309,12 +309,12 @@ class HTMLTest < MiniTest::Test
   def test_html5
     assert_equal(
       '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
-      H { html5 { div { h1 'foobar' } } }.render
+      Papercraft.html { html5 { div { h1 'foobar' } } }.render
     )
   end
 
   def test_link_stylesheet
-    html = H {
+    html = Papercraft.html {
       link_stylesheet '/assets/style.css'
     }
     assert_equal(
@@ -322,7 +322,7 @@ class HTMLTest < MiniTest::Test
       html.render
     )
 
-    html = H {
+    html = Papercraft.html {
       link_stylesheet '/assets/style.css', media: 'print'
     }
     assert_equal(
@@ -332,7 +332,7 @@ class HTMLTest < MiniTest::Test
   end
 
   def test_style
-    html = H {
+    html = Papercraft.html {
       style <<~CSS.chomp
         * { color: red }
         a & b { color: green }
@@ -345,7 +345,7 @@ class HTMLTest < MiniTest::Test
   end
 
   def test_script
-    html = H {
+    html = Papercraft.html {
       script <<~JS.chomp
         if (a && b) c();
       JS
@@ -357,7 +357,7 @@ class HTMLTest < MiniTest::Test
   end
 
   def test_empty_script
-    html = H {
+    html = Papercraft.html {
       script src: '/static/stuff.js'
     }
     assert_equal(
@@ -367,7 +367,7 @@ class HTMLTest < MiniTest::Test
   end
 
   def test_html_encoding
-    html = H {
+    html = Papercraft.html {
       span 'me, myself & I'
     }
 
@@ -380,7 +380,7 @@ end
 
 class XMLTest < MiniTest::Test
   def test_generic_xml
-    xml = X {
+    xml = Papercraft.xml {
       rss(version: '2.0') {
         channel {
           item 'foo'
@@ -396,7 +396,7 @@ class XMLTest < MiniTest::Test
   end
 
   def test_xml_encoding
-    xml = X {
+    xml = Papercraft.xml {
       link 'http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp'
     }
 
@@ -411,7 +411,7 @@ class DeferTest < MiniTest::Test
   def test_defer
     buffer = []
 
-    html = H {
+    html = Papercraft.html {
       div {
         buffer << :before
         defer {
@@ -426,7 +426,7 @@ class DeferTest < MiniTest::Test
   end
 
   def test_deferred_title
-    layout = H {
+    layout = Papercraft.html {
       html {
         head {
           defer {
@@ -447,7 +447,7 @@ class DeferTest < MiniTest::Test
   end
 
   def test_multiple_defer
-    layout = H {
+    layout = Papercraft.html {
       html {
         head {
           defer { title @title }
@@ -455,7 +455,7 @@ class DeferTest < MiniTest::Test
         body { emit_yield }
       }
     }
-    form = H {
+    form = Papercraft.html {
       form {
         defer {
           h3 @error_message if @error_message
@@ -478,7 +478,7 @@ class DeferTest < MiniTest::Test
   end
 
   def test_nested_defer
-    layout = H { |foo, bar|
+    layout = Papercraft.html { |foo, bar|
       h1 'foo'
       defer { emit foo }
       h1 'bar'
@@ -489,14 +489,14 @@ class DeferTest < MiniTest::Test
       @baz = 3
     }
 
-    foo = H {
+    foo = Papercraft.html {
       p 'foo'
       p @foo
       defer { p @baz }
       p 'nomorefoo'
     }
 
-    bar = H {
+    bar = Papercraft.html {
       p 'bar'
       p @bar
       p 'nomorebar'

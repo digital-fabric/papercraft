@@ -26,7 +26,7 @@
 #   end
 
 #   def test_compiler_simple
-#     templ = H {
+#     templ = Papercraft.html {
 #       h1 'foo'
 #       h2 'bar'
 #     }
@@ -41,7 +41,7 @@
 #   end
 
 #   def test_compiler_simple_with_attributes
-#     templ = H {
+#     templ = Papercraft.html {
 #       h1 'foo', class: 'foot'
 #       h2 'bar', id: 'bar', onclick: "f(\"abc\", \"def\")"
 #     }
@@ -62,7 +62,7 @@
 
 #   def test_compiler_conditional_1
 #     a = true
-#     template = H {
+#     template = Papercraft.html {
 #       h1 (a ? 'foo' : 'bar')
 #     }
 
@@ -72,7 +72,7 @@
 
 #   def test_compiler_conditional_2
 #     a = true
-#     template = H {
+#     template = Papercraft.html {
 #       header 'hi'
 #       a ? (p 'foo') : (h3 'bar')
 #       footer 'bye'
@@ -93,7 +93,7 @@
 
 #   def test_compiler_conditional_3
 #     a = true
-#     template = H {
+#     template = Papercraft.html {
 #       h1 'hi' if a
 #       h2 'bye' unless a
 #     }
@@ -113,7 +113,7 @@
 #   def test_compiler_conditional_4
 #     a = true
 #     b = true
-#     template = H {
+#     template = Papercraft.html {
 #       if a
 #         h1 'foo'
 #       elsif b
@@ -141,7 +141,7 @@
 
 # class CompiledTemplateTest < MiniTest::Test
 #   def test_compile
-#     t = H { h1 'foo' }
+#     t = Papercraft.html { h1 'foo' }
 #     c = t.compile
 
 #     assert_kind_of Papercraft::Compiler, c
@@ -236,7 +236,7 @@
 #     )
 #   end
 
-#   # A1 = H { a 'foo', href: '/' }
+#   # A1 = Papercraft.html { a 'foo', href: '/' }
 
 #   # def test_that_tag_method_accepts_papercraft_argument
 #   #   assert_equal(

@@ -22,7 +22,7 @@ class ExtensionsTest < MiniTest::Test
   def test_component_library_installation
     Papercraft.extension(fancy: FancySchmancy)
     o = nil
-    H { o = fancy }.render
+    Papercraft.html { o = fancy }.render
 
     assert_kind_of Papercraft::ExtensionProxy, o
     assert o.respond_to?(:test)
@@ -30,7 +30,7 @@ class ExtensionsTest < MiniTest::Test
   end
 
   def test_component_method_namespacing
-    h = H {
+    h = Papercraft.html {
       carousel(id: 'foo') {
         carousel_item(id: 'bar') {
           h1 'hi'
@@ -44,7 +44,7 @@ class ExtensionsTest < MiniTest::Test
   def test_component_rendering
     Papercraft.extension(fancy: FancySchmancy)
 
-    h = H {
+    h = Papercraft.html {
       fancy.carousel(id: 'foo') {
         fancy.carousel_item(id: 'bar') {
           h1 'hi'
@@ -63,7 +63,7 @@ class ExtensionsTest < MiniTest::Test
 
   def test_module_include
     Papercraft::HTMLRenderer.include DirectExtensions
-    h = H {
+    h = Papercraft.html {
       fancy_div(id: 'd1')
       fancy_div(id: 'd2') { text 'foo' }
     }
@@ -79,7 +79,7 @@ class ExtensionsTest < MiniTest::Test
   def test_same_name_extension_method
     Papercraft.extension(same_name: SameNameExtensions)
 
-    h = H {
+    h = Papercraft.html {
       same_name.button('bar')
     }
 

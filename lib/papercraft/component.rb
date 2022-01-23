@@ -14,7 +14,7 @@ module Papercraft
   # Components are usually created using the global methods `H` or `X`, for HTML
   # or XML templates, respectively:
   #
-  #   greeter = H { |name| h1 "Hello, #{name}!" }
+  #   greeter = Papercraft.html { |name| h1 "Hello, #{name}!" }
   #   greeter.render('world') #=> "<h1>Hello, world!</h1>"
   #
   # Components can also be created using the normal constructor:
@@ -25,7 +25,7 @@ module Papercraft
   # In the component block, HTML elements are created by simply calling
   # unqualified methods:
   #
-  #   page_layout = H {
+  #   page_layout = Papercraft.html {
   #     html5 {
   #       head {
   #         title 'foo'
@@ -41,7 +41,7 @@ module Papercraft
   # `greeter` template shown above takes a single `name` parameter. Here's how a
   # anchor component could be implemented with named parameters:
   #
-  #   anchor = H { |uri: , text: | a(text, href: uri) }
+  #   anchor = Papercraft.html { |uri: , text: | a(text, href: uri) }
   #
   # The above component could later be rendered by passing the needed arguments:
   #
@@ -51,7 +51,7 @@ module Papercraft
   #
   # A component can be included in another component using the `emit` method:
   #
-  #   links = H {
+  #   links = Papercraft.html {
   #     emit anchor, uri: '/posts',   text: 'Posts'
   #     emit anchor, uri: '/archive', text: 'Archive'
   #     emit anchor, uri: '/about',   text: 'About'
@@ -60,7 +60,7 @@ module Papercraft
   # Another way of composing components is to pass the components themselves as
   # parameters:
   #
-  #   links = H { |anchors|
+  #   links = Papercraft.html { |anchors|
   #     anchors.each { |a| emit a }
   #   }
   #   links.render([
@@ -115,7 +115,7 @@ module Papercraft
     # current one. Application is one of the principal methods of composing
     # components, particularly when passing inner components as blocks:
     #
-    #   article_wrapper = H {
+    #   article_wrapper = Papercraft.html {
     #     article {
     #       emit_yield
     #     }

@@ -5,7 +5,7 @@ require 'benchmark/ips'
 
 content = 'foo'
 
-T = H {
+T = Papercraft.html {
   html5 {
     head {
       title 'some title'

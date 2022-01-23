@@ -25,34 +25,32 @@ module Papercraft
   def self.extension(map)
     Renderer.extension(map)
   end
-end
 
-# Kernel extensions
-module ::Kernel
-  
-  # Creates a new papercraft component. `#H` can take either a proc argument or
-  # a block. In both cases, the proc is converted to a `Papercraft::Component`.
+  # Creates a new papercraft component. `Papercraft.html` can take either a proc
+  # argument or a block. In both cases, the proc is converted to a
+  # `Papercraft::Component`.
   #
-  # H(proc { h1 'hi' }).render #=> "<h1>hi</h1>"
-  # H { h1 'hi' }.render #=> "<h1>hi</h1>"
+  # Papercraft.html(proc { h1 'hi' }).render #=> "<h1>hi</h1>"
+  # Papercraft.html { h1 'hi' }.render #=> "<h1>hi</h1>"
   #
   # @param template [Proc] template block
   # @return [Papercraft::Component] Papercraft component
-  def H(o = nil, &template)
+  def self.html(o = nil, &template)
     return o if o.is_a?(Papercraft::Component)
     template ||= o
     Papercraft::Component.new(mode: :html, &template)
   end
 
-  # Creates a new papercraft component in XML mode. `#X` can take either a proc argument or
-  # a block. In both cases, the proc is converted to a `Papercraft::Component`.
+  # Creates a new papercraft component in XML mode. `Papercraft.xml` can take
+  # either a proc argument or a block. In both cases, the proc is converted to a
+  # `Papercraft::Component`.
   #
-  # X(proc { item 'foo' }).render #=> "<item>foo</item>"
-  # X { item 'foo' }.render #=> "<item>foo</item>"
+  # Papercraft.xml(proc { item 'foo' }).render #=> "<item>foo</item>"
+  # Papercraft.xml { item 'foo' }.render #=> "<item>foo</item>"
   #
   # @param template [Proc] template block
   # @return [Papercraft::Component] Papercraft component
-  def X(o = nil, &template)
+  def self.xml(o = nil, &template)
     return o if o.is_a?(Papercraft::Component)
     template ||= o
     Papercraft::Component.new(mode: :xml, &template)

@@ -1,7 +1,7 @@
 require 'bundler/setup'
 require 'papercraft'
 
-App = H {
+App = Papercraft.html {
   html5 {
     body {
       Header(title: 'My app') {
@@ -14,7 +14,7 @@ App = H {
 }
 
 Header = ->(title:, &children) {
-  H {
+  Papercraft.html {
     header {
       h2(title, id: 'title')
       emit children
@@ -22,7 +22,7 @@ Header = ->(title:, &children) {
   }
 }
 
-Content = H {
+Content = Papercraft.html {
   article {
     h3 context[:title]
     p "Hello, world!"

@@ -55,7 +55,7 @@ module Papercraft
       # end
       #
       # Papercraft.extension(components: ComponentLibrary)
-      # H { components.card('Foo', '**Bar**') }
+      # Papercraft.html { components.card('Foo', '**Bar**') }
       #
       # @param map [Hash] hash mapping methods to extension modules
       # @return [void]
@@ -210,11 +210,11 @@ module Papercraft
     # `#to_s` which is then added to the rendering buffer, without any escaping.
     #
     #   greeter = proc { |name| h1 "Hello, #{name}!" }
-    #   H { emit(greeter, 'world') }.render #=> "<h1>Hello, world!</h1>"
+    #   Papercraft.html { emit(greeter, 'world') }.render #=> "<h1>Hello, world!</h1>"
     #   
-    #   H { emit 'hi&<bye>' }.render #=> "hi&<bye>"
+    #   Papercraft.html { emit 'hi&<bye>' }.render #=> "hi&<bye>"
     #   
-    #   H { emit nil }.render #=> ""
+    #   Papercraft.html { emit nil }.render #=> ""
     #
     # @param o [Proc, Papercraft::Component, String] emitted object
     # @param *a [Array<any>] arguments to pass to a proc
@@ -234,7 +234,7 @@ module Papercraft
 
     # Emits a block supplied using `Component#apply` or `Component#render`.
     #
-    #   div_wrap = H { |*args| div { emit_yield(*args) } }
+    #   div_wrap = Papercraft.html { |*args| div { emit_yield(*args) } }
     #   greeter = div_wrap.apply { |name| h1 "Hello, #{name}!" }
     #   greeter.render('world') #=> "<div><h1>Hello, world!</h1></div>"
     #
@@ -256,7 +256,7 @@ module Papercraft
     # adding elements to the `<head>` section. Here's how a title can be
     # controlled from a nested component:
     #
-    #   layout = H {
+    #   layout = Papercraft.html {
     #     html {
     #       head {
     #         defer { title @title }

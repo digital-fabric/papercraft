@@ -6,7 +6,7 @@ require 'benchmark/ips'
 require 'tilt'
 require 'escape_utils'
 
-App = H {
+App = Papercraft.html {
   cache {
     html5 {
       body {
@@ -21,7 +21,7 @@ App = H {
 }
 
 Header = ->(title:, &children) {
-  H {
+  Papercraft.html {
     header {
       h2(title, id: 'title')
       emit children
@@ -29,7 +29,7 @@ Header = ->(title:, &children) {
   }
 }
 
-Content = H {
+Content = Papercraft.html {
   article {
     h3 context[:title]
     p "Hello, world!"

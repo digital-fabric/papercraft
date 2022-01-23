@@ -42,7 +42,7 @@
 ## 0.8 2021-12-22
 
 - Cleanup and refactor code
-- Add X global method for XML templates
+- Add Papercraft.xml global method for XML templates
 - Make `Component` a descendant of `Proc`
 - Introduce new component API
 - Rename Rubyoshka to Papercraft

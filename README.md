@@ -27,14 +27,16 @@
 ```ruby
 require 'papercraft'
 
-page = H { |*args|
+page = Papercraft.html { |*args|
   html {
     head { }
     body { emit_yield *args }
   }
 }
+page.render { p 'foo' }
+#=> "<html><head/><body><p>foo</p></body></html>"
 
-hello = H.apply { |name| h1 "Hello, #{name}!" }
+hello = page.apply { |name| h1 "Hello, #{name}!" }
 hello.render('world')
 #=> "<html><head/><body><h1>Hello, world!</h1></body></html>"
 ```
@@ -73,7 +75,7 @@ To create a template use the global method `Kernel#H`:
 ```ruby
 require 'papercraft'
 
-html = H {
+html = Papercraft.html {
   div(id: 'greeter') { p 'Hello!' }
 }
 ```
@@ -89,7 +91,7 @@ html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 Tags are added using unqualified method calls, and can be nested using blocks:
 
 ```ruby
-H {
+Papercraft.html {
   html {
     head {
       title 'page title'
@@ -106,19 +108,19 @@ H {
 Tag methods accept a string argument, a block, or no argument at all:
 
 ```ruby
-H { p 'hello' }.render #=> "<p>hello</p>"
+Papercraft.html { p 'hello' }.render #=> "<p>hello</p>"
 
-H { p { span '1'; span '2' } }.render #=> "<p><span>1</span><span>2</span></p>"
+Papercraft.html { p { span '1'; span '2' } }.render #=> "<p><span>1</span><span>2</span></p>"
 
-H { hr() }.render #=> "<hr/>"
+Papercraft.html { hr() }.render #=> "<hr/>"
 ```
 
 Tag methods also accept tag attributes, given as a hash:
 
 ```ruby
-H { img src: '/my.gif' }.render #=> "<img src="/my.gif"/>
+Papercraft.html { img src: '/my.gif' }.render #=> "<img src="/my.gif"/>
 
-H { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</p>"
+Papercraft.html { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</p>"
 ```
 
 ## Template parameters
@@ -128,14 +130,14 @@ parameters are specified as block parameters, and are passed to the template on
 rendering:
 
 ```ruby
-greeting = H { |name| h1 "Hello, #{name}!" }
+greeting = Papercraft.html { |name| h1 "Hello, #{name}!" }
 greeting.render('world') #=> "<h1>Hello, world!</h1>"
 ```
 
 Templates can also accept named parameters:
 
 ```ruby
-greeting = H { |name:| h1 "Hello, #{name}!" }
+greeting = Papercraft.html { |name:| h1 "Hello, #{name}!" }
 greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 ```
 
@@ -145,7 +147,7 @@ Since Papercraft templates are just a bunch of Ruby, you can easily write your
 view logic right in the template:
 
 ```ruby
-H { |user = nil|
+Papercraft.html { |user = nil|
   if user
     span "Hello, #{user.name}!"
   else
@@ -159,7 +161,7 @@ H { |user = nil|
 Templates can also accept and render blocks by using `emit_yield`:
 
 ```ruby
-page = H {
+page = Papercraft.html {
   html {
     body { emit_yield }
   }
@@ -176,14 +178,14 @@ it by passing it as a block to `H`:
 
 ```ruby
 greeting = proc { |name| h1 "Hello, #{name}!" }
-H(&greeting).render('world')
+Papercraft.html(&greeting).render('world')
 ```
 
 Components can also be expressed using lambda notation:
 
 ```ruby
 greeting = ->(name) { h1 "Hello, #{name}!" }
-H(&greeting).render('world')
+Papercraft.html(&greeting).render('world')
 ```
 
 ## Component composition
@@ -210,7 +212,7 @@ ItemList = ->(items) {
   }
 }
 
-page = H { |title, items|
+page = Papercraft.html { |title, items|
   html5 {
     head { Title(title) }
     body { ItemList(items) }
@@ -229,7 +231,7 @@ non-constant components by invoking the `#emit` method:
 ```ruby
 greeting = -> { span "Hello, world" }
 
-H {
+Papercraft.html {
   div {
     emit greeting
   }
@@ -247,12 +249,12 @@ or block to the original component:
 
 ```ruby
 # parameter application
-hello = H { |name| h1 "Hello, #{name}!" }
+hello = Papercraft.html { |name| h1 "Hello, #{name}!" }
 hello_world = hello.apply('world')
 hello_world.render #=> "<h1>Hello, world!</h1>"
 
 # block application
-div_wrap = H { div { emit_yield } }
+div_wrap = Papercraft.html { div { emit_yield } }
 wrapped_h1 = div_wrap.apply { h1 'hi' }
 wrapped_h1.render #=> "<div><h1>hi</h1></div>"
 
@@ -271,8 +273,8 @@ markup, enhancing components or injecting component parameters.
 Here is a HOC that takes a component as parameter:
 
 ```ruby
-div_wrap = H { |inner| div { emit inner } }
-greeter = H { h1 'hi' }
+div_wrap = Papercraft.html { |inner| div { emit inner } }
+greeter = Papercraft.html { h1 'hi' }
 wrapped_greeter = div_wrap.apply(greeter)
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 ```
@@ -280,7 +282,7 @@ wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 The inner component can also be passed as a block, as shown above:
 
 ```ruby
-div_wrap = H { div { emit_yield } }
+div_wrap = Papercraft.html { div { emit_yield } }
 wrapped_greeter = div_wrap.apply { h1 'hi' }
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 ```
@@ -294,7 +296,7 @@ this by creating a `default` page template that takes a block, then use `#apply`
 to create the other templates:
 
 ```ruby
-default_layout = H { |**params|
+default_layout = Papercraft.html { |**params|
   html5 {
     head {
       title: params[:title]
@@ -323,7 +325,7 @@ article_layout.render(
 Raw HTML can be emitted using `#emit`:
 
 ```ruby
-wrapped = H { |html| div { emit html } }
+wrapped = Papercraft.html { |html| div { emit html } }
 wrapped.render("<h1>hi</h1>") #=> "<div><h1>hi</h1></div>"
 ```
 
@@ -333,7 +335,7 @@ To emit a string with proper HTML encoding, without wrapping it in an HTML
 element, use `#text`:
 
 ```ruby
-H { str 'hi&lo' }.render #=> "hi&amp;lo"
+Papercraft.html { str 'hi&lo' }.render #=> "hi&amp;lo"
 ```
 
 ## Emitting Markdown
@@ -343,7 +345,7 @@ Markdown is rendered using the
 `#emit_markdown`:
 
 ```ruby
-template = H { |md| div { emit_markdown md } }
+template = Papercraft.html { |md| div { emit_markdown md } }
 template.render("Here's some *Markdown*") #=> "<div><p>Here's some <em>Markdown</em><p>\n</div>"
 ```
 
@@ -352,7 +354,7 @@ options](https://kramdown.gettalong.org/options.html#available-options) can be
 specified by adding them to the `#emit_markdown` call:
 
 ```ruby
-template = H { |md| div { emit_markdown md, auto_ids: false } }
+template = Papercraft.html { |md| div { emit_markdown md, auto_ids: false } }
 template.render("# title") #=> "<div><h1>title</h1></div>"
 ```
 
@@ -395,7 +397,7 @@ class that can collect JS and CSS dependencies from the different components
 integrated into the page, and adds them to the page's `<head>` element:
 
 ```ruby
-default_layout = H { |**args|
+default_layout = Papercraft.html { |**args|
   @dependencies = DependencyMananger.new
   head {
     defer { emit @dependencies.head_markup }
@@ -481,7 +483,7 @@ The call to `Papercraft::extension` lets us access the different methods of
 we'll be able to express the above markup as follows:
 
 ```ruby
-H {
+Papercraft.html {
   bootstrap.card(style: 'width: 18rem') {
     bootstrap.card_title 'Card title'
     bootstrap.card_subtitle 'Card subtitle'

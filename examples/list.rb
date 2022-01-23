@@ -2,7 +2,7 @@ require 'bundler'
 require 'papercraft'
 
 List = ->(items, item_component) {
-  H {
+  Papercraft.html {
     ul {
       items.each { |item|
         with(item: item) {
@@ -13,12 +13,12 @@ List = ->(items, item_component) {
   }
 }
 
-TodoItem = H {
+TodoItem = Papercraft.html {
   span item[:text], class: item[:completed] ? 'done' : 'pending'
 }
 
 def todo_list(items)
-  H {
+  Papercraft.html {
     div {
       List(items, TodoItem)
     }

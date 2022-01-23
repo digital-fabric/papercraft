@@ -1,7 +1,7 @@
 require 'bundler/setup'
 require 'papercraft'
 
-App = H {
+App = Papercraft.html {
   html5 {
     head {
       stylesheet '/assets/style.css', media: 'screen'
