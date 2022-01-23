@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'escape_utils'
+
 require_relative './html'
 require_relative './json'
 require_relative './extension_proxy'

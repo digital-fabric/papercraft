@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'kramdown'
-require 'rouge'
-require 'kramdown-parser-gfm'
-
 module Papercraft  
   # HTML Markup extensions
   module HTML
@@ -83,41 +79,7 @@ module Papercraft
     # @param **opts [Hash] Kramdown options
     # @return [void]
     def emit_markdown(markdown, **opts)
-      emit Kramdown::Document.new(markdown, **kramdown_options(opts)).to_html
-    end
-
-    class << self
-      # Returns the default Kramdown options used for converting Markdown to
-      # HTML.
-      #
-      # @return [Hash] Default Kramdown options
-      def kramdown_options
-        @kramdown_options ||= {
-          entity_output: :numeric,
-          syntax_highlighter: :rouge,
-          input: 'GFM',
-          hard_wrap: false  
-        }
-      end
-
-      # Sets the default Kramdown options used for converting Markdown to
-      # HTML.
-      #
-      # @param opts [Hash] New deafult Kramdown options
-      # @return [Hash] New default Kramdown options
-      def kramdown_options=(opts)
-        @kramdown_options = opts
-      end
-    end
-
-    private
-
-    # Returns the default Kramdown options, merged with the given overrides.
-    # 
-    # @param opts [Hash] Kramdown option overrides
-    # @return [Hash] Merged Kramdown options
-    def kramdown_options(opts)
-      HTML.kramdown_options.merge(**opts)
+      emit Papercraft.markdown(markdown, **opts)
     end
   end
 end

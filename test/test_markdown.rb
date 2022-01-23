@@ -21,11 +21,11 @@ class MarkdownTest < MiniTest::Test
       templ.render('# hi')
 
     templ = Papercraft.html { |md| emit_markdown(md) }
-    Papercraft::HTML.kramdown_options[:auto_ids] = false
+    Papercraft.default_kramdown_options[:auto_ids] = false
     assert_equal "<h1>hi</h1>\n",
       templ.render('# hi')
   ensure
-    Papercraft::HTML.kramdown_options.delete(:auto_ids)
+    Papercraft.default_kramdown_options.delete(:auto_ids)
   end
 
   def test_markdown_with_inline_code
@@ -38,5 +38,9 @@ class MarkdownTest < MiniTest::Test
     templ = Papercraft.html { |md| emit_markdown(md) }
     assert_equal "<p>before</p>\n\n<div class=\"language-ruby highlighter-rouge\"><div class=\"highlight\"><pre class=\"highlight\"><code><span class=\"k\">def</span> <span class=\"nf\">foo</span><span class=\"p\">;</span> <span class=\"k\">end</span>\n</code></pre></div></div>\n\n<p>after</p>\n",
       templ.render("before\n\n```ruby\ndef foo; end\n```\n\nafter")
+  end
+
+  def test_papercraft_markdown_method
+    assert_equal "<h1 id=\"hello\">Hello</h1>\n", Papercraft.markdown("# Hello")
   end
 end
