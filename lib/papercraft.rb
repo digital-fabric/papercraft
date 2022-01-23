@@ -35,10 +35,10 @@ module Papercraft
   #
   # @param template [Proc] template block
   # @return [Papercraft::Component] Papercraft component
-  def self.html(o = nil, &template)
+  def self.html(o = nil, mime_type: nil, &template)
     return o if o.is_a?(Papercraft::Component)
     template ||= o
-    Papercraft::Component.new(mode: :html, &template)
+    Papercraft::Component.new(mode: :html, mime_type: mime_type, &template)
   end
 
   # Creates a new papercraft component in XML mode. `Papercraft.xml` can take
@@ -50,9 +50,9 @@ module Papercraft
   #
   # @param template [Proc] template block
   # @return [Papercraft::Component] Papercraft component
-  def self.xml(o = nil, &template)
+  def self.xml(o = nil, mime_type: nil, &template)
     return o if o.is_a?(Papercraft::Component)
     template ||= o
-    Papercraft::Component.new(mode: :xml, &template)
+    Papercraft::Component.new(mode: :xml, mime_type: mime_type, &template)
   end
 end

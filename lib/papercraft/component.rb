@@ -84,14 +84,20 @@ module Papercraft
     # Determines the rendering mode: `:html` or `:xml`.
     attr_accessor :mode
 
+    STOCK_MIME_TYPE = {
+      html: 'text/html',
+      xml: 'application/xml'
+    }.freeze
+
     # Initializes a component with the given block. The rendering mode (HTML or
     # XML) can be passed in the `mode:` parameter. If `mode:` is not specified,
     # the component defaults to HTML.
     #
     # @param mode [:html, :xml] rendering mode
     # @param block [Proc] nested HTML block
-    def initialize(mode: :html, &block)
+    def initialize(mode: :html, mime_type: nil, &block)
       @mode = mode
+      @mime_type = mime_type || STOCK_MIME_TYPE[mode]
       super(&block)
     end
   
@@ -150,6 +156,10 @@ module Papercraft
       else
         raise "Invalid mode #{@mode.inspect}"
       end
+    end
+
+    def mime_type
+      @mime_type
     end
   
     # def compile

@@ -137,3 +137,20 @@ class ApplyTest < MiniTest::Test
     assert_equal '<body><article><h1>foo</h1></article></body>', c
   end
 end
+
+class MimetypeTest < MiniTest::Test
+  def test_html_mime_type
+    t = Papercraft.html { foo 'bar' }
+    assert_equal 'text/html', t.mime_type
+  end
+
+  def test_xml_mime_type
+    t = Papercraft.xml { foo 'bar' }
+    assert_equal 'application/xml', t.mime_type
+  end
+
+  def test_custom_mime_type
+    t = Papercraft.xml(mime_type: 'foo/bar') { foo 'bar' }
+    assert_equal 'foo/bar', t.mime_type
+  end
+end
