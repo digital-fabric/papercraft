@@ -149,6 +149,11 @@ class MimetypeTest < MiniTest::Test
     assert_equal 'application/xml', t.mime_type
   end
 
+  def test_json_mime_type
+    t = Papercraft.json { foo 'bar' }
+    assert_equal 'application/json', t.mime_type
+  end
+
   def test_custom_mime_type
     t = Papercraft.xml(mime_type: 'foo/bar') { foo 'bar' }
     assert_equal 'foo/bar', t.mime_type

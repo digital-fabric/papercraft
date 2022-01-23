@@ -55,4 +55,19 @@ module Papercraft
     template ||= o
     Papercraft::Component.new(mode: :xml, mime_type: mime_type, &template)
   end
+
+  # Creates a new papercraft component in JSON mode. `Papercraft.json` can take
+  # either a proc argument or a block. In both cases, the proc is converted to a
+  # `Papercraft::Component`.
+  #
+  # Papercraft.json(proc { item 42 }).render #=> "[42]"
+  # Papercraft.json { foo 'bar' }.render #=> "{\"foo\": \"bar\"}"
+  #
+  # @param template [Proc] template block
+  # @return [Papercraft::Component] Papercraft component
+  def self.json(o = nil, mime_type: nil, &template)
+    return o if o.is_a?(Papercraft::Component)
+    template ||= o
+    Papercraft::Component.new(mode: :json, mime_type: mime_type, &template)
+  end
 end

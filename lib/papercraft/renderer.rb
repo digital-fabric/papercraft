@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './html'
+require_relative './json'
 require_relative './extension_proxy'
 
 module Papercraft
@@ -379,5 +380,9 @@ module Papercraft
     def escape_text(text)
       EscapeUtils.escape_xml(text.to_s)
     end
+  end
+
+  class JSONRenderer < Renderer
+    include JSON
   end
 end

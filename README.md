@@ -4,7 +4,7 @@
   Papercraft
 </h1>
 
-<h4 align="center">Composable HTML templating for Ruby</h4>
+<h4 align="center">Composable templating for Ruby</h4>
 
 <p align="center">
   <a href="http://rubygems.org/gems/papercraft">
@@ -41,14 +41,14 @@ hello.render('world')
 #=> "<html><head/><body><h1>Hello, world!</h1></body></html>"
 ```
 
-Papercraft is an HTML templating engine for Ruby that offers the following
-features:
+Papercraft is a templating engine for Ruby that offers the following features:
 
-- HTML and XML templating using plain Ruby syntax
+- HTML, XML and JSON templating using plain Ruby syntax
 - Minimal boilerplate
 - Mix logic and tags freely
 - Automatic HTML and XML escaping
 - Composable components
+- Standard or custom MIME types
 - Explicit parameter passing to nested components
 - Higher order components
 - Built-in support for rendering [Markdown](#emitting-markdown)
@@ -493,6 +493,37 @@ Papercraft.html {
   }
 }
 ```
+
+## JSON templating
+
+You can create a JSON template using the same API used for HTML and XML
+templating. The only difference is that for adding array items you'll need to
+use the `#item` method:
+
+```ruby
+Papercraft.json {
+  item 1
+  item 2
+  item 3
+}.render #=> "[1,2,3]"
+```
+
+Otherwise, you can create arbitrarily complex JSON structures by mixing hashes
+and arrays:
+
+```Ruby
+Papercraft.json {
+  foo {
+    bar {
+      item nil
+      item true
+      item 123.456
+    }
+  }
+}.render #=> "{\"foo\":{\"bar\":[null,true,123.456]}}"
+```
+
+Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood.
 
 ## API Reference
 

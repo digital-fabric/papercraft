@@ -11,16 +11,21 @@ module Papercraft
   # class is simply a special kind of Proc, which has some enhanced
   # capabilities, allowing it to be easily composed in a variety of ways.
   #
-  # Components are usually created using the global methods `H` or `X`, for HTML
-  # or XML templates, respectively:
+  # Components are usually created using the class methods `html`, `xml` or
+  # `json`, for HTML, XML or JSON templates, respectively:
   #
   #   greeter = Papercraft.html { |name| h1 "Hello, #{name}!" }
   #   greeter.render('world') #=> "<h1>Hello, world!</h1>"
   #
   # Components can also be created using the normal constructor:
   #
-  #   greeter = Papercraft::Component.new { |name| h1 "Hello, #{name}!" }
+  #   greeter = Papercraft::Component.new(mode: :html) { |name| h1 "Hello, #{name}!" }
   #   greeter.render('world') #=> "<h1>Hello, world!</h1>"
+  #
+  # The different methods for creating components can also take a custom MIME
+  # type, by passing a `mime_type` named argument:
+  #
+  #   json = Papercraft.json(mime_type: 'application/feed+json') { ... }
   #
   # In the component block, HTML elements are created by simply calling
   # unqualified methods:
@@ -86,7 +91,8 @@ module Papercraft
 
     STOCK_MIME_TYPE = {
       html: 'text/html',
-      xml: 'application/xml'
+      xml:  'application/xml',
+      json: 'application/json'
     }.freeze
 
     # Initializes a component with the given block. The rendering mode (HTML or
@@ -94,6 +100,7 @@ module Papercraft
     # the component defaults to HTML.
     #
     # @param mode [:html, :xml] rendering mode
+    # @param mime_type [String, nil] the component's mime type (nil for default)
     # @param block [Proc] nested HTML block
     def initialize(mode: :html, mime_type: nil, &block)
       @mode = mode
@@ -137,7 +144,7 @@ module Papercraft
     # @return [Papercraft::Component] applied component
     def apply(*a, **b, &block)
       template = self
-      Component.new(&proc do |*x, **y|
+      Component.new(mode: @mode, mime_type: @mime_type, &proc do |*x, **y|
         push_emit_yield_block(block) if block
         instance_exec(*a, *x, **b, **y, &template)
       end)
@@ -153,6 +160,8 @@ module Papercraft
         HTMLRenderer
       when :xml
         XMLRenderer
+      when :json
+        JSONRenderer
       else
         raise "Invalid mode #{@mode.inspect}"
       end
