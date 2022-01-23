@@ -358,6 +358,14 @@ template = Papercraft.html { |md| div { emit_markdown md, auto_ids: false } }
 template.render("# title") #=> "<div><h1>title</h1></div>"
 ```
 
+The `#emit_markdown` method is available only to HTML templates. If you need to
+render markdown in XML or JSON templates (usually for implementing RSS or JSON
+feeds), you can use `Papercraft.markdown` directly:
+
+```ruby
+Papercraft.markdown('# title') #=> "<h1>title</h1>"
+```
+
 The default Kramdown options are:
 
 ```ruby
@@ -370,10 +378,10 @@ The default Kramdown options are:
 ```
 
 The deafult options can be configured by accessing
-`Papercraft::HTML.kramdown_options`, e.g.:
+`Papercraft.default_kramdown_options`, e.g.:
 
 ```ruby
-Papercraft::HTML.kramdown_options[:auto_ids] = false
+Papercraft.default_kramdown_options[:auto_ids] = false
 ```
 
 ## Deferred evaluation

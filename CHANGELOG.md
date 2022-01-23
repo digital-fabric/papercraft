@@ -1,3 +1,7 @@
+## 0.17 2022-01-23
+
+- Refactor markdown code, add `Papercraft.markdown` method (#8)
+
 ## 0.16 2022-01-23
 
 - Implement JSON templating (#7)
