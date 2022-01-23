@@ -1,3 +1,9 @@
+## 0.16 2022-01-23
+
+- Implement JSON templating (#7)
+- Add support for MIME types (#6)
+- Change entrypoint from `Kernel#H`, `Kernel#X` to `Papercraft.html`, `.xml` (#5)
+
 ## 0.15 2022-01-20
 
 - Fix tag method line reference
