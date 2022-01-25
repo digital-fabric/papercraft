@@ -1,30 +1,28 @@
 require 'bundler/setup'
 require 'papercraft'
 
-App = Papercraft.html {
+App = Papercraft.html { |**props|
   html5 {
     body {
-      Header(title: 'My app') {
+      emit(Header, title: props[:title]) {
         button "1"
         button "2"
       }
-      Content {}
+      emit Content, **props
     }
   }
 }
 
-Header = ->(title:, &children) {
-  Papercraft.html {
-    header {
-      h2(title, id: 'title')
-      emit children
-    }
+Header = Papercraft.html { |title:|
+  header {
+    h2(title, id: 'title')
+    emit_yield
   }
 }
 
-Content = Papercraft.html {
+Content = Papercraft.html { |title:|
   article {
-    h3 context[:title]
+    h3 title
     p "Hello, world!"
     div {
       a(href: 'http://google.com/?a=1&b=2&c=3 4') { h3 "foo bar" }
@@ -33,4 +31,4 @@ Content = Papercraft.html {
   }
 }
 
-puts App.render(title: 'title from context')
+puts App.render(title: 'title parameter')

@@ -6,32 +6,28 @@ require 'benchmark/ips'
 require 'tilt'
 require 'escape_utils'
 
-App = Papercraft.html {
-  cache {
-    html5 {
-      body {
-        Header(title: 'My app') {
-          button "1"
-          button "2"
-        }
-        Content {}
+App = Papercraft.html { |title:|
+  html5 {
+    body {
+      emit(Header, title: title) {
+        button "1"
+        button "2"
       }
+      emit Content, title: title
     }
   }
 }
 
-Header = ->(title:, &children) {
-  Papercraft.html {
-    header {
-      h2(title, id: 'title')
-      emit children
-    }
+Header = Papercraft.html { |title:|
+  header {
+    h2(title, id: 'title')
+    emit_yield
   }
 }
 
-Content = Papercraft.html {
+Content = Papercraft.html { |title:|
   article {
-    h3 context[:title]
+    h3 title
     p "Hello, world!"
     div {
       a(href: 'http://google.com/?a=1&b=2&c=3 4') { h3 "foo bar" }

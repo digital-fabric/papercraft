@@ -9,18 +9,16 @@ content = {
   ]
 }
 
-RSSItem = ->(item) {
-  Papercraft.html(mode: :xml) {
-    item {
-      title item[:title]
-      link item[:link]
-      pubDate item[:stamp].httpdate
-      description item[:description]
-    }
+RSSItem = Papercraft.xml { |item|
+  item {
+    title item[:title]
+    link item[:link]
+    pubDate item[:stamp].httpdate
+    description item[:description]
   }
 }
 
-RSS = Papercraft.html(mode: :xml) {
+RSS = Papercraft.xml { |articles:|
   rss(version: '2.0') {
     channel {
       title 'Liftoff News'
@@ -28,12 +26,11 @@ RSS = Papercraft.html(mode: :xml) {
       description 'Liftoff to Space Exploration.'
       language 'en-us'
       pubDate Time.now.httpdate
-      context[:articles].each { |a|
-        RSSItem(a)
+      articles.each { |a|
+        emit RSSItem, a
       }
     }
   }
 }
 
-
-puts RSS.render(content)
+puts RSS.render(**content)
