@@ -24,35 +24,63 @@
 
 ## What is Papercraft?
 
+Papercraft is a templating engine for dynamically producing HTML, XML or JSON.
+Papercraft templates are expressed in plain Ruby, leading to easier debugging,
+better protection against HTML/XML injection attacks, and better code reuse.
+
+Papercraft templates can be composed in a variety of ways, facilitating the
+usage of layout templates, and enabling a component-oriented approach to
+building complex web interfaces.
+
+In Papercraft, dynamic data is passed explicitly to the template as block
+arguments, making the data flow easy to follow and understand. Papercraft also
+lets developers create derivative templates using full or partial parameter
+application.
+
+Papercraft includes built-in support for rendering Markdown (using
+[Kramdown](https://github.com/gettalong/kramdown/)), as well as support for
+creating template extensions in order to allow the creation of component
+libraries.
+
 ```ruby
 require 'papercraft'
 
 page = Papercraft.html { |*args|
   html {
-    head { }
+    head { title 'Title' }
     body { emit_yield *args }
   }
 }
 page.render { p 'foo' }
-#=> "<html><head/><body><p>foo</p></body></html>"
+#=> "<html><head><title>Title</title></head><body><p>foo</p></body></html>"
 
 hello = page.apply { |name| h1 "Hello, #{name}!" }
 hello.render('world')
-#=> "<html><head/><body><h1>Hello, world!</h1></body></html>"
+#=> "<html><head><title>Title</title></head><body><h1>Hello, world!</h1></body></html>"
 ```
 
-Papercraft is a templating engine for Ruby that offers the following features:
+## Table of content
 
-- HTML, XML and JSON templating using plain Ruby syntax
-- Minimal boilerplate
-- Mix logic and tags freely
-- Automatic HTML and XML escaping
-- Composable components
-- Standard or custom MIME types
-- Explicit parameter passing to nested components
-- Higher order components
-- Built-in support for rendering [Markdown](#emitting-markdown)
-- Support for namespaced extensions
+- [Installing papercraft](#installing-papercraft)
+- [Basic usage](#basic-usage)
+- [Adding tags](#adding-tags)
+- [Template parameters](#template-parameters)
+- [Template logic](#template-logic)
+- [Template blocks](#template-blocks)
+- [Plain procs as templates](#plain-procs-as-templates)
+- [Template composition](#template-composition)
+- [Parameter and block application](#parameter-and-block-application)
+- [Higher-order components](#higher-order-components)
+- [Layout template composition](#layout-template-composition)
+- [Emitting raw HTML](#emitting-raw-html)
+- [Emitting a string with HTML Encoding](#emitting-a-string-with-html-encoding)
+- [Emitting Markdown](#emitting-markdown)
+- [Working with MIME types](#working-with-mime-types)
+- [Deferred evaluation](#deferred-evaluation)
+- [Papercraft extensions](#papercraft-extensions)
+- [XML templates](#xml-templates)
+- [JSON templates](#json-templates)
+- [API Reference](#api-reference)
 
 ## Installing Papercraft
 
@@ -68,9 +96,9 @@ Or manually:
 $ gem install papercraft
 ```
 
-## Getting started
+## Basic usage
 
-To create a template use the global method `Kernel#H`:
+To create an HTML template use `Papercraft.html`:
 
 ```ruby
 require 'papercraft'
@@ -80,13 +108,16 @@ html = Papercraft.html {
 }
 ```
 
+(You can also use `Papercraft.xml` and `Papercraft.json` to create XML and JSON
+templates, respectively.)
+
 Rendering a template is done using `#render`:
 
 ```ruby
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
 
-## All about tags
+## Adding tags
 
 Tags are added using unqualified method calls, and can be nested using blocks:
 
@@ -141,7 +172,7 @@ greeting = Papercraft.html { |name:| h1 "Hello, #{name}!" }
 greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 ```
 
-## Logic in templates
+## Template logic
 
 Since Papercraft templates are just a bunch of Ruby, you can easily write your
 view logic right in the template:
@@ -171,10 +202,10 @@ page = Papercraft.html {
 page.render { h1 'hi' }
 ```
 
-## Plain procs as components
+## Plain procs as templates
 
 With Papercraft you can write a template as a plain Ruby proc, and later render
-it by passing it as a block to `H`:
+it by passing it as a block to `Papercraft.html`:
 
 ```ruby
 greeting = proc { |name| h1 "Hello, #{name}!" }
@@ -188,7 +219,7 @@ greeting = ->(name) { h1 "Hello, #{name}!" }
 Papercraft.html(&greeting).render('world')
 ```
 
-## Component composition
+## Template composition
 
 Papercraft makes it easy to compose multiple components into a whole HTML
 document. A Papercraft component can contain other components, as the following
@@ -384,6 +415,22 @@ The deafult options can be configured by accessing
 Papercraft.default_kramdown_options[:auto_ids] = false
 ```
 
+## Working with MIME types
+
+Papercraft lets you set and interrogate a template's MIME type, in order to be
+able to dynamically set the `Content-Type` HTTP response header. A template's
+MIME type can be set when creating the template, e.g. `Papercraft.xml(mime_type:
+'application/rss+xml')`. You can interrogate the template's MIME type using
+`#mime_type`:
+
+```ruby
+# using Qeweney (https://github.com/digital-fabric/qeweney)
+def serve_template(req, template)
+  body = template.render
+  respond(body, 'Content-Type' => template.mime_type)
+end
+```
+
 ## Deferred evaluation
 
 Deferred evaluation allows deferring the rendering of parts of a template until
@@ -502,11 +549,47 @@ Papercraft.html {
 }
 ```
 
-## JSON templating
 
-You can create a JSON template using the same API used for HTML and XML
-templating. The only difference is that for adding array items you'll need to
-use the `#item` method:
+
+## XML templates
+
+XML templates behave largely the same as HTML templates, with a few minor
+differences. XML templates employ a different encoding algorithm, and lack some
+specific HTML functionality, such as emitting Markdown.
+
+Here's an example showing how to create an RSS feed:
+
+```ruby
+rss = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |resource:, **props|
+  rss(version: '2.0', 'xmlns:atom' => 'http://www.w3.org/2005/Atom') {
+    channel {
+      title 'Noteflakes'
+      link 'https://noteflakes.com/'
+      description 'A website by Sharon Rosner'
+      language 'en-us'
+      pubDate Time.now.httpdate
+      emit '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" />'
+      
+      article_entries = resource.page_list('/articles').reverse
+
+      article_entries.each { |e|
+        item {
+          title e[:title]
+          link "https://noteflakes.com#{e[:url]}"
+          guid "https://noteflakes.com#{e[:url]}"
+          pubDate e[:date].to_time.httpdate
+          description e[:html_content]
+        }  
+      }
+    }
+  }
+}
+```
+
+## JSON templates
+
+JSON templates behave largely the same as HTML and XML templates. The only major
+difference is that for adding array items you'll need to use the `#item` method:
 
 ```ruby
 Papercraft.json {
@@ -531,7 +614,8 @@ Papercraft.json {
 }.render #=> "{\"foo\":{\"bar\":[null,true,123.456]}}"
 ```
 
-Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood.
+Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood in
+order to generate actual JSON.
 
 ## API Reference
 
