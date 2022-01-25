@@ -223,10 +223,11 @@ module Papercraft
     # @param *a [Array<any>] arguments to pass to a proc
     # @param **b [Hash] named arguments to pass to a proc
     # @return [void]
-    def emit(o, *a, **b)
+    def emit(o, *a, **b, &block)
       case o
       when ::Proc
         Renderer.verify_proc_parameters(o, a, b)
+        push_emit_yield_block(block) if block
         instance_exec(*a, **b, &o)
       when nil
       else

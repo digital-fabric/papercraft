@@ -58,16 +58,28 @@ class ParametersTest < MiniTest::Test
 end
 
 class EmitComponentTest < MiniTest::Test
-  def test_emit_without_params
+  def test_emit_with_proc_params
     r = Papercraft.html { |p| body { emit p } }
-    assert_equal '<body><h1></hi></body>', r.render(proc { h1 'hi' })
+    assert_equal '<body><h1>hi</h1></body>', r.render(proc { h1 'hi' })
     assert_equal '<body><foo/></body>', r.render(proc { foo })
   end
 
-  def test_emit_without_params
+  def test_emit_with_params
     r = Papercraft.html { |foo| body { emit foo, bar: 2 } }
     assert_raises(Papercraft::Error) { r.render(proc { |baz:| h1 baz }) }
     assert_equal '<body><h1>2</h1></body>', r.render(proc { |bar:| h1 bar })
+  end
+
+  def test_emit_with_block
+    hdr = proc { |foo:|
+      header { h1 foo; emit_yield }
+    }
+    template = Papercraft.html {
+      emit(hdr, foo: 'bar') {
+        button 'hi'
+      }
+    }
+    assert_equal '<header><h1>bar</h1><button>hi</button></header>', template.render
   end
 end
 
