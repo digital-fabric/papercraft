@@ -1,3 +1,9 @@
+## 0.18 2022-02-04
+
+- Cleanup and update examples
+- Fix behaviour of #emit with block
+- Improve README
+
 ## 0.17 2022-01-23
 
 - Refactor markdown code, add `Papercraft.markdown` method (#8)
