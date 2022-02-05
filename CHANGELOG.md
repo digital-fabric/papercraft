@@ -1,3 +1,7 @@
+## 0.19 2022-02-05
+
+- Rename `Papercraft::Component` to `Papercraft::Template`
+
 ## 0.18 2022-02-04
 
 - Cleanup and update examples
