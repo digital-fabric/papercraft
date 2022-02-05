@@ -70,7 +70,7 @@ hello.render('world')
 - [Plain procs as templates](#plain-procs-as-templates)
 - [Template composition](#template-composition)
 - [Parameter and block application](#parameter-and-block-application)
-- [Higher-order components](#higher-order-components)
+- [Higher-order templates](#higher-order-templates)
 - [Layout template composition](#layout-template-composition)
 - [Emitting raw HTML](#emitting-raw-html)
 - [Emitting a string with HTML Encoding](#emitting-a-string-with-html-encoding)
@@ -221,8 +221,8 @@ Papercraft.html(&greeting).render('world')
 
 ## Template composition
 
-Papercraft makes it easy to compose multiple components into a whole HTML
-document. A Papercraft component can contain other components, as the following
+Papercraft makes it easy to compose multiple templates into a whole HTML
+document. A Papercraft template can contain other templates, as the following
 example shows.
 
 ```ruby
@@ -250,14 +250,14 @@ page = Papercraft.html { |title, items|
   }
 }
 
-page.render('Hello from components', [
+page.render('Hello from composed templates', [
   { id: 1, text: 'foo', checked: false },
   { id: 2, text: 'bar', checked: true }
 ])
 ```
 
-In addition to using components defined as constants, you can also use
-non-constant components by invoking the `#emit` method:
+In addition to using templates defined as constants, you can also use
+non-constant templates by invoking the `#emit` method:
 
 ```ruby
 greeting = -> { span "Hello, world" }
@@ -272,11 +272,11 @@ Papercraft.html {
 ## Parameter and block application
 
 Parameters and blocks can be applied to a template without it being rendered, by
-using `#apply`. This mechanism is what allows component composition and the
-creation of higher-order components.
+using `#apply`. This mechanism is what allows template composition and the
+creation of higher-order templates.
 
-The `#apply` method returns a new component which applies the given parameters and
-or block to the original component:
+The `#apply` method returns a new template which applies the given parameters and
+or block to the original template:
 
 ```ruby
 # parameter application
@@ -289,19 +289,19 @@ div_wrap = Papercraft.html { div { emit_yield } }
 wrapped_h1 = div_wrap.apply { h1 'hi' }
 wrapped_h1.render #=> "<div><h1>hi</h1></div>"
 
-# wrap a component
+# wrap a template
 wrapped_hello_world = div_wrap.apply(&hello_world)
 wrapped_hello_world.render #=> "<div><h1>Hello, world!</h1></div>"
 ```
 
-## Higher-order components
+## Higher-order templates
 
-Papercraft also lets you create higher-order components (HOCs), that is,
-components that take other components as parameters, or as blocks. Higher-order
-components are handy for creating layouts, wrapping components in arbitrary
-markup, enhancing components or injecting component parameters.
+Papercraft also lets you create higher-order templates, that is,
+templates that take other templates as parameters, or as blocks. Higher-order
+templates are handy for creating layouts, wrapping templates in arbitrary
+markup, enhancing templates or injecting template parameters.
 
-Here is a HOC that takes a component as parameter:
+Here is a higher-order template that takes a template as parameter:
 
 ```ruby
 div_wrap = Papercraft.html { |inner| div { emit inner } }
@@ -310,7 +310,7 @@ wrapped_greeter = div_wrap.apply(greeter)
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 ```
 
-The inner component can also be passed as a block, as shown above:
+The inner template can also be passed as a block, as shown above:
 
 ```ruby
 div_wrap = Papercraft.html { div { emit_yield } }
@@ -320,7 +320,7 @@ wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 
 ## Layout template composition
 
-One of the principal uses of higher-order components is the creation of nested
+One of the principal uses of higher-order templates is the creation of nested
 layouts. Suppose we have a website with a number of different layouts, and we'd
 like to avoid having to repeat the same code in the different layouts. We can do
 this by creating a `default` page template that takes a block, then use `#apply`
@@ -434,8 +434,8 @@ end
 ## Deferred evaluation
 
 Deferred evaluation allows deferring the rendering of parts of a template until
-the last moment, thus allowing an inner component to manipulate the state of the
-outer component. To in order to defer a part of a template, use `#defer`, and
+the last moment, thus allowing an inner template to manipulate the state of the
+outer template. To in order to defer a part of a template, use `#defer`, and
 include any markup in the provided block. This technique, in in conjunction with
 holding state in instance variables, is an alternative to passing parameters,
 which can be limiting in some situations.
@@ -444,11 +444,11 @@ A few use cases for deferred evaulation come to mind:
 
 - Setting the page title.
 - Adding a flash message to a page.
-- Using components that dynamically add static dependencies (JS and CSS) to the
+- Using templates that dynamically add static dependencies (JS and CSS) to the
   page.
 
 The last use case is particularly interesting. Imagine a `DependencyMananger`
-class that can collect JS and CSS dependencies from the different components
+class that can collect JS and CSS dependencies from the different templates
 integrated into the page, and adds them to the page's `<head>` element:
 
 ```ruby

@@ -4,30 +4,30 @@ require_relative './html'
 
 module Papercraft
 
-  # Component represents a distinct, reusable HTML template. A component can
-  # include other components, and also be nested inside other components.
+  # Template represents a distinct, reusable HTML template. A template can
+  # include other templates, and also be nested inside other templates.
   #
-  # Since in Papercraft HTML is expressed using blocks (or procs,) the Component
+  # Since in Papercraft HTML is expressed using blocks (or procs,) the Template
   # class is simply a special kind of Proc, which has some enhanced
   # capabilities, allowing it to be easily composed in a variety of ways.
   #
-  # Components are usually created using the class methods `html`, `xml` or
+  # Templates are usually created using the class methods `html`, `xml` or
   # `json`, for HTML, XML or JSON templates, respectively:
   #
   #   greeter = Papercraft.html { |name| h1 "Hello, #{name}!" }
   #   greeter.render('world') #=> "<h1>Hello, world!</h1>"
   #
-  # Components can also be created using the normal constructor:
+  # Templates can also be created using the normal constructor:
   #
-  #   greeter = Papercraft::Component.new(mode: :html) { |name| h1 "Hello, #{name}!" }
+  #   greeter = Papercraft::Template.new(mode: :html) { |name| h1 "Hello, #{name}!" }
   #   greeter.render('world') #=> "<h1>Hello, world!</h1>"
   #
-  # The different methods for creating components can also take a custom MIME
+  # The different methods for creating templates can also take a custom MIME
   # type, by passing a `mime_type` named argument:
   #
   #   json = Papercraft.json(mime_type: 'application/feed+json') { ... }
   #
-  # In the component block, HTML elements are created by simply calling
+  # In the template block, HTML elements are created by simply calling
   # unqualified methods:
   #
   #   page_layout = Papercraft.html {
@@ -41,20 +41,20 @@ module Papercraft
   #     }
   #   }
   #
-  # Papercraft components can take explicit parameters in order to render
+  # Papercraft templates can take explicit parameters in order to render
   # dynamic content. This can be in the form of regular or named parameters. The
   # `greeter` template shown above takes a single `name` parameter. Here's how a
-  # anchor component could be implemented with named parameters:
+  # anchor template could be implemented with named parameters:
   #
   #   anchor = Papercraft.html { |uri: , text: | a(text, href: uri) }
   #
-  # The above component could later be rendered by passing the needed arguments:
+  # The above template could later be rendered by passing the needed arguments:
   #
   #   anchor.render(uri: 'https://example.com', text: 'Example')
   #
-  # ## Component Composition
+  # ## Template Composition
   #
-  # A component can be included in another component using the `emit` method:
+  # A template can be included in another template using the `emit` method:
   #
   #   links = Papercraft.html {
   #     emit anchor, uri: '/posts',   text: 'Posts'
@@ -62,7 +62,7 @@ module Papercraft
   #     emit anchor, uri: '/about',   text: 'About'
   #   }
   #
-  # Another way of composing components is to pass the components themselves as
+  # Another way of composing templates is to pass the templates themselves as
   # parameters:
   #
   #   links = Papercraft.html { |anchors|
@@ -74,8 +74,8 @@ module Papercraft
   #     anchor.apply(uri: '/about', text: 'About')
   #   ])
   #
-  # The `#apply` method creates a new component, applying the given parameters
-  # such that the component can be rendered without parameters:
+  # The `#apply` method creates a new template, applying the given parameters
+  # such that the template can be rendered without parameters:
   #
   #   links_with_anchors = links.apply([
   #     anchor.apply(uri: '/posts', text: 'Posts'),
@@ -84,7 +84,7 @@ module Papercraft
   #   ])
   #   links_with_anchors.render
   #
-  class Component < Proc
+  class Template < Proc
     
     # Determines the rendering mode: `:html` or `:xml`.
     attr_accessor :mode
@@ -95,12 +95,12 @@ module Papercraft
       json: 'application/json'
     }.freeze
 
-    # Initializes a component with the given block. The rendering mode (HTML or
+    # Initializes a template with the given block. The rendering mode (HTML or
     # XML) can be passed in the `mode:` parameter. If `mode:` is not specified,
-    # the component defaults to HTML.
+    # the template defaults to HTML.
     #
     # @param mode [:html, :xml] rendering mode
-    # @param mime_type [String, nil] the component's mime type (nil for default)
+    # @param mime_type [String, nil] the template's mime type (nil for default)
     # @param block [Proc] nested HTML block
     def initialize(mode: :html, mime_type: nil, &block)
       @mode = mode
@@ -124,9 +124,9 @@ module Papercraft
       end.to_s
     end
   
-    # Creates a new component, applying the given parameters and or block to the
+    # Creates a new template, applying the given parameters and or block to the
     # current one. Application is one of the principal methods of composing
-    # components, particularly when passing inner components as blocks:
+    # templates, particularly when passing inner templates as blocks:
     #
     #   article_wrapper = Papercraft.html {
     #     article {
@@ -141,19 +141,19 @@ module Papercraft
     # @param *a [<any>] normal parameters
     # @param **b [Hash] named parameters
     # @param &block [Proc] inner block
-    # @return [Papercraft::Component] applied component
+    # @return [Papercraft::Template] applied template
     def apply(*a, **b, &block)
       template = self
-      Component.new(mode: @mode, mime_type: @mime_type, &proc do |*x, **y|
+      Template.new(mode: @mode, mime_type: @mime_type, &proc do |*x, **y|
         push_emit_yield_block(block) if block
         instance_exec(*a, *x, **b, **y, &template)
       end)
     end
   
     # Returns the Renderer class used for rendering the templates, according to
-    # the component's mode.
+    # the template's mode.
     #
-    # @return [Papercraft::Renderer] Renderer used for rendering the component
+    # @return [Papercraft::Renderer] Renderer used for rendering the template
     def renderer_class
       case @mode
       when :html

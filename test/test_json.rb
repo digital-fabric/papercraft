@@ -9,7 +9,7 @@ class JsonTest < MiniTest::Test
     block = proc { :foo }
     j = Papercraft.json(&block)
 
-    assert_kind_of(Papercraft::Component, j)
+    assert_kind_of(Papercraft::Template, j)
     assert_equal :json, j.mode
     assert_equal :foo, j.call
   end
@@ -18,7 +18,7 @@ class JsonTest < MiniTest::Test
     o = proc { :foo }
     j = Papercraft.json(o)
 
-    assert_kind_of(Papercraft::Component, j)
+    assert_kind_of(Papercraft::Template, j)
     assert_equal :json, j.mode
     assert_equal :foo, j.call
 

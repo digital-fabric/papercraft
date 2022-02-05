@@ -4,13 +4,13 @@ require 'kramdown'
 require 'rouge'
 require 'kramdown-parser-gfm'
 
-require_relative 'papercraft/component'
+require_relative 'papercraft/template'
 require_relative 'papercraft/renderer'
 require_relative 'papercraft/encoding'
 # require_relative 'papercraft/compiler'
 
 
-# Papercraft is a component-based HTML templating library
+# Papercraft is a composable templating library
 module Papercraft
   # Exception class used to signal templating-related errors
   class Error < RuntimeError; end
@@ -31,49 +31,49 @@ module Papercraft
       Renderer.extension(map)
     end
     
-    # Creates a new papercraft component. `Papercraft.html` can take either a proc
+    # Creates a new papercraft template. `Papercraft.html` can take either a proc
     # argument or a block. In both cases, the proc is converted to a
-    # `Papercraft::Component`.
+    # `Papercraft::Template`.
     #
     # Papercraft.html(proc { h1 'hi' }).render #=> "<h1>hi</h1>"
     # Papercraft.html { h1 'hi' }.render #=> "<h1>hi</h1>"
     #
     # @param template [Proc] template block
-    # @return [Papercraft::Component] Papercraft component
+    # @return [Papercraft::Template] Papercraft template
     def html(o = nil, mime_type: nil, &template)
-      return o if o.is_a?(Papercraft::Component)
+      return o if o.is_a?(Papercraft::Template)
       template ||= o
-      Papercraft::Component.new(mode: :html, mime_type: mime_type, &template)
+      Papercraft::Template.new(mode: :html, mime_type: mime_type, &template)
     end
     
-    # Creates a new papercraft component in XML mode. `Papercraft.xml` can take
+    # Creates a new Papercraft template in XML mode. `Papercraft.xml` can take
     # either a proc argument or a block. In both cases, the proc is converted to a
-    # `Papercraft::Component`.
+    # `Papercraft::Template`.
     #
     # Papercraft.xml(proc { item 'foo' }).render #=> "<item>foo</item>"
     # Papercraft.xml { item 'foo' }.render #=> "<item>foo</item>"
     #
     # @param template [Proc] template block
-    # @return [Papercraft::Component] Papercraft component
+    # @return [Papercraft::Template] Papercraft template
     def xml(o = nil, mime_type: nil, &template)
-      return o if o.is_a?(Papercraft::Component)
+      return o if o.is_a?(Papercraft::Template)
       template ||= o
-      Papercraft::Component.new(mode: :xml, mime_type: mime_type, &template)
+      Papercraft::Template.new(mode: :xml, mime_type: mime_type, &template)
     end
     
-    # Creates a new papercraft component in JSON mode. `Papercraft.json` can take
+    # Creates a new Papercraft template in JSON mode. `Papercraft.json` can take
     # either a proc argument or a block. In both cases, the proc is converted to a
-    # `Papercraft::Component`.
+    # `Papercraft::Template`.
     #
     # Papercraft.json(proc { item 42 }).render #=> "[42]"
     # Papercraft.json { foo 'bar' }.render #=> "{\"foo\": \"bar\"}"
     #
     # @param template [Proc] template block
-    # @return [Papercraft::Component] Papercraft component
+    # @return [Papercraft::Template] Papercraft template
     def json(o = nil, mime_type: nil, &template)
-      return o if o.is_a?(Papercraft::Component)
+      return o if o.is_a?(Papercraft::Template)
       template ||= o
-      Papercraft::Component.new(mode: :json, mime_type: mime_type, &template)
+      Papercraft::Template.new(mode: :json, mime_type: mime_type, &template)
     end
 
     # Renders Markdown into HTML. The `opts` argument will be merged with the

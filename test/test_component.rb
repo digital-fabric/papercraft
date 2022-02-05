@@ -109,7 +109,7 @@ class ApplyTest < MiniTest::Test
   def test_apply_with_parameters
     a = Papercraft.html { |foo| body { emit foo } }
     b = a.apply(proc { p 'hi' })
-    assert_kind_of Papercraft::Component, b
+    assert_kind_of Papercraft::Template, b
     assert_equal(
       '<body><p>hi</p></body>',
       b.render('hi')
@@ -119,7 +119,7 @@ class ApplyTest < MiniTest::Test
   def test_apply_with_block
     a = Papercraft.html { |foo| body { emit_yield(foo) } }
     b = a.apply(&->(foo) { p foo })
-    assert_kind_of Papercraft::Component, b
+    assert_kind_of Papercraft::Template, b
     assert_equal '<body><p>hi</p></body>', b.render('hi')
     assert_equal (a.render('foo') { |foo| p foo }), b.render('foo')
   end
@@ -128,7 +128,7 @@ class ApplyTest < MiniTest::Test
     a = Papercraft.html { |a:, b:| foo(a); body { emit_yield b } }
     b = a.apply(a: 'bar', b: 'baz') { |b| p b }
 
-    assert_kind_of Papercraft::Component, b
+    assert_kind_of Papercraft::Template, b
     assert_equal '<foo>bar</foo><body><p>baz</p></body>', b.render
   end
 

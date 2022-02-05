@@ -8,7 +8,7 @@ require_relative './extension_proxy'
 
 module Papercraft
   
-  # A Renderer renders a Papercraft component into a string
+  # A Renderer renders a Papercraft template into a string
   class Renderer
   
     class << self
@@ -43,7 +43,7 @@ module Papercraft
       #
       # Installs the given extensions, passed in the form of a Ruby hash mapping
       # methods to extension modules. The methods will be available to all
-      # Papercraft components. Extension methods are executed in the context of
+      # Papercraft templates. Extension methods are executed in the context of
       # the the renderer instance, so they can look just like normal proc
       # components. In cases where method names in the module clash with HTML
       # tag names, you can use the `#tag` method to emit the relevant tag.
@@ -219,7 +219,7 @@ module Papercraft
     #   
     #   Papercraft.html { emit nil }.render #=> ""
     #
-    # @param o [Proc, Papercraft::Component, String] emitted object
+    # @param o [Proc, Papercraft::Template, String] emitted object
     # @param *a [Array<any>] arguments to pass to a proc
     # @param **b [Hash] named arguments to pass to a proc
     # @return [void]
@@ -253,7 +253,7 @@ module Papercraft
     end
 
     # Defers the given block to be evaluated later. Deferred evaluation allows
-    # Papercraft components to inject state into sibling components, regardless
+    # Papercraft templates to inject state into sibling components, regardless
     # of the component's order in the container component. For example, a nested
     # component may set an instance variable used by another component. This is
     # an elegant solution to the problem of setting the HTML page's title, or

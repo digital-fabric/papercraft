@@ -9,7 +9,7 @@ class HtmlTest < MiniTest::Test
     block = proc { :foo }
     h = Papercraft.html(&block)
 
-    assert_kind_of(Papercraft::Component, h)
+    assert_kind_of(Papercraft::Template, h)
     assert_equal :foo, h.call
   end
 
@@ -17,7 +17,7 @@ class HtmlTest < MiniTest::Test
     o = proc { :foo }
     h = Papercraft.html(o)
 
-    assert_kind_of(Papercraft::Component, h)
+    assert_kind_of(Papercraft::Template, h)
     assert_equal :foo, h.call
 
     h2 = Papercraft.html(h)

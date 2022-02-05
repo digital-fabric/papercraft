@@ -9,7 +9,7 @@ class XmlTest < MiniTest::Test
     block = proc { :foo }
     x = Papercraft.xml(&block)
 
-    assert_kind_of(Papercraft::Component, x)
+    assert_kind_of(Papercraft::Template, x)
     assert_equal :xml, x.mode
     assert_equal :foo, x.call
   end
@@ -18,7 +18,7 @@ class XmlTest < MiniTest::Test
     o = proc { :foo }
     x = Papercraft.xml(o)
 
-    assert_kind_of(Papercraft::Component, x)
+    assert_kind_of(Papercraft::Template, x)
     assert_equal :xml, x.mode
     assert_equal :foo, x.call
 
