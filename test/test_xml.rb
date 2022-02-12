@@ -52,4 +52,26 @@ class XmlTest < MiniTest::Test
       xml.render
     )
   end
+
+  def test_xml_capitalized_tags
+    xml = Papercraft.xml {
+      Foo {
+        Bar 42
+      }
+    }
+
+    assert_equal(
+      '<Foo><Bar>42</Bar></Foo>', xml.render
+    )
+  end
+
+  def test_xml_namespaced_tags
+    xml = Papercraft.xml {
+      soap__envelope 'hi'
+    }
+    assert_equal(
+      '<soap:envelope>hi</soap:envelope>',
+      xml.render
+    )
+  end
 end

@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
+require 'escape_utils'
+require_relative './tags'
+
 module Papercraft  
   # HTML Markup extensions
   module HTML
+    include Tags
+
     # Emits the p tag (overrides Object#p)
     #
     # @param text [String] text content of tag
@@ -80,6 +85,13 @@ module Papercraft
     # @return [void]
     def emit_markdown(markdown, **opts)
       emit Papercraft.markdown(markdown, **opts)
+    end
+
+    private
+
+    # Escapes the given text using XML entities.
+    def escape_text(text)
+      EscapeUtils.escape_html(text.to_s)
     end
   end
 end

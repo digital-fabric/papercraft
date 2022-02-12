@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'escape_utils'
-
 require_relative './html'
+require_relative './xml'
 require_relative './json'
 require_relative './extension_proxy'
 
@@ -10,7 +9,7 @@ module Papercraft
   
   # A Renderer renders a Papercraft template into a string
   class Renderer
-  
+
     class << self
 
       # Verifies that the given template proc can be called with the given
@@ -45,7 +44,7 @@ module Papercraft
       # methods to extension modules. The methods will be available to all
       # Papercraft templates. Extension methods are executed in the context of
       # the the renderer instance, so they can look just like normal proc
-      # components. In cases where method names in the module clash with HTML
+      # components. In cases where method names in the module clash with XML
       # tag names, you can use the `#tag` method to emit the relevant tag.
       # 
       # module ComponentLibrary
@@ -113,99 +112,6 @@ module Papercraft
       @buffer
     end
 
-    # The tag method template below is optimized for performance. Do not touch!
-
-    S_TAG_METHOD_LINE = __LINE__ + 2
-    S_TAG_METHOD = <<~EOF
-      S_TAG_%<TAG>s_PRE = %<tag_pre>s
-      S_TAG_%<TAG>s_CLOSE = %<tag_close>s
-
-      def %<tag>s(text = nil, **props, &block)
-        if text.is_a?(Hash) && props.empty?
-          props = text
-          text = nil
-        end
-
-        @buffer << S_TAG_%<TAG>s_PRE
-        emit_props(props) unless props.empty?
-
-        if block
-          @buffer << S_GT
-          instance_eval(&block)
-          @buffer << S_TAG_%<TAG>s_CLOSE
-        elsif Proc === text
-          @buffer << S_GT
-          emit(text)
-          @buffer << S_TAG_%<TAG>s_CLOSE
-        elsif text
-          @buffer << S_GT << escape_text(text.to_s) << S_TAG_%<TAG>s_CLOSE
-        else
-          @buffer << S_SLASH_GT
-        end
-      end
-    EOF
-
-    # Emits an HTML tag with the given content, properties and optional block.
-    # This method is an alternative to emitting HTML tags using dynamically
-    # created methods. This is particularly useful when using extensions that
-    # have method names that clash with HTML tags, such as `button` or `a`, or
-    # when you need to override the behaviour of a particular HTML tag.
-    #
-    # The following two method calls have the same effect:
-    #
-    # button 'text', id: 'button1'
-    # tag :button, 'text', id: 'button1'
-    #
-    # @param sym [Symbol, String] HTML tag
-    # @param text [String, nil] tag content
-    # @param **props [Hash] tag attributes
-    # @param &block [Proc] optional inner HTML
-    # @return [void]
-    def tag(sym, text = nil, **props, &block)
-      if text.is_a?(Hash) && props.empty?
-        props = text
-        text = nil
-      end
-
-      tag = sym.to_s.tr('_', '-')
-
-      @buffer << S_LT << tag
-      emit_props(props) unless props.empty?
-
-      if block
-        @buffer << S_GT
-        instance_eval(&block)
-        @buffer << S_LT_SLASH << tag << S_GT
-      elsif Proc === text
-        @buffer << S_GT
-        emit(text)
-        @buffer << S_LT_SLASH << tag << S_GT
-      elsif text
-        @buffer << S_GT << escape_text(text.to_s) << S_LT_SLASH << tag << S_GT
-      else
-        @buffer << S_SLASH_GT
-      end
-    end
-
-    # Catches undefined tag method call and handles it by defining the method.
-    #
-    # @param sym [Symbol] HTML tag or component identifier
-    # @param args [Array] method arguments
-    # @param opts [Hash] named method arguments
-    # @param &block [Proc] block passed to method
-    # @return [void]
-    def method_missing(sym, *args, **opts, &block)
-      tag = sym.to_s
-      code = S_TAG_METHOD % {
-        tag: tag,
-        TAG: tag.upcase,
-        tag_pre: "<#{tag.tr('_', '-')}".inspect,
-        tag_close: "</#{tag.tr('_', '-')}>".inspect
-      }
-      self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
-      send(sym, *args, **opts, &block)
-    end
-
     # Emits the given object into the rendering buffer. If the given object is a
     # proc or a component, `emit` will passes any additional arguments and named
     # arguments to the object when rendering it. If the given object is nil,
@@ -256,7 +162,7 @@ module Papercraft
     # Papercraft templates to inject state into sibling components, regardless
     # of the component's order in the container component. For example, a nested
     # component may set an instance variable used by another component. This is
-    # an elegant solution to the problem of setting the HTML page's title, or
+    # an elegant solution to the problem of setting the XML page's title, or
     # adding elements to the `<head>` section. Here's how a title can be
     # controlled from a nested component:
     #
@@ -288,24 +194,6 @@ module Papercraft
       @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
     end
     
-    S_LT              = '<'
-    S_GT              = '>'
-    S_LT_SLASH        = '</'
-    S_SPACE_LT_SLASH  = ' </'
-    S_SLASH_GT        = '/>'
-    S_SPACE           = ' '
-    S_EQUAL_QUOTE     = '="'
-    S_QUOTE           = '"'
-
-    # Emits text into the rendering buffer, escaping any special characters to
-    # the respective HTML entities.
-    #
-    # @param data [String] text
-    # @return [void]
-    def text(data)
-      @buffer << escape_text(data)
-    end
-
     private
 
     # Escapes text. This method must be overriden in descendant classes.
@@ -320,29 +208,6 @@ module Papercraft
     # @param block [Proc] block
     def push_emit_yield_block(block)
       (@emit_yield_stack ||= []) << block
-    end
-
-    # Emits tag attributes into the rendering buffer
-    # @param props [Hash] tag attributes
-    # @return [void]
-    def emit_props(props)
-      props.each { |k, v|
-        case k
-        when :src, :href
-          @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE <<
-            EscapeUtils.escape_uri(v) << S_QUOTE
-        else
-          case v
-          when true
-            @buffer << S_SPACE << k.to_s.tr('_', '-')
-          when false, nil
-            # emit nothing
-          else
-            @buffer << S_SPACE << k.to_s.tr('_', '-') <<
-              S_EQUAL_QUOTE << v << S_QUOTE
-          end
-        end
-      }
     end
 
     # Renders a deferred proc by evaluating it, then adding the rendered result
@@ -366,23 +231,11 @@ module Papercraft
   # Implements an HTML renderer
   class HTMLRenderer < Renderer
     include HTML
-
-    private
-
-    # Escapes the given text using HTML entities.
-    def escape_text(text)
-      EscapeUtils.escape_html(text.to_s)
-    end
   end
 
   # Implements an XML renderer
   class XMLRenderer < Renderer
-    private
-
-    # Escapes the given text using XML entities.
-    def escape_text(text)
-      EscapeUtils.escape_xml(text.to_s)
-    end
+    include XML
   end
 
   class JSONRenderer < Renderer
