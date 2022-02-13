@@ -154,6 +154,43 @@ Papercraft.html { img src: '/my.gif' }.render #=> "<img src="/my.gif"/>
 Papercraft.html { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</p>"
 ```
 
+## Tag and attribute formatting
+
+Papercraft does not make any presumption about what tags and attributes you can
+use. You can mix upper and lower case letters, and you can include arbitrary
+characters in tag and attribute names. However, in order to best adhere to the
+HTML and XML specs and common practices, tag names and attributes will be
+formatted according to the following rules, depending on the template type:
+
+- HTML: underscores are converted to dashes:
+
+  ```ruby
+  Papercraft.html {
+    foo_bar { p 'Hello', data_name: 'world' }
+  }.render #=> '<foo-bar><p data-name="world">Hello</p></foo-bar>'
+  ```
+
+- XML: underscores are converted to dashes, double underscores are converted to
+  colons:
+
+  ```ruby
+  Papercraft.xml {
+    soap__Envelope(
+      xmlns__soap:  'http://schemas.xmlsoap.org/soap/envelope/',
+    ) { }
+  }.render #=> '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Envelope>'
+  ```
+
+If you need more precise control over tag names, you can use the `#tag` method,
+which takes the tag name as its first parameter, then the rest of the parameters
+normally used for tags:
+
+```ruby
+Papercraft.html {
+  tag 'cra_zy__:!tag', 'foo'
+}.render #=> '<cra_zy__:!tag>foo</cra_zy__:!tag>'
+```
+
 ## Template parameters
 
 In Papercraft, parameters are always passed explicitly. This means that template
