@@ -1,3 +1,7 @@
+## 0.21 2022-02-13
+
+- Refactor and improve documentation
+
 ## 0.20 2022-02-13
 
 - Add support for XML namespaced tags and attributes (#9)
