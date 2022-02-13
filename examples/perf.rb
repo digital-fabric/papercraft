@@ -111,26 +111,31 @@ end
 r = Renderer.new
 
 puts r.render_papercraft_app
-puts r.render_papercraft_app
+puts r.render_erubis_app.gsub(/\n\s*/, '')
+puts r.render_erb_app.gsub(/\n\s+/, '')
 
-puts "=== Template with 2 partials"
-Benchmark.ips do |x|
-  x.config(:time => 3, :warmup => 1)
+# puts r.render_papercraft_content
+# puts r.render_erubis_content
+# puts r.render_erb_content
 
-  x.report("papercraft") { r.render_papercraft_app }
-  x.report("erubis") { r.render_erubis_app }
-  x.report("erb") { r.render_erb_app }
-
-  x.compare!
-end
-
-# puts "=== Single template"
+# puts "=== Template with 2 partials"
 # Benchmark.ips do |x|
 #   x.config(:time => 3, :warmup => 1)
 
-#   x.report("papercraft") { r.render_papercraft_content }
-#   x.report("erubis") { r.render_erubis_content }
-#   # x.report("erb") { r.render_erb_content }
+#   x.report("papercraft") { r.render_papercraft_app }
+#   x.report("erubis") { r.render_erubis_app }
+#   x.report("erb") { r.render_erb_app }
 
 #   x.compare!
 # end
+
+puts "=== Single template"
+Benchmark.ips do |x|
+  x.config(:time => 3, :warmup => 1)
+
+  x.report("papercraft") { r.render_papercraft_content }
+  x.report("erubis") { r.render_erubis_content }
+  x.report("erb") { r.render_erb_content }
+
+  x.compare!
+end

@@ -94,6 +94,7 @@ module Papercraft
     # @param &block [Proc] block passed to method
     # @return [void]
     def method_missing(sym, *args, **opts, &block)
+      # p method_missing: sym, self: self
       tag = sym.to_s
       repr = tag_repr(tag)
       code = S_TAG_METHOD % {
@@ -121,7 +122,7 @@ module Papercraft
       tag.to_s.tr('_', '-')
     end
 
-    def attr_repr(att)
+    def att_repr(att)
       att.to_s.tr('_', '-')
     end
 
@@ -137,11 +138,11 @@ module Papercraft
         else
           case v
           when true
-            @buffer << S_SPACE << attr_repr(k)
+            @buffer << S_SPACE << att_repr(k)
           when false, nil
             # emit nothing
           else
-            @buffer << S_SPACE << attr_repr(k) <<
+            @buffer << S_SPACE << att_repr(k) <<
               S_EQUAL_QUOTE << v << S_QUOTE
           end
         end

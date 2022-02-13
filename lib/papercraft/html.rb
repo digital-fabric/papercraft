@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'escape_utils'
 require_relative './tags'
 
 module Papercraft  
