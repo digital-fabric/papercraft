@@ -5,47 +5,19 @@ require 'json'
 module Papercraft  
   # JSON renderer extensions
   module JSON
-    def object_stack
-      @object_stack ||= [nil]
+    # Initializes a JSON renderer, setting up an object stack.
+    def initialize(&template)
+      @object_stack = [nil]
+      super
     end
 
-    def with_object(&block)
-      object_stack << nil
-      instance_eval(&block)
-    end
-
-    def verify_array_target
-      case object_stack[-1]
-      when nil
-        object_stack[-1] = []
-      when Hash
-        raise "Mixing array and hash values"
-      end
-    end
-
-    def verify_hash_target
-      case object_stack[-1]
-      when nil
-        object_stack[-1] = {}
-      when Array
-        raise "Mixing array and hash values"
-      end
-    end
-
-    def push_array_item(value)
-      object_stack[-1] << value
-    end
-
-    def push_kv_item(key, value)
-      object_stack[-1][key] = value
-    end
-
-    def enter_object(&block)
-      object_stack << nil
-      instance_eval(&block)
-      object_stack.pop
-    end
-
+    # Adds an array item to the current object target. If a block is given, the
+    # block is evaulated against a new object target, then added to the current
+    # array.
+    #
+    # @param value [Object] item
+    # @param &block [Proc] template block
+    # @return [void]
     def item(value = nil, &block)
       verify_array_target
       if block
@@ -54,7 +26,15 @@ module Papercraft
       push_array_item(value)
     end
 
-    def kv(key, value, &block)
+    # Adds a key-value item to the current object target. If a block is given,
+    # the block is evaulated against a new object target, then used as the
+    # value.
+    #
+    # @param key [Object] key
+    # @param value [Object] value
+    # @param &block [Proc] template block
+    # @return [void]
+    def kv(key, value = nil, &block)
       verify_hash_target
       if block
         value = enter_object(&block)
@@ -62,12 +42,85 @@ module Papercraft
       push_kv_item(key, value)
     end
 
+    # Intercepts method calls by adding key-value pairs to the current object
+    # target.
+    #
+    # @param key [Object] key
+    # @param value [Object] value
+    # @param &block [Proc] template block
+    # @return [void]
     def method_missing(sym, value = nil, &block)
       kv(sym, value, &block)
     end
 
+    # Converts the root object target to JSON.
+    #
+    # @return [String] JSON template result
     def to_s
-      object_stack[0].to_json
+      @object_stack[0].to_json
     end
+
+    private
+
+    # Adds a new entry to the object stack and evaluates the given block.
+    #
+    # @param &block [Proc] template block
+    # @return [void]
+    def with_object(&block)
+      @object_stack << nil
+      instance_eval(&block)
+    end
+
+    # Verifies that the current object target is not a hash.
+    #
+    # @return [bool]
+    def verify_array_target
+      case @object_stack[-1]
+      when nil
+        @object_stack[-1] = []
+      when Hash
+        raise "Mixing array and hash values"
+      end
+    end
+
+    # Verifies that the current object target is not an array.
+    #
+    # @return [bool]
+    def verify_hash_target
+      case @object_stack[-1]
+      when nil
+        @object_stack[-1] = {}
+      when Array
+        raise "Mixing array and hash values"
+      end
+    end
+
+    # Pushes an array item to the current object target.
+    #
+    # @param value [Object] item
+    # @return [void]
+    def push_array_item(value)
+      @object_stack[-1] << value
+    end
+
+    # Pushes a key value into the current object target.
+    #
+    # @param key [Object] key
+    # @param value [Object] value
+    # @return [void]
+    def push_kv_item(key, value)
+      @object_stack[-1][key] = value
+    end
+
+    # Adds a new object to the object stack, evaluates the given template block,
+    # then pops the object off the stack.
+    #
+    # @param &block [Proc] template block
+    # @return [void]
+    def enter_object(&block)
+      @object_stack << nil
+      instance_eval(&block)
+      @object_stack.pop
+    end    
   end
 end

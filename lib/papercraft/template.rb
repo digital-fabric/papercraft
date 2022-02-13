@@ -167,6 +167,9 @@ module Papercraft
       end
     end
 
+    # Returns the template's associated MIME type.
+    #
+    # @return [String] MIME type
     def mime_type
       @mime_type
     end

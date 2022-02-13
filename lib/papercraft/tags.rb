@@ -44,6 +44,72 @@ module Papercraft
       end
     EOF
 
+    INITIAL_BUFFER_CAPACITY = 8192
+
+    # Initializes a tag renderer.
+    def initialize(&template)
+      @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+      super
+    end
+
+    # Returns the rendered template.
+    #
+    # @return [String]
+    def to_s
+      if @parts
+        last = @buffer
+        @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+        parts = @parts
+        @parts = nil
+        parts.each do |p|
+          if Proc === p
+            render_deferred_proc(&p)
+          else
+            @buffer << p
+          end
+        end
+        @buffer << last unless last.empty?
+      end
+      @buffer
+    end
+
+    # Defers the given block to be evaluated later. Deferred evaluation allows
+    # Papercraft templates to inject state into sibling components, regardless
+    # of the component's order in the container component. For example, a nested
+    # component may set an instance variable used by another component. This is
+    # an elegant solution to the problem of setting the XML page's title, or
+    # adding elements to the `<head>` section. Here's how a title can be
+    # controlled from a nested component:
+    #
+    #   layout = Papercraft.html {
+    #     html {
+    #       head {
+    #         defer { title @title }
+    #       }
+    #       body {
+    #         emit_yield
+    #       }
+    #     }
+    #   }
+    #
+    #   html.render {
+    #     @title = 'My super page'
+    #     h1 'content'
+    #   }
+    #
+    # @param &block [Proc] Deferred block to be emitted
+    # @return [void]
+    def defer(&block)
+      if !@parts
+        @parts = [@buffer, block]
+      else
+        @parts << @buffer unless @buffer.empty?
+        @parts << block
+      end
+      @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+    end
+    
+    
     # Emits an XML tag with the given content, properties and optional block.
     # This method is an alternative to emitting XML tags using dynamically
     # created methods. This is particularly useful when using extensions that
@@ -118,15 +184,58 @@ module Papercraft
 
     private
 
+    # Emits an arbitrary object by converting it to string, then adding it to
+    # the internal buffer. This method is called internally by `Renderer#emit`.
+    #
+    # @param obj [Object] emitted object
+    # @return [void]
+    def emit_object(obj)
+      @buffer << obj.to_s
+    end
+
+    # Renders a deferred proc by evaluating it, then adding the rendered result
+    # to the buffer.
+    #
+    # @param &block [Proc] deferred proc
+    # @return [void]
+    def render_deferred_proc(&block)
+      old_buffer = @buffer
+      
+      @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
+      @parts = nil
+
+      instance_eval(&block)
+
+      old_buffer << to_s
+      @buffer = old_buffer
+    end
+
+    # Escapes text. This method must be overriden in Renderers which include
+    # this module.
+    #
+    # @param text [String] text to be escaped
+    def escape_text(text)
+      raise NotImplementedError
+    end
+
+    # Converts a tag to its string representation. This method must be overriden
+    # in Renderers which include this module.
+    #
+    # @param tag [Symbol, String] tag
     def tag_repr(tag)
-      tag.to_s.tr('_', '-')
+      raise NotImplementedError
     end
 
+    # Converts an attribute to its string representation. This method must be
+    # overriden in Renderers which include this module.
+    #
+    # @param att [Symbol, String] attribute
     def att_repr(att)
-      att.to_s.tr('_', '-')
+      raise NotImplementedError
     end
 
-    # Emits tag attributes into the rendering buffer
+    # Emits tag attributes into the rendering buffer.
+    #
     # @param props [Hash] tag attributes
     # @return [void]
     def emit_props(props)

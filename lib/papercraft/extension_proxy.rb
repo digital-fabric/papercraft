@@ -10,6 +10,7 @@ module Papercraft
   class ExtensionProxy
 
     # Initializes a new ExtensionProxy.
+    #
     # @param renderer [Papercraft::Renderer] renderer to proxy to
     # @param mod [Module] extension module
     # @return [void]
@@ -18,7 +19,8 @@ module Papercraft
       extend(mod)
     end
   
-    # Proxies missing methods to the renderer
+    # Proxies missing methods to the renderer.
+    #
     # @param sym [Symbol] method name
     # @param *args [Array] arguments
     # @param &block [Proc] block

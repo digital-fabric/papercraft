@@ -88,9 +88,30 @@ module Papercraft
 
     private
 
-    # Escapes the given text using XML entities.
+    # Escapes the given text using HTML entities.
+    #
+    # @param text [String] text
+    # @return [String] escaped text
     def escape_text(text)
       EscapeUtils.escape_html(text.to_s)
+    end
+
+    # Converts a tag to its string representation. Underscores will be converted
+    # to dashes.
+    #
+    # @param tag [Symbol, String] tag
+    # @return [String] tag string
+    def tag_repr(tag)
+      tag.to_s.tr('_', '-')
+    end
+
+    # Converts an attribute to its string representation. Underscores will be
+    # converted to dashes.
+    #
+    # @param att [Symbol, String] attribute
+    # @return [String] attribute string
+    def att_repr(att)
+      att.to_s.tr('_', '-')
     end
   end
 end
