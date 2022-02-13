@@ -1,3 +1,8 @@
+## 0.20 2022-02-13
+
+- Add support for XML namespaced tags and attributes (#9)
+- Move and refactor HTML/XML common code to Tags module
+
 ## 0.19 2022-02-05
 
 - Rename `Papercraft::Component` to `Papercraft::Template`
