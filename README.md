@@ -551,21 +551,27 @@ and other associated methods:
 
 ```ruby
 module BootstrapComponents
-  ...
-
-  def card(**props)
+  def card(**props, &block)
     div(class: 'card', **props) {
-      div(class: 'card-body') {
-        emit_yield
-      }
+      div(class: 'card-body', &block)
     }
   end
-
+  
   def card_title(title)
-    h5 title, class: 'card-title'
+    h4(title, class: 'card-title')
   end
 
-  ...
+  def card_subtitle(subtitle)
+    h5(subtitle, class: 'card-subtitle')
+  end
+
+  def card_text(text)
+    p(text, class: 'card-text')
+  end
+
+  def card_link(text, **opts)
+    a(text, class: 'card-link', **opts)
+  end
 end
 
 Papercraft.extension(bootstrap: BootstrapComponents)
@@ -581,13 +587,11 @@ Papercraft.html {
     bootstrap.card_title 'Card title'
     bootstrap.card_subtitle 'Card subtitle'
     bootstrap.card_text 'Some quick example text to build on the card title and make up the bulk of the card''s content.'
-    bootstrap.card_link '#', 'Card link'
-    bootstrap.card_link '#', 'Another link'
+    bootstrap.card_link 'Card link', href: '#foo'
+    bootstrap.card_link 'Another link', href: '#bar'
   }
 }
 ```
-
-
 
 ## XML templates
 
