@@ -85,4 +85,47 @@ class ExtensionsTest < MiniTest::Test
 
     assert_equal "<button>foo:bar</button>", h.render
   end
+
+  module BootstrapComponents
+    def card(**props, &block)
+      div(class: 'card', **props) {
+        div(class: 'card-body', &block)
+      }
+    end
+  
+    def card_title(title)
+      h4(title, class: 'card-title')
+    end
+
+    def card_subtitle(subtitle)
+      h5(subtitle, class: 'card-subtitle')
+    end
+
+    def card_text(text)
+      p(text, class: 'card-text')
+    end
+
+    def card_link(text, **opts)
+      a(text, class: 'card-link', **opts)
+    end
+  end
+
+  def test_bootstrap_extension_issue_10
+    Papercraft.extension(bootstrap: BootstrapComponents)
+
+    page = Papercraft.html {
+      bootstrap.card(style: 'width: 18rem') {
+        bootstrap.card_title 'Card title'
+        bootstrap.card_subtitle 'Card subtitle'
+        bootstrap.card_text 'Some quick example text to build on the card title and make up the bulk of the card''s content.'
+        bootstrap.card_link 'Card link', href: '#foo'
+        bootstrap.card_link 'Another link', href: '#bar'
+      }
+    }
+
+    assert_equal(
+      '<div class="card" style="width: 18rem"><div class="card-body"><h4 class="card-title">Card title</h4><h5 class="card-subtitle">Card subtitle</h5><p class="card-text">Some quick example text to build on the card title and make up the bulk of the cards content.</p><a class="card-link" href="%23foo">Card link</a><a class="card-link" href="%23bar">Another link</a></div></div>',
+      page.render
+    )
+  end
 end
