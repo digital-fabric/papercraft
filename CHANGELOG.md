@@ -1,3 +1,7 @@
+## 0.22 2022-02-14
+
+- Fix behaviour of call to `#p` in an extension (#10)
+
 ## 0.21 2022-02-13
 
 - Refactor and improve documentation
