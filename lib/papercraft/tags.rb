@@ -160,7 +160,6 @@ module Papercraft
     # @param &block [Proc] block passed to method
     # @return [void]
     def method_missing(sym, *args, **opts, &block)
-      # p method_missing: sym, self: self
       tag = sym.to_s
       repr = tag_repr(tag)
       code = S_TAG_METHOD % {
