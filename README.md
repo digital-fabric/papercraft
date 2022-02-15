@@ -78,9 +78,10 @@ hello.render('world')
 - [Emitting Markdown](#emitting-markdown)
 - [Working with MIME types](#working-with-mime-types)
 - [Deferred evaluation](#deferred-evaluation)
-- [Papercraft extensions](#papercraft-extensions)
 - [XML templates](#xml-templates)
 - [JSON templates](#json-templates)
+- [Papercraft extensions](#papercraft-extensions)
+  - [Bundled extensions](#bundled-extensions)
 - [API Reference](#api-reference)
 
 ## Installing Papercraft
@@ -521,6 +522,72 @@ page = default_layout.apply {
 }
 ```
 
+## XML templates
+
+XML templates behave largely the same as HTML templates, with a few minor
+differences. XML templates employ a different encoding algorithm, and lack some
+specific HTML functionality, such as emitting Markdown.
+
+Here's an example showing how to create an RSS feed:
+
+```ruby
+rss = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |resource:, **props|
+  rss(version: '2.0', 'xmlns:atom' => 'http://www.w3.org/2005/Atom') {
+    channel {
+      title 'Noteflakes'
+      link 'https://noteflakes.com/'
+      description 'A website by Sharon Rosner'
+      language 'en-us'
+      pubDate Time.now.httpdate
+      emit '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" />'
+      
+      article_entries = resource.page_list('/articles').reverse
+
+      article_entries.each { |e|
+        item {
+          title e[:title]
+          link "https://noteflakes.com#{e[:url]}"
+          guid "https://noteflakes.com#{e[:url]}"
+          pubDate e[:date].to_time.httpdate
+          description e[:html_content]
+        }  
+      }
+    }
+  }
+}
+```
+
+## JSON templates
+
+JSON templates behave largely the same as HTML and XML templates. The only major
+difference is that for adding array items you'll need to use the `#item` method:
+
+```ruby
+Papercraft.json {
+  item 1
+  item 2
+  item 3
+}.render #=> "[1,2,3]"
+```
+
+Otherwise, you can create arbitrarily complex JSON structures by mixing hashes
+and arrays:
+
+```Ruby
+Papercraft.json {
+  foo {
+    bar {
+      item nil
+      item true
+      item 123.456
+    }
+  }
+}.render #=> "{\"foo\":{\"bar\":[null,true,123.456]}}"
+```
+
+Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood in
+order to generate actual JSON.
+
 ## Papercraft extensions
 
 Papercraft extensions are modules that contain one or more methods that can be
@@ -593,71 +660,55 @@ Papercraft.html {
 }
 ```
 
-## XML templates
+## Bundled Extensions
 
-XML templates behave largely the same as HTML templates, with a few minor
-differences. XML templates employ a different encoding algorithm, and lack some
-specific HTML functionality, such as emitting Markdown.
+Papercraft comes bundled with a few extensions that address common use cases.
+All bundled extensions are namespaced under `Papercraft::Extensions`, and must
+be specifically required in order to be available to templates.
 
-Here's an example showing how to create an RSS feed:
+For all bundled Papercraft extensions, there's no need to call
+`Papercraft.extension`, requiring the extension is sufficient.
+
+### SOAP extension
+
+The SOAP extension was contributed by @aemadrid.
+
+The SOAP extension provides common tags for building SOAP payloads. To load the
+SOAP extensions, require `polyphony/extensions/soap`. The extension provides the
+following methods:
+
+- `soap.Body(...)` - emits a `soap:Body` tag.
+- `soap.Envelope(...)` - emits a `soap:Envelope` tag.
+- `soap.Fault(...)` - emits a `soap:Fault` tag.
+- `soap.Header(...)` - emits a `soap:Header` tag.
+
+As mentioned above, namespaced tags and attributes may be specified by using
+double underscores for colons. Other tags that contain special characters may be
+emitted using the `#tag` method:
 
 ```ruby
-rss = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |resource:, **props|
-  rss(version: '2.0', 'xmlns:atom' => 'http://www.w3.org/2005/Atom') {
-    channel {
-      title 'Noteflakes'
-      link 'https://noteflakes.com/'
-      description 'A website by Sharon Rosner'
-      language 'en-us'
-      pubDate Time.now.httpdate
-      emit '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" />'
-      
-      article_entries = resource.page_list('/articles').reverse
+require 'polyphony/extensions/soap'
 
-      article_entries.each { |e|
-        item {
-          title e[:title]
-          link "https://noteflakes.com#{e[:url]}"
-          guid "https://noteflakes.com#{e[:url]}"
-          pubDate e[:date].to_time.httpdate
-          description e[:html_content]
-        }  
+xml = Papercraft.xml {
+  soap.Envelope(
+    xmlns__xsd: 'http://www.w3.org/2001/XMLSchema',
+    xmlns__xsi: 'http://www.w3.org/2001/XMLSchema-instance'
+  ) {
+    soap.Body {
+      PosRequest(xmlns: 'http://Some.Site') {
+        tag('Ver1.0') {
+          Header {
+            SecretAPIKey 'some_secret_key'
+          }
+          Transaction {
+            SomeData {}
+          }
+        }
       }
     }
   }
 }
 ```
-
-## JSON templates
-
-JSON templates behave largely the same as HTML and XML templates. The only major
-difference is that for adding array items you'll need to use the `#item` method:
-
-```ruby
-Papercraft.json {
-  item 1
-  item 2
-  item 3
-}.render #=> "[1,2,3]"
-```
-
-Otherwise, you can create arbitrarily complex JSON structures by mixing hashes
-and arrays:
-
-```Ruby
-Papercraft.json {
-  foo {
-    bar {
-      item nil
-      item true
-      item 123.456
-    }
-  }
-}.render #=> "{\"foo\":{\"bar\":[null,true,123.456]}}"
-```
-
-Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood in
-order to generate actual JSON.
 
 ## API Reference
 
