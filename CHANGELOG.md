@@ -1,3 +1,8 @@
+## 0.23 2022-02-15
+
+- Remove unused `Encoding` module
+- Add SOAP extension (#11, thanks [@aemadrid](https://github.com/aemadrid))
+
 ## 0.22 2022-02-14
 
 - Fix behaviour of call to `#p` in an extension (#10)
