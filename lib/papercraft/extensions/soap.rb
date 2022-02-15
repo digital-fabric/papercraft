@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Papercraft
   module Extensions
-    module SoapComponents
+    module Soap
       # Emits a SOAP XML tag that identifies the XML document as a SOAP message.
       #
       # @param **props [Hash] tag attributes
@@ -41,4 +43,4 @@ module Papercraft
   end
 end
 
-Papercraft.extension(soap: Papercraft::Extensions::SoapComponents)
+Papercraft.extension(soap: Papercraft::Extensions::Soap)
