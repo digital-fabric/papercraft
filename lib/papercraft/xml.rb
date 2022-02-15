@@ -2,7 +2,6 @@
 
 require 'escape_utils'
 require_relative './tags'
-require_relative './soap'
 
 module Papercraft  
   # XML renderer extensions
