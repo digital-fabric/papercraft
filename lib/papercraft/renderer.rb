@@ -47,17 +47,17 @@ module Papercraft
       # components. In cases where method names in the module clash with XML
       # tag names, you can use the `#tag` method to emit the relevant tag.
       # 
-      # module ComponentLibrary
-      #   def card(title, content)
-      #     div(class: 'card') {
-      #       h3 title
-      #       div(class: 'card-content') { emit_markdown content }
-      #     }
+      #   module ComponentLibrary
+      #     def card(title, content)
+      #       div(class: 'card') {
+      #         h3 title
+      #         div(class: 'card-content') { emit_markdown content }
+      #       }
+      #     end
       #   end
-      # end
       #
-      # Papercraft.extension(components: ComponentLibrary)
-      # Papercraft.html { components.card('Foo', '**Bar**') }
+      #   Papercraft.extension(components: ComponentLibrary)
+      #   Papercraft.html { components.card('Foo', '**Bar**') }
       #
       # @param map [Hash] hash mapping methods to extension modules
       # @return [void]
