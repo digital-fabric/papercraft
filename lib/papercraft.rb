@@ -6,7 +6,6 @@ require 'kramdown-parser-gfm'
 
 require_relative 'papercraft/template'
 require_relative 'papercraft/renderer'
-require_relative 'papercraft/encoding'
 # require_relative 'papercraft/compiler'
 
 
