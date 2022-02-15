@@ -671,7 +671,7 @@ For all bundled Papercraft extensions, there's no need to call
 
 ### SOAP extension
 
-The SOAP extension was contributed by @aemadrid.
+> The SOAP extension was contributed by [aemadrid](https://github.com/aemadrid).
 
 The SOAP extension provides common tags for building SOAP payloads. To load the
 SOAP extensions, require `polyphony/extensions/soap`. The extension provides the
