@@ -100,6 +100,6 @@ class XmlTest < MiniTest::Test
     assert_equal(
       '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><PosRequest xmlns="http://Some.Site"><Ver1.0><Header><SecretAPIKey>some_secret_key</SecretAPIKey></Header><Transaction><SomeData></SomeData></Transaction></Ver1.0></PosRequest></soap:Body></soap:Envelope>'.gsub('<', '\n<'),
       xml.render.gsub('<', '\n<')
-    )    
+    )
   end
 end
