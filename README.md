@@ -43,8 +43,8 @@ creating template extensions in order to allow the creation of component
 libraries.
 
 Papercraft automatically escapes all text emitted in templates according to the
-template type. For more information see the section on [sanitizing
-content](#sanitizing-content).
+template type. For more information see the section on [escaping
+content](#escaping-content).
 
 ```ruby
 require 'papercraft'
@@ -69,7 +69,7 @@ hello.render('world')
 - [Basic Usage](#basic-usage)
 - [Adding Tags](#adding-tags)
 - [Tag and Attribute Formatting](#tag-and-attribute-formatting)
-- [Sanitizing Content](#sanitizing-content)
+- [Escaping Content](#escaping-content)
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
 - [Template Blocks](#template-blocks)
@@ -198,9 +198,9 @@ Papercraft.html {
 }.render #=> '<cra_zy__:!tag>foo</cra_zy__:!tag>'
 ```
 
-## Sanitizing Content
+## Escaping Content
 
-Papercraft automatically sanitizes all text content emitted in a template. The
+Papercraft automatically escapes all text content emitted in a template. The
 specific escaping algorithm depends on the template type. For both HTML and XML
 templates, Papercraft uses
 [escape_utils](https://github.com/brianmario/escape_utils), specifically:
