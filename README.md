@@ -42,6 +42,10 @@ Papercraft includes built-in support for rendering Markdown (using
 creating template extensions in order to allow the creation of component
 libraries.
 
+Papercraft automatically escapes all text emitted in templates according to the
+template type. For more information see the section on [sanitizing
+content](#sanitizing-content).
+
 ```ruby
 require 'papercraft'
 
@@ -59,29 +63,30 @@ hello.render('world')
 #=> "<html><head><title>Title</title></head><body><h1>Hello, world!</h1></body></html>"
 ```
 
-## Table of content
+## Table of Content
 
-- [Installing papercraft](#installing-papercraft)
-- [Basic usage](#basic-usage)
-- [Adding tags](#adding-tags)
-- [Tag and attribute formatting](#tag-and-attribute-formatting)
-- [Template parameters](#template-parameters)
-- [Template logic](#template-logic)
-- [Template blocks](#template-blocks)
-- [Plain procs as templates](#plain-procs-as-templates)
-- [Template composition](#template-composition)
-- [Parameter and block application](#parameter-and-block-application)
-- [Higher-order templates](#higher-order-templates)
-- [Layout template composition](#layout-template-composition)
-- [Emitting raw HTML](#emitting-raw-html)
-- [Emitting a string with HTML Encoding](#emitting-a-string-with-html-encoding)
+- [Installing Papercraft](#installing-papercraft)
+- [Basic Usage](#basic-usage)
+- [Adding Tags](#adding-tags)
+- [Tag and Attribute Formatting](#tag-and-attribute-formatting)
+- [Sanitizing Content](#sanitizing-content)
+- [Template Parameters](#template-parameters)
+- [Template Logic](#template-logic)
+- [Template Blocks](#template-blocks)
+- [Plain Procs as Templates](#plain-procs-as-templates)
+- [Template Composition](#template-composition)
+- [Parameter and Block Application](#parameter-and-block-application)
+- [Higher-Order Templates](#higher-order-templates)
+- [Layout Template Composition](#layout-template-composition)
+- [Emitting Raw HTML](#emitting-raw-html)
+- [Emitting a String with HTML Encoding](#emitting-a-string-with-html-encoding)
 - [Emitting Markdown](#emitting-markdown)
-- [Working with MIME types](#working-with-mime-types)
-- [Deferred evaluation](#deferred-evaluation)
-- [XML templates](#xml-templates)
-- [JSON templates](#json-templates)
-- [Papercraft extensions](#papercraft-extensions)
-  - [Bundled extensions](#bundled-extensions)
+- [Working with MIME Types](#working-with-mime-types)
+- [Deferred Evaluation](#deferred-evaluation)
+- [XML Templates](#xml-templates)
+- [JSON Templates](#json-templates)
+- [Papercraft Extensions](#papercraft-extensions)
+  - [Bundled Extensions](#bundled-extensions)
 - [API Reference](#api-reference)
 
 ## Installing Papercraft
@@ -98,7 +103,7 @@ Or manually:
 $ gem install papercraft
 ```
 
-## Basic usage
+## Basic Usage
 
 To create an HTML template use `Papercraft.html`:
 
@@ -119,7 +124,7 @@ Rendering a template is done using `#render`:
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
 
-## Adding tags
+## Adding Tags
 
 Tags are added using unqualified method calls, and can be nested using blocks:
 
@@ -156,7 +161,7 @@ Papercraft.html { img src: '/my.gif' }.render #=> "<img src="/my.gif"/>
 Papercraft.html { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</p>"
 ```
 
-## Tag and attribute formatting
+## Tag and Attribute Formatting
 
 Papercraft does not make any presumption about what tags and attributes you can
 use. You can mix upper and lower case letters, and you can include arbitrary
@@ -193,7 +198,23 @@ Papercraft.html {
 }.render #=> '<cra_zy__:!tag>foo</cra_zy__:!tag>'
 ```
 
-## Template parameters
+## Sanitizing Content
+
+Papercraft automatically sanitizes all text content emitted in a template. The
+specific escaping algorithm depends on the template type. For both HTML and XML
+templates, Papercraft uses
+[escape_utils](https://github.com/brianmario/escape_utils), specifically:
+
+- HTML: `escape_utils.escape_html`
+- XML: `escape_utils.escape_xml`
+
+In order to emit raw HTML/XML, you can use the `#emit` method as [described
+below](#emitting-raw-html).
+
+JSON templates are rendered using the `json` gem bundled with Ruby, which takes
+care of escaping text values.
+
+## Template Parameters
 
 In Papercraft, parameters are always passed explicitly. This means that template
 parameters are specified as block parameters, and are passed to the template on
@@ -211,7 +232,7 @@ greeting = Papercraft.html { |name:| h1 "Hello, #{name}!" }
 greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 ```
 
-## Template logic
+## Template Logic
 
 Since Papercraft templates are just a bunch of Ruby, you can easily write your
 view logic right in the template:
@@ -226,7 +247,7 @@ Papercraft.html { |user = nil|
 }
 ```
 
-## Template blocks
+## Template Blocks
 
 Templates can also accept and render blocks by using `emit_yield`:
 
@@ -241,7 +262,7 @@ page = Papercraft.html {
 page.render { h1 'hi' }
 ```
 
-## Plain procs as templates
+## Plain Procs as Templates
 
 With Papercraft you can write a template as a plain Ruby proc, and later render
 it by passing it as a block to `Papercraft.html`:
@@ -258,7 +279,7 @@ greeting = ->(name) { h1 "Hello, #{name}!" }
 Papercraft.html(&greeting).render('world')
 ```
 
-## Template composition
+## Template Composition
 
 Papercraft makes it easy to compose multiple templates into a whole HTML
 document. A Papercraft template can contain other templates, as the following
@@ -308,7 +329,7 @@ Papercraft.html {
 }
 ```
 
-## Parameter and block application
+## Parameter and Block Application
 
 Parameters and blocks can be applied to a template without it being rendered, by
 using `#apply`. This mechanism is what allows template composition and the
@@ -333,7 +354,7 @@ wrapped_hello_world = div_wrap.apply(&hello_world)
 wrapped_hello_world.render #=> "<div><h1>Hello, world!</h1></div>"
 ```
 
-## Higher-order templates
+## Higher-Order Templates
 
 Papercraft also lets you create higher-order templates, that is,
 templates that take other templates as parameters, or as blocks. Higher-order
@@ -357,7 +378,7 @@ wrapped_greeter = div_wrap.apply { h1 'hi' }
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 ```
 
-## Layout template composition
+## Layout Template Composition
 
 One of the principal uses of higher-order templates is the creation of nested
 layouts. Suppose we have a website with a number of different layouts, and we'd
@@ -390,7 +411,7 @@ article_layout.render(
 )
 ```
 
-## Emitting raw HTML
+## Emitting Raw HTML
 
 Raw HTML can be emitted using `#emit`:
 
@@ -399,13 +420,13 @@ wrapped = Papercraft.html { |html| div { emit html } }
 wrapped.render("<h1>hi</h1>") #=> "<div><h1>hi</h1></div>"
 ```
 
-## Emitting a string with HTML Encoding
+## Emitting a String with HTML Encoding
 
 To emit a string with proper HTML encoding, without wrapping it in an HTML
 element, use `#text`:
 
 ```ruby
-Papercraft.html { str 'hi&lo' }.render #=> "hi&amp;lo"
+Papercraft.html { text 'hi&lo' }.render #=> "hi&amp;lo"
 ```
 
 ## Emitting Markdown
@@ -454,7 +475,7 @@ The deafult options can be configured by accessing
 Papercraft.default_kramdown_options[:auto_ids] = false
 ```
 
-## Working with MIME types
+## Working with MIME Types
 
 Papercraft lets you set and interrogate a template's MIME type, in order to be
 able to dynamically set the `Content-Type` HTTP response header. A template's
@@ -470,7 +491,7 @@ def serve_template(req, template)
 end
 ```
 
-## Deferred evaluation
+## Deferred Evaluation
 
 Deferred evaluation allows deferring the rendering of parts of a template until
 the last moment, thus allowing an inner template to manipulate the state of the
@@ -522,7 +543,7 @@ page = default_layout.apply {
 }
 ```
 
-## XML templates
+## XML Templates
 
 XML templates behave largely the same as HTML templates, with a few minor
 differences. XML templates employ a different encoding algorithm, and lack some
@@ -557,7 +578,7 @@ rss = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |resource:, **props
 }
 ```
 
-## JSON templates
+## JSON Templates
 
 JSON templates behave largely the same as HTML and XML templates. The only major
 difference is that for adding array items you'll need to use the `#item` method:
@@ -588,7 +609,7 @@ Papercraft.json {
 Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood in
 order to generate actual JSON.
 
-## Papercraft extensions
+## Papercraft Extensions
 
 Papercraft extensions are modules that contain one or more methods that can be
 used to render complex HTML components. Extension modules can be used by
@@ -669,7 +690,7 @@ be specifically required in order to be available to templates.
 For all bundled Papercraft extensions, there's no need to call
 `Papercraft.extension`, requiring the extension is sufficient.
 
-### SOAP extension
+### SOAP Extension
 
 > The SOAP extension was contributed by [@aemadrid](https://github.com/aemadrid).
 
