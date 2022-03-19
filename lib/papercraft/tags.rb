@@ -251,7 +251,7 @@ module Papercraft
             # emit nothing
           else
             @buffer << S_SPACE << att_repr(k) <<
-              S_EQUAL_QUOTE << v << S_QUOTE
+              S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
           end
         end
       }
