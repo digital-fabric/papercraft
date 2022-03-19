@@ -1,3 +1,8 @@
+## 0.24 2022-03-19
+
+- Fix usage of const components (#13)
+- Fix formatting of HTML/XML attributes for non-string values
+
 ## 0.23 2022-02-15
 
 - Remove unused `Encoding` module
