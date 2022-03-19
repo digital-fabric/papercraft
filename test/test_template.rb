@@ -171,3 +171,42 @@ class MimetypeTest < MiniTest::Test
     assert_equal 'foo/bar', t.mime_type
   end
 end
+
+Title = ->(title) { h1 title }
+
+Item = ->(id:, text:, checked:) {
+  li {
+    input name: id, type: 'checkbox', checked: checked
+    label text, for: id
+  }
+}
+
+ItemList = ->(items) {
+  ul {
+    items.each { |i|
+      Item(**i)
+    }
+  }
+}
+
+class ConstComponentTest < MiniTest::Test
+  def test_nested_composition
+    page = Papercraft.html { |title, items|
+      html5 {
+        head { Title(title) }
+        body { ItemList(items) }
+      }
+    }
+  
+    html = page.render('Hello from composed templates', [
+      { id: 1, text: 'foo', checked: false },
+      { id: 2, text: 'bar', checked: true }
+    ])
+  
+    assert_equal(
+      '<!DOCTYPE html><html><head><h1>Hello from composed templates</h1></head><body><ul><li><input name="1" type="checkbox"/><label for="1">foo</label></li><li><input name="2" type="checkbox" checked/><label for="2">bar</label></li></ul></body></html>',
+      html
+    )
+  end
+
+end

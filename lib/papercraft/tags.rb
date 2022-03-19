@@ -161,14 +161,13 @@ module Papercraft
     # @return [void]
     def method_missing(sym, *args, **opts, &block)
       tag = sym.to_s
-      repr = tag_repr(tag)
-      code = S_TAG_METHOD % {
-        tag: tag,
-        TAG: tag.upcase,
-        tag_pre: "<#{repr}".inspect,
-        tag_close: "</#{repr}>".inspect
-      }
-      self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
+      if tag =~ /^[A-Z]/ && (Object.const_defined?(tag))
+        define_const_tag_method(tag)
+        # return send(tag, *args, **opts)
+      else
+        define_tag_method(tag)
+      end
+
       send(sym, *args, **opts, &block)
     end
 
@@ -182,6 +181,33 @@ module Papercraft
     end
 
     private
+
+    # Defines a method that emits the given tag based on a constant. The
+    # constant must be defined on the main (Object) binding.
+    #
+    # @param tag [Symbol, String] tag/method name
+    # @return [void]
+    def define_const_tag_method(tag)
+      const = Object.const_get(tag)
+      self.class.define_method(tag) { |*a, **b, &blk|
+        emit const, *a, **b, &blk
+      }
+    end
+
+    # Defines a normal tag method.
+    #
+    # @param tag [Symbol, String] tag/method name
+    # @return [void]
+    def define_tag_method(tag)
+      repr = tag_repr(tag)
+      code = S_TAG_METHOD % {
+        tag: tag,
+        TAG: tag.upcase,
+        tag_pre: "<#{repr}".inspect,
+        tag_close: "</#{repr}>".inspect
+      }
+      self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
+    end
 
     # Emits an arbitrary object by converting it to string, then adding it to
     # the internal buffer. This method is called internally by `Renderer#emit`.
