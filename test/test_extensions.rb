@@ -131,6 +131,31 @@ class ExtensionsTest < MiniTest::Test
 end
 
 class InlineExtensionsTest < MiniTest::Test
+  module CustomTags
+    def label(text)
+      span text, class: 'label'
+    end
+  end
+
+  def test_inline_extend
+    t1 = Papercraft.html {
+      extend CustomTags
+      label('foo')
+    }
+    t2 = Papercraft.html {
+      label('bar')
+    }
+    t3 = Papercraft.html {
+      extend CustomTags
+      label('foo')
+      emit t2 # t2 should also have access to the extension
+    }
+
+    assert_equal '<span class="label">foo</span>', t1.render
+    assert_equal '<label>bar</label>', t2.render
+    assert_equal '<span class="label">foo</span><span class="label">bar</span>', t3.render
+  end
+
   def test_inline_def
     t = Papercraft.html {
       def part(text)

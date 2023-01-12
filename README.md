@@ -86,6 +86,7 @@ hello.render('world')
 - [XML Templates](#xml-templates)
 - [JSON Templates](#json-templates)
 - [Papercraft Extensions](#papercraft-extensions)
+  - [Extending Specific Templates](#extending-specific-templates)
   - [Inline Helper Methods](#inline-helper-methods)
   - [Bundled Extensions](#bundled-extensions)
 - [API Reference](#api-reference)
@@ -682,7 +683,29 @@ Papercraft.html {
 }
 ```
 
-## Inline Helper Methods
+### Extending Specific Templates
+
+Sometimes you wish to extend a specific template, without the extension API
+being available to other templates. To do this you can use `#extend`:
+
+```ruby
+module CustomTags
+  def label(text)
+    span text, class: 'label'
+  end
+end
+
+Papercraft.html {
+  extend CustomTags
+
+  label 'foo'
+}
+```
+
+The extension is in effect as long as the template is processing, so it is also
+accessible to any sub templates that are emitted.
+
+### Inline Helper Methods
 
 In addition to proper extensions defined in modules, you can also define
 individual extension methods inline in your Papercraft templates. You can do
@@ -733,7 +756,7 @@ def_tag(:section) do |title, &inner|
 end
 ```
 
-## Bundled Extensions
+### Bundled Extensions
 
 Papercraft comes bundled with a few extensions that address common use cases.
 All bundled extensions are namespaced under `Papercraft::Extensions`, and must
@@ -742,7 +765,7 @@ be specifically required in order to be available to templates.
 For all bundled Papercraft extensions, there's no need to call
 `Papercraft.extension`, requiring the extension is sufficient.
 
-### SOAP Extension
+#### SOAP Extension
 
 > The SOAP extension was contributed by [@aemadrid](https://github.com/aemadrid).
 
