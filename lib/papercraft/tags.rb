@@ -180,6 +180,29 @@ module Papercraft
       @buffer << escape_text(data)
     end
 
+    # Defines a custom tag. This is handy for defining helper or extension
+    # methods inside the template body.
+    #
+    #   Papercraft.html {
+    #     def_tag(:section) { |title, &inner|
+    #       div {
+    #         h1 title
+    #         emit inner
+    #       }
+    #     }
+    #
+    #     section('Foo') {
+    #       p 'Bar'
+    #     }
+    #   }
+    #
+    # @param tag [Symbol, String] tag/method name
+    # @param block [Proc] method body
+    # @return [void]
+    def def_tag(sym, &block)
+      self.class.define_method(sym, &block)
+    end
+
     private
 
     # Defines a method that emits the given tag based on a constant. The

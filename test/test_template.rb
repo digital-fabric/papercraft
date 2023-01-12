@@ -208,5 +208,4 @@ class ConstComponentTest < MiniTest::Test
       html
     )
   end
-
 end

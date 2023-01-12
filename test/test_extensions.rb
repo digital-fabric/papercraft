@@ -129,3 +129,30 @@ class ExtensionsTest < MiniTest::Test
     )
   end
 end
+
+class InlineExtensionsTest < MiniTest::Test
+  def test_inline_def
+    t = Papercraft.html {
+      def part(text)
+        span text, class: 'part'
+      end
+
+      part 'foo'
+      part 'bar'
+    }
+
+    assert_equal '<span class="part">foo</span><span class="part">bar</span>', t.render
+  end
+
+  def test_def_tag
+    t = Papercraft.html {
+      def_tag(:part) { |t, **a, &b| div(class: 'part', **a) { h1 t; emit b } }
+
+      part('foo', id: 'bar') {
+        p 'hello'
+      }
+    }
+
+    assert_equal '<div class="part" id="bar"><h1>foo</h1><p>hello</p></div>', t.render
+  end
+end
