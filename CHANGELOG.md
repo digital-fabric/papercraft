@@ -1,3 +1,7 @@
+## 0.25 2023-01-12
+
+- Implement `#def_tag` for defining custom tags inline
+
 ## 0.24 2022-03-19
 
 - Fix usage of const components (#13)

@@ -86,6 +86,7 @@ hello.render('world')
 - [XML Templates](#xml-templates)
 - [JSON Templates](#json-templates)
 - [Papercraft Extensions](#papercraft-extensions)
+  - [Inline Helper Methods](#inline-helper-methods)
   - [Bundled Extensions](#bundled-extensions)
 - [API Reference](#api-reference)
 
@@ -679,6 +680,57 @@ Papercraft.html {
     bootstrap.card_link 'Another link', href: '#bar'
   }
 }
+```
+
+## Inline Helper Methods
+
+In addition to proper extensions defined in modules, you can also define
+individual extension methods inline in your Papercraft templates. You can do
+this using any of the following techniques:
+
+1. Define a method in the template body:
+
+```ruby
+Papercraft.html {
+  def label(text)
+    span text, class: 'label'
+  end
+
+  label 'foo'
+  label 'bar'
+}
+```
+
+2. Use `def_tag` to define a custom tag:
+
+```ruby
+Papercraft.html {
+  def_tag(:label) { |text| span text, class: 'label' }
+
+  label 'foo'
+  label 'bar'
+}
+```
+
+Note that using any of the above methods you can also create custom components
+that take a block with inner HTML:
+
+```ruby
+# using def
+def section(title, &inner)
+  div {
+    h1 title
+    emit inner
+  }
+end
+
+# using def_tag
+def_tag(:section) do |title, &inner|
+  div {
+    h1 title
+    emit inner
+  }
+end
 ```
 
 ## Bundled Extensions
