@@ -1,3 +1,7 @@
+## 0.26 2023-01-13
+
+- Add support for namespaced local extensions using `#extend`
+
 ## 0.25 2023-01-12
 
 - Implement `#def_tag` for defining custom tags inline
