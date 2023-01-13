@@ -156,6 +156,30 @@ class InlineExtensionsTest < MiniTest::Test
     assert_equal '<span class="label">foo</span><span class="label">bar</span>', t3.render
   end
 
+  def test_inline_extend_with_hash
+    t1 = Papercraft.html {
+      extend custom: CustomTags
+      custom.label('foo')
+    }
+    errs = []
+    t2 = Papercraft.html do
+      custom.label('bar')
+    rescue => e
+      errs << e
+    end
+    t3 = Papercraft.html {
+      extend custom: CustomTags
+      custom.label('foo')
+      emit t2 # t2 should also have access to the extension
+    }
+
+    assert_equal '<span class="label">foo</span>', t1.render
+    t2.render
+    assert_equal 1, errs.size
+    assert_kind_of NoMethodError, errs.first
+    assert_equal '<span class="label">foo</span><span class="label">bar</span>', t3.render
+  end
+
   def test_inline_def
     t = Papercraft.html {
       def part(text)

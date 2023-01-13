@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative './extension_proxy'
+
 module Papercraft  
   # Markup (HTML/XML) extensions
   module Tags
@@ -203,6 +205,43 @@ module Papercraft
       self.class.define_method(sym, &block)
     end
 
+    alias_method :orig_extend, :extend
+
+    # Extends the template with the provided module or map of modules. When
+    # given a module, the template body will be extended with the module,
+    # and will have access to all the module's methods:
+    #
+    #   module CustomTags
+    #     def label(text)
+    #       span text, class: 'label'
+    #     end
+    #   end
+    #
+    #   Papercraft.html {
+    #     extend CustomTags
+    #     label('foo')
+    #   }
+    #
+    # When given a hash, each module in the hash is namespaced, and can be
+    # accessed using its key:
+    #
+    #   Papercraft.html {
+    #     extend custom: CustomTags
+    #     custom.label('foo')
+    #   }
+    #
+    # @param ext [Module, Hash] extension module or hash mapping symbols to modules
+    # @return [Object] self
+    def extend(ext)
+      if ext.is_a?(Module)
+        orig_extend(ext)
+      else
+        ext.each do |sym, mod|
+          define_extension_method(sym, mod)
+        end
+      end
+    end
+
     private
 
     # Defines a method that emits the given tag based on a constant. The
@@ -230,6 +269,17 @@ module Papercraft
         tag_close: "</#{repr}>".inspect
       }
       self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
+    end
+
+    # Defines a namespace referring to the given module.
+    #
+    # @param sym [Symbol] namespace
+    # @param mod [Module] module
+    # @return [void]
+    def define_extension_method(sym, mod)
+      self.singleton_class.define_method(sym) do
+        (@extension_proxies ||= {})[mod] ||= ExtensionProxy.new(self, mod)
+      end
     end
 
     # Emits an arbitrary object by converting it to string, then adding it to

@@ -685,8 +685,8 @@ Papercraft.html {
 
 ### Extending Specific Templates
 
-Sometimes you wish to extend a specific template, without the extension API
-being available to other templates. To do this you can use `#extend`:
+Sometimes you wish to extend a specific template locally, without the extension
+API being available to other templates. To do this you can use `#extend`:
 
 ```ruby
 module CustomTags
@@ -704,6 +704,17 @@ Papercraft.html {
 
 The extension is in effect as long as the template is processing, so it is also
 accessible to any sub templates that are emitted.
+
+Local extensions can also be namespaced by passing `#extend` a hash mapping
+namespaces to modules:
+
+```ruby
+Papercraft.html {
+  extend custom: CustomTags
+
+  custom.label 'foo'
+}
+```
 
 ### Inline Helper Methods
 
