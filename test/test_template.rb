@@ -8,11 +8,11 @@ class ParametersTest < MiniTest::Test
   def test_ordinal_parameters
     h = Papercraft.html { |foo| h1 foo }
 
-    assert_equal '<h1/>', h.render
+    assert_equal '<h1></h1>', h.render
     assert_equal '<h1>bar</h1>', h.render('bar')
 
     h = Papercraft.html { |foo, *rest| h2 foo; h3 rest.inspect }
-    assert_equal '<h2/><h3>[]</h3>', h.render
+    assert_equal '<h2></h2><h3>[]</h3>', h.render
     assert_equal '<h2>23</h2><h3>[]</h3>', h.render(23)
     assert_equal '<h2>42</h2><h3>[43, 44]</h3>',
       h.render(42, 43, 44)
@@ -61,7 +61,7 @@ class EmitComponentTest < MiniTest::Test
   def test_emit_with_proc_params
     r = Papercraft.html { |p| body { emit p } }
     assert_equal '<body><h1>hi</h1></body>', r.render(proc { h1 'hi' })
-    assert_equal '<body><foo/></body>', r.render(proc { foo })
+    assert_equal '<body><foo></foo></body>', r.render(proc { foo })
   end
 
   def test_emit_with_params

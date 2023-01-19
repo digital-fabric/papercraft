@@ -10,6 +10,7 @@ module Papercraft
     S_LT_SLASH        = '</'
     S_SPACE_LT_SLASH  = ' </'
     S_SLASH_GT        = '/>'
+    S_GT_LT_SLASH     = '></'
     S_SPACE           = ' '
     S_EQUAL_QUOTE     = '="'
     S_QUOTE           = '"'
@@ -18,6 +19,36 @@ module Papercraft
 
     S_TAG_METHOD_LINE = __LINE__ + 2
     S_TAG_METHOD = <<~EOF
+      S_TAG_%<TAG>s_PRE = %<tag_pre>s
+      S_TAG_%<TAG>s_CLOSE = %<tag_close>s
+
+      def %<tag>s(text = nil, **props, &block)
+        if text.is_a?(Hash) && props.empty?
+          props = text
+          text = nil
+        end
+
+        @buffer << S_TAG_%<TAG>s_PRE
+        emit_props(props) unless props.empty?
+
+        if block
+          @buffer << S_GT
+          instance_eval(&block)
+          @buffer << S_TAG_%<TAG>s_CLOSE
+        elsif Proc === text
+          @buffer << S_GT
+          emit(text)
+          @buffer << S_TAG_%<TAG>s_CLOSE
+        elsif text
+          @buffer << S_GT << escape_text(text.to_s) << S_TAG_%<TAG>s_CLOSE
+        else
+          @buffer << S_GT << S_TAG_%<TAG>s_CLOSE
+        end
+      end
+    EOF
+
+    S_VOID_TAG_METHOD_LINE = __LINE__ + 2
+    S_VOID_TAG_METHOD = <<~EOF
       S_TAG_%<TAG>s_PRE = %<tag_pre>s
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
@@ -149,8 +180,10 @@ module Papercraft
         @buffer << S_LT_SLASH << tag << S_GT
       elsif text
         @buffer << S_GT << escape_text(text.to_s) << S_LT_SLASH << tag << S_GT
-      else
+      elsif is_void_element_tag?(sym)
         @buffer << S_SLASH_GT
+      else
+        @buffer << S_GT_LT_SLASH << tag << S_GT
       end
     end
 
@@ -262,13 +295,20 @@ module Papercraft
     # @return [void]
     def define_tag_method(tag)
       repr = tag_repr(tag)
-      code = S_TAG_METHOD % {
+      if is_void_element_tag?(tag)
+        tmpl = S_VOID_TAG_METHOD
+        line = S_VOID_TAG_METHOD_LINE
+      else
+        tmpl = S_TAG_METHOD
+        line = S_TAG_METHOD_LINE
+      end
+      code = tmpl % {
         tag: tag,
         TAG: tag.upcase,
         tag_pre: "<#{repr}".inspect,
         tag_close: "</#{repr}>".inspect
       }
-      self.class.class_eval(code, __FILE__, S_TAG_METHOD_LINE)
+      self.class.class_eval(code, __FILE__, line)
     end
 
     # Defines a namespace referring to the given module.

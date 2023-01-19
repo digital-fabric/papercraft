@@ -23,6 +23,17 @@ class HtmlTest < MiniTest::Test
     h2 = Papercraft.html(h)
     assert_equal h2, h
   end
+
+  def test_void_elements
+    h = Papercraft.html {
+      hr
+      input value: 'foo'
+      br
+      text 'hi'
+      hr
+    }
+    assert_equal '<hr/><input value="foo"/><br/>hi<hr/>', h.render
+  end
 end
 
 class RenderTest < MiniTest::Test
@@ -38,17 +49,17 @@ end
 class AttributesTest < MiniTest::Test
   def test_that_attributes_are_supported_and_escaped
     assert_equal(
-      '<div class="blue and green"/>',
+      '<div class="blue and green"></div>',
       Papercraft.html { div class: 'blue and green' }.render
     )
 
     assert_equal(
-      '<div onclick="return doit();"/>',
+      '<div onclick="return doit();"></div>',
       Papercraft.html { div onclick: 'return doit();' }.render
     )
 
     assert_equal(
-      '<a href="/?q=a%20b"/>',
+      '<a href="/?q=a%20b"></a>',
       Papercraft.html { a href: '/?q=a b' }.render
     )
   end
@@ -69,7 +80,7 @@ end
 class DynamicTagMethodTest < MiniTest::Test
   def test_that_dynamic_tag_method_accepts_no_arguments
     assert_equal(
-      '<div/>',
+      '<div></div>',
       Papercraft.html { div() }.render
     )
   end
@@ -102,7 +113,7 @@ class DynamicTagMethodTest < MiniTest::Test
     )
 
     assert_equal(
-      '<my-nifty-tag/>',
+      '<my-nifty-tag></my-nifty-tag>',
       Papercraft.html { my_nifty_tag }.render
     )
   end
@@ -132,7 +143,7 @@ class DynamicTagMethodTest < MiniTest::Test
 
   def test_that_dynamic_tag_method_accepts_block
     assert_equal(
-      '<div><p><a/></p></div>',
+      '<div><p><a></a></p></div>',
       Papercraft.html { div { p { a() } } }.render
     )
   end
@@ -141,7 +152,7 @@ end
 class TagMethodTest < MiniTest::Test
   def test_that_tag_method_accepts_no_arguments
     assert_equal(
-      '<div/>',
+      '<div></div>',
       Papercraft.html { tag(:div) }.render
     )
   end
@@ -174,7 +185,7 @@ class TagMethodTest < MiniTest::Test
     )
 
     assert_equal(
-      '<my-nifty-tag/>',
+      '<my-nifty-tag></my-nifty-tag>',
       Papercraft.html { tag :my_nifty_tag }.render
     )
   end
@@ -204,7 +215,7 @@ class TagMethodTest < MiniTest::Test
 
   def test_that_tag_method_accepts_block
     assert_equal(
-      '<div><p><a/></p></div>',
+      '<div><p><a></a></p></div>',
       Papercraft.html { tag(:div) { tag(:p) { tag :a } } }.render
     )
   end

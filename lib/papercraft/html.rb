@@ -88,6 +88,16 @@ module Papercraft
 
     private
 
+    def is_void_element_tag?(tag)
+      case tag
+      # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+      when 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'
+        true
+      else
+        false
+      end
+    end
+
     # Escapes the given text using HTML entities.
     #
     # @param text [String] text

@@ -10,7 +10,11 @@ module Papercraft
 
     private
 
-    # Converts a tag to its string representation. Underscores will be converted
+    def is_void_element_tag?(tag)
+      false
+    end
+
+      # Converts a tag to its string representation. Underscores will be converted
     # to dashes, double underscores will be converted to colon.
     #
     # @param tag [Symbol, String] tag
