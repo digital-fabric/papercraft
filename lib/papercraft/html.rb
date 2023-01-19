@@ -88,9 +88,14 @@ module Papercraft
 
     private
 
+    # Returns true if the given tag is a void element, in order to render a self
+    # closing tag. See spec: https://html.spec.whatwg.org/multipage/syntax.html#void-elements.
+    #
+    # @param text [String] tag
+    # @return [Bool] is it a void element
     def is_void_element_tag?(tag)
       case tag
-      # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+      # 
       when 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'
         true
       else

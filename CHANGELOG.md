@@ -1,3 +1,7 @@
+## 0.27 2023-01-19
+
+- Fix rendering of HTML void element tags
+
 ## 0.26 2023-01-13
 
 - Add support for namespaced local extensions using `#extend`

@@ -10,6 +10,10 @@ module Papercraft
 
     private
 
+    # Returns false (no void elements in XML)
+    #
+    # @param tag [String] tag
+    # @return [false] false
     def is_void_element_tag?(tag)
       false
     end
