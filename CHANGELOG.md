@@ -1,3 +1,7 @@
+## 0.29 2023-03-11
+
+- Add Tilt integration (#15)
+
 ## 0.28 2023-03-11
 
 - Add `HTML#import_map`, `HTML#js_module` methods
