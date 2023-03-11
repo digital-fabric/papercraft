@@ -66,6 +66,7 @@ hello.render('world')
 ## Table of Content
 
 - [Installing Papercraft](#installing-papercraft)
+- [Using with Tilt](#using-with-tilt)
 - [Basic Usage](#basic-usage)
 - [Adding Tags](#adding-tags)
 - [Tag and Attribute Formatting](#tag-and-attribute-formatting)
@@ -124,6 +125,45 @@ Rendering a template is done using `#render`:
 
 ```ruby
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
+```
+
+## Using with Tilt
+
+Papercraft templates can also be rendered using Tilt:
+
+```ruby
+require 'tilt/papercraft'
+
+# loading from a file (with a .papercraft extension)
+template = Tilt.new('mytemplate.papercraft')
+template.render
+
+# defining a template inline:
+template = Tilt['papercraft'].new { <<~RUBY
+  h1 'Hello'
+RUBY
+}
+template.render
+```
+
+When rendering using Tilt, the following local variables are available to the
+template: `scope`, `locals` and `block`:
+
+```ruby
+template = Tilt['papercraft'].new { <<~RUBY
+  title scope.title
+  
+  h1 locals[:message]
+
+  emit block if block
+RUBY
+}
+
+def title
+  'foo'
+end
+
+template.render(self, message: 'bar') { p 'this is a paragraph' }
 ```
 
 ## Adding Tags

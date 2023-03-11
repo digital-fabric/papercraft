@@ -20,7 +20,7 @@ GEM
     minitest (5.15.0)
     rexml (3.2.5)
     rouge (3.27.0)
-    tilt (2.0.10)
+    tilt (2.1.0)
 
 PLATFORMS
   arm64-darwin-21
@@ -32,7 +32,7 @@ DEPENDENCIES
   erubis (~> 2.7.0)
   minitest (~> 5.15)
   papercraft!
-  tilt (~> 2.0.9)
+  tilt (~> 2.1.0)
 
 BUNDLED WITH
    2.3.3
