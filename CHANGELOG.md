@@ -1,3 +1,7 @@
+## 0.28 2023-03-11
+
+- Add `HTML#import_map`, `HTML#js_module` methods
+
 ## 0.27 2023-01-19
 
 - Fix rendering of HTML void element tags
