@@ -71,7 +71,47 @@ module Papercraft
         @buffer << '></script>'
       end
     end
+
+    # Returns a versioned URL for the given file spec.
+    #
+    # @param href [String] relative file path
+    # @param root_path [String] root path for file
+    # @param root_url [String] root URL
+    # @return [String] versioned URL
+    def versioned_file_href(href, root_path, root_url = '')
+      fn = File.join(root_path, href)
+      version = File.stat(fn).mtime.to_i rescue 0
+      "#{root_url}/#{href}?v=#{version}"
+    end  
   
+    # Emits an import map scrit tag. If a hash is given, emits the hash as is.
+    # If a string is given, searches for all *.js files under the given path,
+    # and emits an import map including all found files, with versioned URLs.
+    #
+    # @param root_path [String, Hash] root path or hash
+    # @param root_url [String] root URL to construct URLs against
+    # @return [void]
+    def import_map(root_path, root_url = '')
+      if root_path.is_a?(Hash)
+        script(root_path.to_json, type: 'importmap')
+      else
+        map = Dir["#{root_path}/*.js"].sort.each_with_object({}) do |fn, h|
+          name = File.basename(fn)
+          m = fn.match(/\/([^\/]+)\.js$/)
+          h[m[1]] = versioned_file_href(name, root_path, root_url)
+        end
+        script(map.to_json, type: 'importmap')
+      end
+    end
+
+    # Emits a script tag with type attribute set to module.
+    #
+    # @param code [String] JS code
+    # @return [void]
+    def js_module(code)
+      script code, type: 'module'
+    end
+
     # Converts and emits the given markdown. Papercraft uses
     # [Kramdown](https://github.com/gettalong/kramdown/) to do the Markdown to
     # HTML conversion. Optional Kramdown settings can be provided in order to

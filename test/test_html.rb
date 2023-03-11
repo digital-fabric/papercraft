@@ -34,6 +34,120 @@ class HtmlTest < MiniTest::Test
     }
     assert_equal '<hr/><input value="foo"/><br/>hi<hr/>', h.render
   end
+
+  def test_html5
+    assert_equal(
+      '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
+      Papercraft.html { html5 { div { h1 'foobar' } } }.render
+    )
+  end
+
+  def test_link_stylesheet
+    html = Papercraft.html {
+      link_stylesheet '/assets/style.css'
+    }
+    assert_equal(
+      '<link rel="stylesheet" href="/assets/style.css"/>',
+      html.render
+    )
+
+    html = Papercraft.html {
+      link_stylesheet '/assets/style.css', media: 'print'
+    }
+    assert_equal(
+      '<link media="print" rel="stylesheet" href="/assets/style.css"/>',
+      html.render
+    )
+  end
+
+  def test_style
+    html = Papercraft.html {
+      style <<~CSS.chomp
+        * { color: red }
+        a & b { color: green }
+      CSS
+    }
+    assert_equal(
+      "<style>* { color: red }\na & b { color: green }</style>",
+      html.render
+    )
+  end
+
+  def test_script
+    html = Papercraft.html {
+      script <<~JS.chomp
+        if (a && b) c();
+      JS
+    }
+    assert_equal(
+      "<script>if (a && b) c();</script>",
+      html.render
+    )
+  end
+
+  def test_empty_script
+    html = Papercraft.html {
+      script src: '/static/stuff.js'
+    }
+    assert_equal(
+      "<script src=\"/static/stuff.js\"></script>",
+      html.render
+    )
+  end
+
+  def test_html_encoding
+    html = Papercraft.html {
+      span 'me, myself & I'
+    }
+
+    assert_equal(
+      '<span>me, myself &amp; I</span>',
+      html.render
+    )
+  end
+
+  def test_import_map_hash
+    html = Papercraft.html {
+      import_map(a: '/foo/a.js', b: '/bar/b.js')
+    }
+
+    assert_equal(
+      '<script type="importmap">{"a":"/foo/a.js","b":"/bar/b.js"}</script>',
+      html.render
+    )
+  end
+
+  def calc_versioned_js_file_url(name)
+    stat = File.stat(File.join(__dir__, 'js', name))
+    "/static/js/#{name}?v=#{stat.mtime.to_i}"
+  end
+
+  def test_import_map_path
+    html = Papercraft.html {
+      import_map(File.join(__dir__, 'js'), '/static/js')
+    }
+
+    foo_url = calc_versioned_js_file_url('foo.js')
+    bar_url = calc_versioned_js_file_url('bar.js')
+
+    expected_map = { 'bar' => bar_url, 'foo' => foo_url }
+
+    assert_equal(
+      "<script type=\"importmap\">#{expected_map.to_json}</script>",
+      html.render
+    )
+  end
+
+  def test_js_module
+    html = Papercraft.html {
+      js_module 'foo( );'
+    }
+
+    assert_equal(
+      '<script type="module">foo( );</script>',
+      html.render
+    )
+  end
 end
 
 class RenderTest < MiniTest::Test
@@ -291,79 +405,6 @@ class ScopeTest < MiniTest::Test
     assert_equal(
       '<p>foobar</p>',
       Papercraft.html { p text }.render
-    )
-  end
-end
-
-class HTMLTest < MiniTest::Test
-  def test_html5
-    assert_equal(
-      '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
-      Papercraft.html { html5 { div { h1 'foobar' } } }.render
-    )
-  end
-
-  def test_link_stylesheet
-    html = Papercraft.html {
-      link_stylesheet '/assets/style.css'
-    }
-    assert_equal(
-      '<link rel="stylesheet" href="/assets/style.css"/>',
-      html.render
-    )
-
-    html = Papercraft.html {
-      link_stylesheet '/assets/style.css', media: 'print'
-    }
-    assert_equal(
-      '<link media="print" rel="stylesheet" href="/assets/style.css"/>',
-      html.render
-    )
-  end
-
-  def test_style
-    html = Papercraft.html {
-      style <<~CSS.chomp
-        * { color: red }
-        a & b { color: green }
-      CSS
-    }
-    assert_equal(
-      "<style>* { color: red }\na & b { color: green }</style>",
-      html.render
-    )
-  end
-
-  def test_script
-    html = Papercraft.html {
-      script <<~JS.chomp
-        if (a && b) c();
-      JS
-    }
-    assert_equal(
-      "<script>if (a && b) c();</script>",
-      html.render
-    )
-  end
-
-  def test_empty_script
-    html = Papercraft.html {
-      script src: '/static/stuff.js'
-    }
-    assert_equal(
-      "<script src=\"/static/stuff.js\"></script>",
-      html.render
-    )
-  end
-
-  def test_html_encoding
-    html = Papercraft.html {
-      span 'me, myself & I'
-    }
-
-    assert_equal(
-      '<span>me, myself &amp; I</span>',
-      html.render
     )
   end
 end

@@ -198,7 +198,6 @@ module Papercraft
       tag = sym.to_s
       if tag =~ /^[A-Z]/ && (Object.const_defined?(tag))
         define_const_tag_method(tag)
-        # return send(tag, *args, **opts)
       else
         define_tag_method(tag)
       end
