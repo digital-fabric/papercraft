@@ -84,6 +84,7 @@ hello.render('world')
 - [Emitting Markdown](#emitting-markdown)
 - [Working with MIME Types](#working-with-mime-types)
 - [Deferred Evaluation](#deferred-evaluation)
+- [HTML Templates](#html-templates)
 - [XML Templates](#xml-templates)
 - [JSON Templates](#json-templates)
 - [Papercraft Extensions](#papercraft-extensions)
@@ -198,14 +199,28 @@ Papercraft.html { hr() }.render #=> "<hr/>"
 Tag methods also accept tag attributes, given as a hash:
 
 ```ruby
-Papercraft.html { img src: '/my.gif' }.render #=> "<img src="/my.gif"/>
+Papercraft.html { img src: '/my.gif' }.render #=> "<img src=\"/my.gif\"/>"
 
 Papercraft.html { p "foobar", class: 'important' }.render #=> "<p class=\"important\">foobar</p>"
 ```
 
+A `true` attribute value will emit a valueless attribute. A `nil` or `false`
+attribute value will emit nothing:
+
+```ruby
+Papercraft.html { button disabled: nil }.render #=> "<button></button>"
+Papercraft.html { button disabled: true }.render #=> "<button disabled></button>"
+```
+
+An attribute value given as an array will be joined by space characters:
+
+```ruby
+Papercraft.html { div class: [:foo, :bar] }.render #=> "<div class=\"foo bar\"></div>"
+```
+
 ## Tag and Attribute Formatting
 
-Papercraft does not make any presumption about what tags and attributes you can
+Papercraft does not make any assumption about what tags and attributes you can
 use. You can mix upper and lower case letters, and you can include arbitrary
 characters in tag and attribute names. However, in order to best adhere to the
 HTML and XML specs and common practices, tag names and attributes will be
@@ -276,7 +291,7 @@ greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 
 ## Template Logic
 
-Since Papercraft templates are just a bunch of Ruby, you can easily write your
+Since Papercraft templates are just a bunch of Ruby, you can easily embed your
 view logic right in the template:
 
 ```ruby
@@ -585,6 +600,24 @@ page = default_layout.apply {
 }
 ```
 
+## HTML Templates
+
+HTML templates include a few HTML-specific methods to facilitate writing modern
+HTML:
+
+- `html5 { ... }` - emits an HTML 5 DOCTYPE (`<!DOCTYPE html>`)
+- `import_map(root_path, root_url)` - emits an import map including all files
+  matching `<root_path>/*.js`, based on the given `root_url`
+- `js_module(js)` - emits a `<script type="module">` element
+- `link_stylesheet(href, **attributes)` - emits a `<link rel="stylesheet" ...>`
+  element
+- `script(js, **attributes)` - emits an inline `<script>` element
+- `style(css, **attributes)` - emits an inline `<style>` element
+- `versioned_file_href(href, root_path, root_url)` - calculates a versioned href
+  for the given file
+
+[HTML docs](https://www.rubydoc.info/gems/papercraft/Papercraft/HTML)
+
 ## XML Templates
 
 XML templates behave largely the same as HTML templates, with a few minor
@@ -620,6 +653,8 @@ rss = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |resource:, **props
 }
 ```
 
+[XML docs](https://www.rubydoc.info/gems/papercraft/Papercraft/XML)
+
 ## JSON Templates
 
 JSON templates behave largely the same as HTML and XML templates. The only major
@@ -650,6 +685,8 @@ Papercraft.json {
 
 Papercraft uses the [JSON gem](https://rubyapi.org/3.1/o/json) under the hood in
 order to generate actual JSON.
+
+[JSON docs](https://www.rubydoc.info/gems/papercraft/Papercraft/JSON)
 
 ## Papercraft Extensions
 
@@ -856,6 +893,8 @@ xml = Papercraft.xml {
   }
 }
 ```
+
+[SOAP docs](https://www.rubydoc.info/gems/papercraft/Papercraft/Extensions/Soap)
 
 ## API Reference
 

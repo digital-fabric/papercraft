@@ -1,3 +1,7 @@
+## 1.0 2023-03-30
+
+- Add support for Array attribute values
+
 ## 0.29 2023-03-11
 
 - Add Tilt integration (#15)
