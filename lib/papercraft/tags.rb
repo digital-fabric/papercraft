@@ -387,6 +387,10 @@ module Papercraft
             @buffer << S_SPACE << att_repr(k)
           when false, nil
             # emit nothing
+          when Array
+            v = v.join(' ')
+            @buffer << S_SPACE << att_repr(k) <<
+              S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
           else
             @buffer << S_SPACE << att_repr(k) <<
               S_EQUAL_QUOTE << escape_text(v) << S_QUOTE

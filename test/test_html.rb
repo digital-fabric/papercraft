@@ -161,7 +161,7 @@ class RenderTest < MiniTest::Test
 end
 
 class AttributesTest < MiniTest::Test
-  def test_that_attributes_are_supported_and_escaped
+  def test_attribute_encoding
     assert_equal(
       '<div class="blue and green"></div>',
       Papercraft.html { div class: 'blue and green' }.render
@@ -178,7 +178,7 @@ class AttributesTest < MiniTest::Test
     )
   end
 
-  def test_that_valueless_attributes_are_supported
+  def test_valueless_attributes
     assert_equal(
       '<input type="checkbox" checked/>',
       Papercraft.html { input type: 'checkbox', checked: true }.render
@@ -187,6 +187,18 @@ class AttributesTest < MiniTest::Test
     assert_equal(
       '<input type="checkbox"/>',
       Papercraft.html { input type: 'checkbox', checked: false }.render
+    )
+  end
+
+  def test_array_attributes
+    assert_equal(
+      '<div class="foo bar"></div>',
+      Papercraft.html { div class: [:foo, :bar] }.render
+    )
+
+    assert_equal(
+      '<div class="foo  bar"></div>',
+      Papercraft.html { div class: [:foo, nil, 'bar'] }.render
     )
   end
 end
