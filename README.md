@@ -130,7 +130,7 @@ html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 
 ## Using with Tilt
 
-Papercraft templates can also be rendered using Tilt:
+Papercraft templates can also be rendered using [Tilt](https://github.com/jeremyevans/tilt):
 
 ```ruby
 require 'tilt/papercraft'
