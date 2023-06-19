@@ -55,7 +55,7 @@ module Papercraft
 
       @buffer << '>' << css << '</style>'
     end
-  
+
     # Emits an inline JS script element.
     #
     # @param js [String, nil] Javascript code
@@ -83,7 +83,7 @@ module Papercraft
       version = File.stat(fn).mtime.to_i rescue 0
       "#{root_url}/#{href}?v=#{version}"
     end  
-  
+
     # Emits an import map scrit tag. If a hash is given, emits the hash as is.
     # If a string is given, searches for all *.js files under the given path,
     # and emits an import map including all found files, with versioned URLs.

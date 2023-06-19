@@ -141,8 +141,8 @@ module Papercraft
       end
       @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
     end
-    
-    
+
+
     # Emits an XML tag with the given content, properties and optional block.
     # This method is an alternative to emitting XML tags using dynamically
     # created methods. This is particularly useful when using extensions that
@@ -337,7 +337,7 @@ module Papercraft
     # @return [void]
     def render_deferred_proc(&block)
       old_buffer = @buffer
-      
+
       @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
       @parts = nil
 

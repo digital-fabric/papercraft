@@ -13,9 +13,9 @@ require_relative 'papercraft/renderer'
 module Papercraft
   # Exception class used to signal templating-related errors
   class Error < RuntimeError; end
-  
+
   class << self
-    
+
     # Installs one or more extensions. Extensions enhance templating capabilities
     # by adding namespaced methods to emplates. An extension is implemented as a
     # Ruby module containing one or more methods. Each method in the extension
@@ -29,7 +29,7 @@ module Papercraft
     def extension(map)
       Renderer.extension(map)
     end
-    
+
     # Creates a new papercraft template. `Papercraft.html` can take either a proc
     # argument or a block. In both cases, the proc is converted to a
     # `Papercraft::Template`.
@@ -44,7 +44,7 @@ module Papercraft
       template ||= o
       Papercraft::Template.new(mode: :html, mime_type: mime_type, &template)
     end
-    
+
     # Creates a new Papercraft template in XML mode. `Papercraft.xml` can take
     # either a proc argument or a block. In both cases, the proc is converted to a
     # `Papercraft::Template`.
@@ -59,7 +59,7 @@ module Papercraft
       template ||= o
       Papercraft::Template.new(mode: :xml, mime_type: mime_type, &template)
     end
-    
+
     # Creates a new Papercraft template in JSON mode. `Papercraft.json` can take
     # either a proc argument or a block. In both cases, the proc is converted to a
     # `Papercraft::Template`.
@@ -85,7 +85,7 @@ module Papercraft
       opts = default_kramdown_options.merge(opts)
       Kramdown::Document.new(markdown, **opts).to_html
     end
-    
+
     # Returns the default Kramdown options used for rendering Markdown.
     #
     # @return [Hash] Kramdown options

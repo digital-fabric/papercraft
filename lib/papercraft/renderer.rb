@@ -6,7 +6,7 @@ require_relative './json'
 require_relative './extension_proxy'
 
 module Papercraft
-  
+
   # A Renderer renders a Papercraft template into a string
   class Renderer
 
@@ -131,10 +131,10 @@ module Papercraft
     def emit_yield(*a, **b)
       block = @emit_yield_stack&.pop
       raise Papercraft::Error, "No block given" unless block
-      
+
       instance_exec(*a, **b, &block)
     end
-    
+
     private
 
     # Pushes the given block onto the emit_yield stack.

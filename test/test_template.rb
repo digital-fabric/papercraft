@@ -16,7 +16,7 @@ class ParametersTest < MiniTest::Test
     assert_equal '<h2>23</h2><h3>[]</h3>', h.render(23)
     assert_equal '<h2>42</h2><h3>[43, 44]</h3>',
       h.render(42, 43, 44)
-    
+
     h = Papercraft.html { |foo = true| emit foo ? 'yes' : 'no' }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(false)
@@ -34,7 +34,7 @@ class ParametersTest < MiniTest::Test
     assert_raises(Papercraft::Error) { h.render(bar: 2) }
     assert_equal '<h2>42</h2><h3>43</h3>',
       h.render(foo: 42, bar: 43)
-    
+
     h = Papercraft.html { |foo: true| emit foo ? 'yes' : 'no' }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(foo: false)
@@ -48,7 +48,7 @@ class ParametersTest < MiniTest::Test
     assert_raises(Papercraft::Error) { h.render(baz: 4) }
     assert_equal '<h1>1</h1><h2>2</h2><h3>3</h3>',
       h.render(1, bar: 2, baz: 3)
-    
+
     h = Papercraft.html { |foo, bar: 5, baz:| h1 foo; h2 bar; h3 baz }
     assert_raises(Papercraft::Error) { h.render }
     assert_raises(Papercraft::Error) { h.render(1) }
@@ -137,7 +137,7 @@ class ApplyTest < MiniTest::Test
     b = a.apply(foo: 'aaa')
 
     assert_raises { b.render }
-    
+
     assert_equal '<p>aaa</p><p>bbb</p>', b.render(bar: 'bbb')
   end
 
@@ -197,12 +197,12 @@ class ConstComponentTest < MiniTest::Test
         body { ItemList(items) }
       }
     }
-  
+
     html = page.render('Hello from composed templates', [
       { id: 1, text: 'foo', checked: false },
       { id: 2, text: 'bar', checked: true }
     ])
-  
+
     assert_equal(
       '<!DOCTYPE html><html><head><h1>Hello from composed templates</h1></head><body><ul><li><input name="1" type="checkbox"/><label for="1">foo</label></li><li><input name="2" type="checkbox" checked/><label for="2">bar</label></li></ul></body></html>',
       html

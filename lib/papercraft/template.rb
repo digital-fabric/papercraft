@@ -85,7 +85,7 @@ module Papercraft
   #   links_with_anchors.render
   #
   class Template < Proc
-    
+
     # Determines the rendering mode: `:html` or `:xml`.
     attr_accessor :mode
 
@@ -107,9 +107,9 @@ module Papercraft
       @mime_type = mime_type || STOCK_MIME_TYPE[mode]
       super(&block)
     end
-  
+
     H_EMPTY = {}.freeze
-  
+
     # Renders the template with the given parameters and or block, and returns
     # the string result.
     #
@@ -123,7 +123,7 @@ module Papercraft
         instance_exec(*a, **b, &template)
       end.to_s
     end
-  
+
     # Creates a new template, applying the given parameters and or block to the
     # current one. Application is one of the principal methods of composing
     # templates, particularly when passing inner templates as blocks:
@@ -149,7 +149,7 @@ module Papercraft
         instance_exec(*a, *x, **b, **y, &template)
       end)
     end
-  
+
     # Returns the Renderer class used for rendering the templates, according to
     # the template's mode.
     #
@@ -173,7 +173,7 @@ module Papercraft
     def mime_type
       @mime_type
     end
-  
+
     # def compile
     #   Papercraft::Compiler.new.compile(self)
     # end

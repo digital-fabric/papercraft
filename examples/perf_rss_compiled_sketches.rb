@@ -56,7 +56,7 @@ tmpl1 = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |articles:|
       language 'en-us'
       pubDate Time.now.httpdate
       emit '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" />'
-      
+
       article_entries = articles.reverse
       article_entries.each { |e|
         item {

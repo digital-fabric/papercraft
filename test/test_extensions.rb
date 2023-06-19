@@ -92,7 +92,7 @@ class ExtensionsTest < MiniTest::Test
         div(class: 'card-body', &block)
       }
     end
-  
+
     def card_title(title)
       h4(title, class: 'card-title')
     end

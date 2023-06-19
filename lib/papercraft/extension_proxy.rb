@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Papercraft
-  
+
   # An ExtensionProxy proxies method calls to a renderer. Extension proxies are
   # used to provide an namespaced interface to Papercraft extensions. When an
   # extension is installed using `Papercraft.extension`, a corresponding method
@@ -18,7 +18,7 @@ module Papercraft
       @renderer = renderer
       extend(mod)
     end
-  
+
     # Proxies missing methods to the renderer.
     #
     # @param sym [Symbol] method name
