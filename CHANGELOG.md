@@ -1,3 +1,7 @@
+## 1.1 2023-07-03
+
+- Add direct iteration using the `_for` attribute
+
 ## 1.0 2023-03-30
 
 - Add support for Array attribute values

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    papercraft (1.0)
+    papercraft (1.1)
       escape_utils (~> 1.2.1)
       kramdown (~> 2.3.1)
       kramdown-parser-gfm (~> 1.1.0)
@@ -17,7 +17,7 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    minitest (5.15.0)
+    minitest (5.18.1)
     rexml (3.2.5)
     rouge (3.27.0)
     tilt (2.1.0)
