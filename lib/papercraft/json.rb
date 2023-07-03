@@ -2,7 +2,7 @@
 
 require 'json'
 
-module Papercraft  
+module Papercraft
   # JSON renderer extensions
   module JSON
     # Initializes a JSON renderer, setting up an object stack.
@@ -123,6 +123,6 @@ module Papercraft
       @object_stack << nil
       instance_eval(&block)
       @object_stack.pop
-    end    
+    end
   end
 end

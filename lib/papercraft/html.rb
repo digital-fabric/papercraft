@@ -2,7 +2,7 @@
 
 require_relative './tags'
 
-module Papercraft  
+module Papercraft
   # HTML Markup extensions
   module HTML
     include Tags
@@ -82,7 +82,7 @@ module Papercraft
       fn = File.join(root_path, href)
       version = File.stat(fn).mtime.to_i rescue 0
       "#{root_url}/#{href}?v=#{version}"
-    end  
+    end
 
     # Emits an import map scrit tag. If a hash is given, emits the hash as is.
     # If a string is given, searches for all *.js files under the given path,
@@ -135,7 +135,7 @@ module Papercraft
     # @return [Bool] is it a void element
     def is_void_element_tag?(tag)
       case tag
-      # 
+      #
       when 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr'
         true
       else

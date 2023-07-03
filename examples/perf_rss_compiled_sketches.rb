@@ -65,7 +65,7 @@ tmpl1 = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |articles:|
           guid "https://noteflakes.com#{e[:url]}"
           pubDate e[:date].to_time.httpdate
           description e[:html_content]
-        }  
+        }
       }
     }
   }
@@ -95,7 +95,7 @@ tmpl3 = ->(articles:) {
 
 #################################################################################
 
-class HTMLString < String  
+class HTMLString < String
 end
 
 class FunctionalRenderer

@@ -3,7 +3,7 @@
 require 'escape_utils'
 require_relative './tags'
 
-module Papercraft  
+module Papercraft
   # XML renderer extensions
   module XML
     include Tags

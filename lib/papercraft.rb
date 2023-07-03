@@ -94,7 +94,7 @@ module Papercraft
         entity_output: :numeric,
         syntax_highlighter: :rouge,
         input: 'GFM',
-        hard_wrap: false  
+        hard_wrap: false
       }
     end
 

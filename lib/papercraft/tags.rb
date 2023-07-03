@@ -2,7 +2,7 @@
 
 require_relative './extension_proxy'
 
-module Papercraft  
+module Papercraft
   # Markup (HTML/XML) extensions
   module Tags
     S_LT              = '<'

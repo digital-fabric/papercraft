@@ -46,7 +46,7 @@ module Papercraft
       # the the renderer instance, so they can look just like normal proc
       # components. In cases where method names in the module clash with XML
       # tag names, you can use the `#tag` method to emit the relevant tag.
-      # 
+      #
       #   module ComponentLibrary
       #     def card(title, content)
       #       div(class: 'card') {
@@ -96,9 +96,9 @@ module Papercraft
     #
     #   greeter = proc { |name| h1 "Hello, #{name}!" }
     #   Papercraft.html { emit(greeter, 'world') }.render #=> "<h1>Hello, world!</h1>"
-    #   
+    #
     #   Papercraft.html { emit 'hi&<bye>' }.render #=> "hi&<bye>"
-    #   
+    #
     #   Papercraft.html { emit nil }.render #=> ""
     #
     # @param o [Proc, Papercraft::Template, String] emitted object
