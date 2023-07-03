@@ -22,7 +22,9 @@ module Papercraft
       S_TAG_%<TAG>s_PRE = %<tag_pre>s
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
-      def %<tag>s(text = nil, **props, &block)
+      def %<tag>s(text = nil, _for: nil, **props, &block)
+        return _for.each { |*a| %<tag>s(text, **props) { block.(*a)} } if _for
+
         if text.is_a?(Hash) && props.empty?
           props = text
           text = nil
@@ -52,7 +54,9 @@ module Papercraft
       S_TAG_%<TAG>s_PRE = %<tag_pre>s
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
-      def %<tag>s(text = nil, **props, &block)
+      def %<tag>s(text = nil, _for: nil, **props, &block)
+        return _for.each { |*a| %<tag>s(text, **props) { block.(*a)} } if _for
+
         if text.is_a?(Hash) && props.empty?
           props = text
           text = nil
@@ -159,7 +163,9 @@ module Papercraft
     # @param **props [Hash] tag attributes
     # @param &block [Proc] optional inner XML
     # @return [void]
-    def tag(sym, text = nil, **props, &block)
+    def tag(sym, text = nil, _for: nil, **props, &block)
+      return _for.each { |*a| tag(sym, text, **props) { block.(*a)} } if _for
+
       if text.is_a?(Hash) && props.empty?
         props = text
         text = nil

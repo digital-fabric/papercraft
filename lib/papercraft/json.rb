@@ -18,7 +18,9 @@ module Papercraft
     # @param value [Object] item
     # @param &block [Proc] template block
     # @return [void]
-    def item(value = nil, &block)
+    def item(value = nil, _for: nil, &block)
+      return _for.each { |*a| item(value) { block.(*a)} } if _for
+
       verify_array_target
       if block
         value = enter_object(&block)

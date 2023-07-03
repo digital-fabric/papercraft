@@ -102,14 +102,13 @@ class JsonTest < MiniTest::Test
     assert_equal '{"foo":42}', j2.render
   end
 
-  # def test_xml_encoding
-  #   xml = Papercraft.xml {
-  #     link 'http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp'
-  #   }
+  def test_json_template_with_iteration
+    data = [1, 2, 3]
 
-  #   assert_equal(
-  #     '<link>http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp</link>',
-  #     xml.render
-  #   )
-  # end
+    json = Papercraft.json {
+      item(_for: data) { |d| foo d }
+    }
+
+    assert_equal '[{"foo":1},{"foo":2},{"foo":3}]', json.render
+  end
 end

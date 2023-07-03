@@ -209,3 +209,53 @@ class ConstComponentTest < MiniTest::Test
     )
   end
 end
+
+class EnumeratorTest < MiniTest::Test
+  def test_enumerator_tag
+    data = %w{foo bar baz}
+
+    t = Papercraft.html {
+      tr(_for: data) { |d| span d }
+    }
+
+    assert_equal(
+      '<tr><span>foo</span></tr><tr><span>bar</span></tr><tr><span>baz</span></tr>',
+      t.render
+    )
+
+    t = Papercraft.html {
+      tr(_for: data.each_with_index) { |d, i| span i; span d }
+    }
+
+    assert_equal(
+      '<tr><span>0</span><span>foo</span></tr><tr><span>1</span><span>bar</span></tr><tr><span>2</span><span>baz</span></tr>',
+      t.render
+    )
+  end
+
+  def test_nested_enumerator_tags
+    data = [
+      { name: 'foo', age: 16 },
+      { name: 'bar', age: 32 },
+      { name: 'baz', age: 64 },
+    ]
+
+    fields = [:name, :age]
+
+    t = Papercraft.html {
+      tbody {
+        tr(_for: data) { |row|
+          td(_for: fields.each_with_index) { |field, idx|
+            div_class = idx == 0 ? 'text-bold' : 'text-center p-4'
+            div row[field], class: div_class
+          }
+        }
+      }
+    }
+
+    assert_equal(
+      '<tbody><tr><td><div class="text-bold">foo</div></td><td><div class="text-center p-4">16</div></td></tr><tr><td><div class="text-bold">bar</div></td><td><div class="text-center p-4">32</div></td></tr><tr><td><div class="text-bold">baz</div></td><td><div class="text-center p-4">64</div></td></tr></tbody>',
+      t.render
+    )
+  end
+end
