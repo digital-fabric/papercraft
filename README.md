@@ -72,7 +72,7 @@ hello.render('world')
 - [Adding Tags](#adding-tags)
 - [Tag and Attribute Formatting](#tag-and-attribute-formatting)
 - [Escaping Content](#escaping-content)
-- [Direct Iteration][#direct-iteration]
+- [Direct Iteration](#direct-iteration)
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
 - [Template Blocks](#template-blocks)
