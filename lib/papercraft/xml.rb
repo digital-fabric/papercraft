@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'escape_utils'
 require_relative './tags'
+require 'escape_utils'
 
 module Papercraft
   # XML renderer extensions

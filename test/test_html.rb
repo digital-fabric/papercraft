@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class HtmlTest < MiniTest::Test
+class HtmlTest < Minitest::Test
   def test_html_method_with_block
     block = proc { :foo }
     h = Papercraft.html(&block)
@@ -150,7 +150,7 @@ class HtmlTest < MiniTest::Test
   end
 end
 
-class RenderTest < MiniTest::Test
+class RenderTest < Minitest::Test
   def test_that_render_returns_rendered_html
     h = Papercraft.html { div { p 'foo'; p 'bar' } }
     assert_equal(
@@ -160,7 +160,7 @@ class RenderTest < MiniTest::Test
   end
 end
 
-class AttributesTest < MiniTest::Test
+class AttributesTest < Minitest::Test
   def test_attribute_encoding
     assert_equal(
       '<div class="blue and green"></div>',
@@ -203,7 +203,7 @@ class AttributesTest < MiniTest::Test
   end
 end
 
-class DynamicTagMethodTest < MiniTest::Test
+class DynamicTagMethodTest < Minitest::Test
   def test_that_dynamic_tag_method_accepts_no_arguments
     assert_equal(
       '<div></div>',
@@ -275,7 +275,7 @@ class DynamicTagMethodTest < MiniTest::Test
   end
 end
 
-class TagMethodTest < MiniTest::Test
+class TagMethodTest < Minitest::Test
   def test_that_tag_method_accepts_no_arguments
     assert_equal(
       '<div></div>',
@@ -348,7 +348,7 @@ class TagMethodTest < MiniTest::Test
 end
 
 
-class EmitTest < MiniTest::Test
+class EmitTest < Minitest::Test
   def test_that_emit_accepts_block
     # papercraft emits the value returned from the block
     block = proc { emit 'foobar' }
@@ -411,7 +411,7 @@ class EmitTest < MiniTest::Test
   end
 end
 
-class ScopeTest < MiniTest::Test
+class ScopeTest < Minitest::Test
   def test_that_template_block_has_access_to_local_variables
     text = 'foobar'
     assert_equal(
@@ -421,7 +421,7 @@ class ScopeTest < MiniTest::Test
   end
 end
 
-class DeferTest < MiniTest::Test
+class DeferTest < Minitest::Test
   def test_defer
     buffer = []
 

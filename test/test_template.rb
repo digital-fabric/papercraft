@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class ParametersTest < MiniTest::Test
+class ParametersTest < Minitest::Test
   def test_ordinal_parameters
     h = Papercraft.html { |foo| h1 foo }
 
@@ -57,7 +57,7 @@ class ParametersTest < MiniTest::Test
   end
 end
 
-class EmitComponentTest < MiniTest::Test
+class EmitComponentTest < Minitest::Test
   def test_emit_with_proc_params
     r = Papercraft.html { |p| body { emit p } }
     assert_equal '<body><h1>hi</h1></body>', r.render(proc { h1 'hi' })
@@ -83,7 +83,7 @@ class EmitComponentTest < MiniTest::Test
   end
 end
 
-class EmitYieldTest < MiniTest::Test
+class EmitYieldTest < Minitest::Test
   def test_emit_yield
     r = Papercraft.html { body { emit_yield } }
     assert_raises(Papercraft::Error) { r.render(foo: 'bar') }
@@ -105,7 +105,7 @@ class EmitYieldTest < MiniTest::Test
   end
 end
 
-class ApplyTest < MiniTest::Test
+class ApplyTest < Minitest::Test
   def test_apply_with_parameters
     a = Papercraft.html { |foo| body { emit foo } }
     b = a.apply(proc { p 'hi' })
@@ -150,7 +150,7 @@ class ApplyTest < MiniTest::Test
   end
 end
 
-class MimetypeTest < MiniTest::Test
+class MimetypeTest < Minitest::Test
   def test_html_mime_type
     t = Papercraft.html { foo 'bar' }
     assert_equal 'text/html', t.mime_type
@@ -189,7 +189,7 @@ ItemList = ->(items) {
   }
 }
 
-class ConstComponentTest < MiniTest::Test
+class ConstComponentTest < Minitest::Test
   def test_nested_composition
     page = Papercraft.html { |title, items|
       html5 {
@@ -210,7 +210,7 @@ class ConstComponentTest < MiniTest::Test
   end
 end
 
-class EnumeratorTest < MiniTest::Test
+class EnumeratorTest < Minitest::Test
   def test_enumerator_tag
     data = %w{foo bar baz}
 
@@ -260,7 +260,7 @@ class EnumeratorTest < MiniTest::Test
   end
 end
 
-class FragmentTest < MiniTest::Test
+class FragmentTest < Minitest::Test
   def test_complete_render_with_fragments
     h = Papercraft.html { |foo|
       h1 foo

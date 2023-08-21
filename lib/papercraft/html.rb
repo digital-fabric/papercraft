@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './tags'
+require 'cgi'
 
 module Papercraft
   # HTML Markup extensions
@@ -148,7 +149,7 @@ module Papercraft
     # @param text [String] text
     # @return [String] escaped text
     def escape_text(text)
-      EscapeUtils.escape_html(text.to_s)
+      CGI.escapeHTML(text.to_s)
     end
 
     # Converts a tag to its string representation. Underscores will be converted

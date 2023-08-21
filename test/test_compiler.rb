@@ -2,7 +2,7 @@
 # require 'minitest/autorun'
 # require 'papercraft'
 
-# class CompilerTest < MiniTest::Test
+# class CompilerTest < Minitest::Test
 #   class Papercraft::Compiler
 #     attr_accessor :level
 #   end
@@ -139,7 +139,7 @@
 #   end
 # end
 
-# class CompiledTemplateTest < MiniTest::Test
+# class CompiledTemplateTest < Minitest::Test
 #   def test_compile
 #     t = Papercraft.html { h1 'foo' }
 #     c = t.compile

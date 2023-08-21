@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class JsonTest < MiniTest::Test
+class JsonTest < Minitest::Test
   def test_json_method_with_block
     block = proc { :foo }
     j = Papercraft.json(&block)

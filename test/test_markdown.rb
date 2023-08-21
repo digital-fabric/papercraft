@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class MarkdownTest < MiniTest::Test
+class MarkdownTest < Minitest::Test
   def test_basic_markdown
     templ = Papercraft.html { |md| body { emit_markdown(md) } }
     assert_equal "<body><h1 id=\"hi\">hi</h1>\n</body>",

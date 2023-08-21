@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'tilt/papercraft'
 
-class TiltIntegrationTest < MiniTest::Test
+class TiltIntegrationTest < Minitest::Test
   def test_extension
     assert_equal Tilt::PapercraftTemplate, Tilt['papercraft']
   end

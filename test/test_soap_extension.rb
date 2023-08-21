@@ -5,7 +5,7 @@ require 'minitest/autorun'
 require 'papercraft'
 require 'papercraft/extensions/soap'
 
-class SoapExtensionTest < MiniTest::Test
+class SoapExtensionTest < Minitest::Test
   def test_soap_extension
     xml = Papercraft.xml {
       soap.Envelope(

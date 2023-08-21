@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class XmlTest < MiniTest::Test
+class XmlTest < Minitest::Test
   def test_xml_method_with_block
     block = proc { :foo }
     x = Papercraft.xml(&block)

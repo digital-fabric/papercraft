@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './extension_proxy'
+require 'escape_utils'
 
 module Papercraft
   # Markup (HTML/XML) extensions
@@ -391,8 +392,7 @@ module Papercraft
       props.each { |k, v|
         case k
         when :src, :href
-          @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE <<
-            EscapeUtils.escape_uri(v) << S_QUOTE
+          @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE << EscapeUtils.escape_uri(v) << S_QUOTE
         else
           case v
           when true

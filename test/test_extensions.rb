@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'minitest/autorun'
 require 'papercraft'
 
-class ExtensionsTest < MiniTest::Test
+class ExtensionsTest < Minitest::Test
   module FancySchmancy
     def test
       :foo
@@ -130,7 +130,7 @@ class ExtensionsTest < MiniTest::Test
   end
 end
 
-class InlineExtensionsTest < MiniTest::Test
+class InlineExtensionsTest < Minitest::Test
   module CustomTags
     def label(text)
       span text, class: 'label'
