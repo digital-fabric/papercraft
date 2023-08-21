@@ -23,6 +23,8 @@ module Papercraft
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
       def %<tag>s(text = nil, _for: nil, **props, &block)
+        return if @render_fragment && @fragment != @render_fragment
+
         return _for.each { |*a| %<tag>s(text, **props) { block.(*a)} } if _for
 
         if text.is_a?(Hash) && props.empty?
@@ -55,6 +57,8 @@ module Papercraft
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
       def %<tag>s(text = nil, _for: nil, **props, &block)
+        return if @render_fragment && @fragment != @render_fragment
+        
         return _for.each { |*a| %<tag>s(text, **props) { block.(*a)} } if _for
 
         if text.is_a?(Hash) && props.empty?
@@ -84,9 +88,9 @@ module Papercraft
     INITIAL_BUFFER_CAPACITY = 8192
 
     # Initializes a tag renderer.
-    def initialize(&template)
+    def initialize(render_fragment = nil, &template)
       @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
-      super
+      super(render_fragment)
     end
 
     # Returns the rendered template.
@@ -134,7 +138,6 @@ module Papercraft
     #     h1 'content'
     #   }
     #
-    # @param &block [Proc] Deferred block to be emitted
     # @return [void]
     def defer(&block)
       if !@parts
@@ -161,9 +164,10 @@ module Papercraft
     # @param sym [Symbol, String] XML tag
     # @param text [String, nil] tag content
     # @param **props [Hash] tag attributes
-    # @param &block [Proc] optional inner XML
     # @return [void]
     def tag(sym, text = nil, _for: nil, **props, &block)
+      return if @render_fragment && @fragment != @render_fragment
+        
       return _for.each { |*a| tag(sym, text, **props) { block.(*a)} } if _for
 
       if text.is_a?(Hash) && props.empty?
@@ -195,10 +199,9 @@ module Papercraft
 
     # Catches undefined tag method call and handles it by defining the method.
     #
-    # @param sym [Symbol] XML tag or component identifier
+    # @param sym [Symbol] tag or component identifier
     # @param args [Array] method arguments
     # @param opts [Hash] named method arguments
-    # @param &block [Proc] block passed to method
     # @return [void]
     def method_missing(sym, *args, **opts, &block)
       tag = sym.to_s
@@ -217,6 +220,8 @@ module Papercraft
     # @param data [String] text
     # @return [void]
     def text(data)
+      return if @render_fragment && @fragment != @render_fragment
+        
       @buffer << escape_text(data)
     end
 
@@ -239,8 +244,8 @@ module Papercraft
     # @param tag [Symbol, String] tag/method name
     # @param block [Proc] method body
     # @return [void]
-    def def_tag(sym, &block)
-      self.class.define_method(sym, &block)
+    def def_tag(tag, &block)
+      self.class.define_method(tag, &block)
     end
 
     alias_method :orig_extend, :extend
@@ -333,13 +338,14 @@ module Papercraft
     # @param obj [Object] emitted object
     # @return [void]
     def emit_object(obj)
+      return if @render_fragment && @fragment != @render_fragment
+        
       @buffer << obj.to_s
     end
 
     # Renders a deferred proc by evaluating it, then adding the rendered result
     # to the buffer.
     #
-    # @param &block [Proc] deferred proc
     # @return [void]
     def render_deferred_proc(&block)
       old_buffer = @buffer

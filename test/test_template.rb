@@ -259,3 +259,44 @@ class EnumeratorTest < MiniTest::Test
     )
   end
 end
+
+class FragmentTest < MiniTest::Test
+  def test_complete_render_with_fragments
+    h = Papercraft.html { |foo|
+      h1 foo
+      fragment(:a) {
+        p 'this is a'
+      }
+      fragment(:b) {
+        p 'this is b'
+      }
+    }
+
+    assert_equal(
+      '<h1>bar</h1><p>this is a</p><p>this is b</p>',
+      h.render('bar')
+    )
+  end
+
+  def test_fragment_render
+    h = Papercraft.html { |foo|
+      h1 foo
+      fragment(:a) {
+        p 'this is a'
+      }
+      fragment(:b) {
+        p 'this is b'
+      }
+    }
+
+    assert_equal(
+      '<p>this is a</p>',
+      h.render_fragment(:a, 'bar')
+    )
+
+    assert_equal(
+      '<p>this is b</p>',
+      h.render_fragment(:b, 'bar')
+    )
+  end
+end

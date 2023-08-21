@@ -24,7 +24,6 @@ module Papercraft
     # @param sym [Symbol] method name
     # @param *args [Array] arguments
     # @param *props [Array] named arguments
-    # @param &block [Proc] block
     # @return void
     def method_missing(sym, *args, **props, &block)
       @renderer.send(sym, *args, **props, &block)
@@ -34,7 +33,6 @@ module Papercraft
     #
     # @param *args [Array] arguments
     # @param *props [Array] named arguments
-    # @param &block [Proc] block
     # @return void
     def p(text = nil, **props, &block)
       @renderer.p(text, **props, &block)

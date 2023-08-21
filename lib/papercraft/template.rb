@@ -113,12 +113,39 @@ module Papercraft
     # Renders the template with the given parameters and or block, and returns
     # the string result.
     #
-    # @param context [Hash] context
-    # @return [String]
+    # @param *params [any] unnamed parameters
+    # @param **named_params [any] named parameters
+    # @return [String] rendered string
     def render(*a, **b, &block)
       template = self
       Renderer.verify_proc_parameters(template, a, b)
       renderer_class.new do
+        push_emit_yield_block(block) if block
+        instance_exec(*a, **b, &template)
+      end.to_s
+    end
+
+    # Renders a template fragment. Any given parameters are passed to the
+    # template just like with {Template#render}. See also
+    # {https://htmx.org/essays/template-fragments/ HTMX template fragments}.
+    #
+    #   form = Papercraft.html { |action|
+    #     h1 'Hello'
+    #     fragment(:buttons) {
+    #       button action
+    #       button 'Cancel'
+    #     }
+    #   }
+    #   form.render_fragment(:buttons, 'foo') #=> "<button>foo</button><button>Cancel</buttons>"
+    #
+    # @param name [Symbol, String] fragment name
+    # @param *params [any] unnamed parameters
+    # @param **named_params [any] named parameters
+    # @return [String] rendered string
+    def render_fragment(name, *a, **b, &block)
+      template = self
+      Renderer.verify_proc_parameters(template, a, b)
+      renderer_class.new(name) do
         push_emit_yield_block(block) if block
         instance_exec(*a, **b, &template)
       end.to_s
@@ -140,7 +167,6 @@ module Papercraft
     #
     # @param *a [<any>] normal parameters
     # @param **b [Hash] named parameters
-    # @param &block [Proc] inner block
     # @return [Papercraft::Template] applied template
     def apply(*a, **b, &block)
       template = self

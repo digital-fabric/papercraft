@@ -76,6 +76,7 @@ hello.render('world')
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
 - [Template Blocks](#template-blocks)
+- [Template Fragments](#template-fragments)
 - [Plain Procs as Templates](#plain-procs-as-templates)
 - [Template Composition](#template-composition)
 - [Parameter and Block Application](#parameter-and-block-application)
@@ -380,6 +381,35 @@ page = Papercraft.html {
 # we pass the inner HTML
 page.render { h1 'hi' }
 ```
+
+## Template Fragments
+
+Template fragments allow rendering specific parts of a template, instead of the
+entire template. For example, you can define a template for a web page that
+includes a form, but may want to render just the form. Instead of extracting the
+code and putting it into a separate template, you can use template fragments to
+render just that part of that template:
+
+```ruby
+page = Papercraft.html {
+  div {
+    h1 'Page title'
+    p 'Some text'
+  }
+  div(id: 'my-form') {
+    fragment(:form) {
+      form {
+        input(name: 'email')
+        button 'OK'
+      }
+    }
+  }
+}
+page.render_fragment(:form)
+```
+
+For more information on how to use template fragments, see the [HTMX
+article](https://htmx.org/essays/template-fragments/).
 
 ## Plain Procs as Templates
 

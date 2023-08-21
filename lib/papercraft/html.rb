@@ -10,7 +10,7 @@ module Papercraft
     # Emits the p tag (overrides Object#p)
     #
     # @param text [String] text content of tag
-    # @param props [Hash] tag attributes
+    # @param **props [Hash] tag attributes
     # @para block [Proc] nested HTML block
     # @return [void]
     def p(text = nil, **props, &block)
@@ -131,7 +131,7 @@ module Papercraft
     # Returns true if the given tag is a void element, in order to render a self
     # closing tag. See spec: https://html.spec.whatwg.org/multipage/syntax.html#void-elements.
     #
-    # @param text [String] tag
+    # @param tag [String] tag
     # @return [Bool] is it a void element
     def is_void_element_tag?(tag)
       case tag

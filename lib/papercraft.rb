@@ -79,7 +79,7 @@ module Papercraft
     # default Kramdown options in order to change the rendering behaviour.
     #
     # @param markdown [String] Markdown
-    # @param **opts [Hash] Kramdown option overrides
+    # @param opts [Hash] Kramdown option overrides
     # @return [String] HTML
     def markdown(markdown, **opts)
       opts = default_kramdown_options.merge(opts)

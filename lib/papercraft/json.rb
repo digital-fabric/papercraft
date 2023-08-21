@@ -15,8 +15,12 @@ module Papercraft
     # block is evaulated against a new object target, then added to the current
     # array.
     #
+    #   Papercraft.json {
+    #     item 'foo'
+    #     item 'bar'
+    #   }.render #=> "[\"foo\", \"bar\"]"
+    #
     # @param value [Object] item
-    # @param &block [Proc] template block
     # @return [void]
     def item(value = nil, _for: nil, &block)
       return _for.each { |*a| item(value) { block.(*a)} } if _for
@@ -34,7 +38,6 @@ module Papercraft
     #
     # @param key [Object] key
     # @param value [Object] value
-    # @param &block [Proc] template block
     # @return [void]
     def kv(key, value = nil, &block)
       verify_hash_target
@@ -47,12 +50,11 @@ module Papercraft
     # Intercepts method calls by adding key-value pairs to the current object
     # target.
     #
-    # @param key [Object] key
+    # @param key [Symbol] key
     # @param value [Object] value
-    # @param &block [Proc] template block
     # @return [void]
-    def method_missing(sym, value = nil, &block)
-      kv(sym, value, &block)
+    def method_missing(key, value = nil, &block)
+      kv(key, value, &block)
     end
 
     # Converts the root object target to JSON.
@@ -66,7 +68,6 @@ module Papercraft
 
     # Adds a new entry to the object stack and evaluates the given block.
     #
-    # @param &block [Proc] template block
     # @return [void]
     def with_object(&block)
       @object_stack << nil
@@ -117,7 +118,6 @@ module Papercraft
     # Adds a new object to the object stack, evaluates the given template block,
     # then pops the object off the stack.
     #
-    # @param &block [Proc] template block
     # @return [void]
     def enter_object(&block)
       @object_stack << nil

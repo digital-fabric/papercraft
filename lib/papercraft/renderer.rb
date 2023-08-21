@@ -84,7 +84,8 @@ module Papercraft
     # renderer's scope.
     #
     # @param &template [Proc] template block
-    def initialize(&template)
+    def initialize(render_fragment = nil, &template)
+      @render_fragment = render_fragment
       instance_eval(&template)
     end
 
@@ -119,7 +120,7 @@ module Papercraft
     end
     alias_method :e, :emit
 
-    # Emits a block supplied using `Component#apply` or `Component#render`.
+    # Emits a block supplied using {Template#apply} or {Template#render}.
     #
     #   div_wrap = Papercraft.html { |*args| div { emit_yield(*args) } }
     #   greeter = div_wrap.apply { |name| h1 "Hello, #{name}!" }
@@ -133,6 +134,33 @@ module Papercraft
       raise Papercraft::Error, "No block given" unless block
 
       instance_exec(*a, **b, &block)
+    end
+
+    # Defines a named template fragment. Template fragments allow rendering
+    # specific parts of the same template. A template fragment can be rendered
+    # using {Template#render_fragment}. See also
+    # {https://htmx.org/essays/template-fragments/ HTMX template fragments}.
+    #
+    #   form = Papercraft.html {
+    #     h1 'Hello'
+    #     fragment(:buttons) {
+    #       button 'OK'
+    #       button 'Cancel'
+    #     }
+    #   }
+    #   form.render_fragment(:buttons) #=> "<button>OK</button><button>Cancel</buttons>"
+    #
+    # @param name [Symbol, String] fragment name
+    # @return [void]
+    def fragment(name, &block)
+      raise Papercraft::Error, "Already in fragment" if @fragment
+
+      begin
+        @fragment = name
+        emit(block)
+      ensure
+        @fragment = nil
+      end
     end
 
     private
