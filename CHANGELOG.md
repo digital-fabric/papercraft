@@ -1,3 +1,8 @@
+## 1.2 2023-08-21
+
+- Update dependencies
+- Implement template fragments
+
 ## 1.1 2023-07-03
 
 - Add direct iteration using the `_for` attribute
