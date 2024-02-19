@@ -10,7 +10,7 @@ module Papercraft
     DEFAULT_EMIT_BUFFER_CAPACITY = 4096
 
     def initialize
-      @level = 1
+      @level = 0
       @code_buffer = String.new(capacity: DEFAULT_CODE_BUFFER_CAPACITY)
       @sub_templates = []
     end
@@ -28,11 +28,14 @@ module Papercraft
       @line_break = nil
     end
 
+    def emit_buffer
+      @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
+    end
+
     def emit_literal(lit)
       if @output_mode
         emit_code_line_break if @line_break
-        @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
-        @emit_buffer << lit
+        emit_buffer << lit
       else
         emit_code(lit)
       end
@@ -40,18 +43,16 @@ module Papercraft
 
     def emit_text(str, encoding: :html)
       emit_code_line_break if @line_break
-      @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
-      @emit_buffer << encode(str, encoding).inspect[1..-2]
+      emit_buffer << encode(str, encoding).inspect[1..-2]
     end
 
     def emit_text_fcall(node)
-      p node_type: node.type
       case node.type
       when :STR, :LIT, :SYM
         value = node.children.first.to_s
         emit_text(value, encoding: :html)
       when :VCALL
-        emit_code("__buffer__ << #{node.children.first}\n")
+        emit_code("__buf__ << CGI.escapeHTML(#{node.children.first})\n")
       when :CONST
         name = node.children.first.to_s
         value = get_const(name)
@@ -103,7 +104,7 @@ module Papercraft
     def flush_emit_buffer
       return if !@emit_buffer
 
-      @code_buffer << "#{'  ' * @level}__buffer__ << \"#{@emit_buffer}\"\n"
+      @code_buffer << "#{'  ' * @level}__buf__ << \"#{@emit_buffer}\"\n"
       @emit_buffer = nil
       true
     end
@@ -121,38 +122,48 @@ module Papercraft
       end
     end
 
-    def compile(template)
+    def compile(template, initial_level = 0)
       @block = template.to_proc
+      @level = initial_level
       ast = RubyVM::AbstractSyntaxTree.of(@block)
       Compiler.pp_ast(ast) if ENV['DEBUG'] == '1'
+      @level += 1
       parse(ast)
       flush_emit_buffer
+      @level -= 1
       self
     end
 
     attr_reader :code_buffer
 
     def to_code
-      "->(__buffer__, __context__) do\n#{prelude}#{@code_buffer}end"
+      pad = '  ' * @level
+      "#{pad}->(__buf__, __ctx__#{args}) do\n#{prelude}#{@code_buffer}#{pad}  __buf__\n#{pad}end"
+    end
+
+    def args
+      return nil if !@args
+      
+      ", #{@args.join(", ")}"
     end
 
     def prelude
       return nil if @sub_templates.empty?
 
       converted = @sub_templates.map { |t| convert_sub_template(t)}
-      "__sub_templates__ = [#{converted.join("\n")}]\n"
+      "#{'  ' * @level}  __sub_templates__ = [\n#{converted.join("\n")}\n  ]\n"
     end
 
     def convert_sub_template(template)
-      template.compile.to_code
+      template.compile(@level + 2).to_code
     end
 
     def to_proc
       @block.binding.eval(to_code)
     end
 
-    def parse(node)
-      @line_break = @last_node && node.first_lineno != @last_node.first_lineno
+    def parse(node, line_break = true)
+      @line_break = line_break && @last_node && node.first_lineno != @last_node.first_lineno
       @last_node = node
       method_name = :"parse_#{node.type.downcase}"
       if !respond_to?(method_name)
@@ -162,6 +173,10 @@ module Papercraft
     end
 
     def parse_scope(node)
+      args = node.children[0]
+      if args && !args.empty?
+        @args = args
+      end
       parse(node.children[2])
     end
 
@@ -185,7 +200,7 @@ module Papercraft
 
     def parse_ivar(node)
       ivar = node.children.first.match(/^@(.+)*/)[1]
-      emit_literal("__context__[:#{ivar}]")
+      emit_literal("__ctx__[:#{ivar}]")
     end
 
     def parse_fcall(node, block = nil)
@@ -196,7 +211,7 @@ module Papercraft
       when :html5
         return emit_html5(node, block)
       when :emit
-        return emit_emit(args, block)
+        return emit_emit(args.first, block)
       when :text
         return emit_text_fcall(args.first)
       end
@@ -211,7 +226,7 @@ module Papercraft
           when Papercraft::Template
             @sub_templates << text
             idx = @sub_templates.size - 1
-            emit_literal("\n__sub_templates__[#{idx}].(__buffer__, __context__)\n")
+            emit_code("__sub_templates__[#{idx}].(__buf__, __ctx__)\n")
           when String
             emit_output { emit_text(text) }
           else
@@ -277,11 +292,32 @@ module Papercraft
       end
     end
 
-    def emit_emit(args, block)
-      value = fcall_inner_text_from_args(args)
-      emit_output do
-        emit_literal(value)
+    def emit_emit(node, block)
+      case node.type
+      when :STR, :LIT, :SYM
+        value = node.children.first.to_s
+        emit_output { emit_literal(value) }
+      when :VCALL
+        emit_code("__buf__ << #{node.children.first}\n")
+      when :CONST
+        name = node.children.first.to_s
+        value = get_const(name)
+        case value
+        when Papercraft::Template
+          @sub_templates << value
+          idx = @sub_templates.size - 1
+          emit_code("__sub_templates__[#{idx}].(__buf__, __ctx__)\n")
+        else
+          emit_output { emit_literal(value) }
+        end
+      else
+        raise NotImplementedError
       end
+
+      # value = fcall_inner_text_from_args(args)
+      # emit_output do
+      #   emit_literal(value)
+      # end
     end
 
     def emit_tag_attributes(atts)
@@ -337,7 +373,7 @@ module Papercraft
     def parse_call(node)
       receiver, method, args = node.children
       if receiver.type == :VCALL && receiver.children == [:context]
-        emit_literal('__context__')
+        emit_literal('__ctx__')
       else
         parse(receiver)
       end
@@ -505,8 +541,59 @@ module Papercraft
     end
 
     def parse_dvar(node)
-
       emit_literal(node.children.first.to_s)
+    end
+
+    def parse_case(node)
+      value       = node.children[0]
+      when_clause = node.children[1]
+      emit_code("case ")
+      parse(value)
+      emit_code("\n")
+      parse_when(when_clause)
+      emit_code("end\n")
+    end
+
+    def parse_when(node)
+      values      = node.children[0]
+      then_clause = node.children[1]
+      else_clause = node.children[2]
+
+      emit_code('when ')
+      last_value = nil
+      emit_when_clause_values(values)
+      emit_code("\n")
+      @level += 1
+      parse(then_clause)
+      @level -= 1
+      
+      return if !else_clause
+
+      if else_clause.type == :WHEN
+        parse_when(else_clause)
+      else
+        emit_code("else\n")
+        @level += 1
+        @level -= 1
+        parse(else_clause)
+      end
+    end
+
+    def emit_when_clause_values(values)
+      if values.type != :LIST
+        raise Papercraft::Error, "Expected LIST node, found #{values.type} node"
+      end
+
+      idx = 0
+      list_items = values.children
+      while idx < list_items.size
+        value = list_items[idx]
+        break if !value
+
+        emit_code(', ') if idx > 0
+        parse(value, idx > 0)
+        idx += 1
+      end
     end
 
     def self.pp_ast(node, level = 0)

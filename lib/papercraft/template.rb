@@ -200,8 +200,8 @@ module Papercraft
       @mime_type
     end
 
-    def compile
-      Papercraft::Compiler.new.compile(self)
+    def compile(*)
+      Papercraft::Compiler.new.compile(self, *)
     end
   end
 end
