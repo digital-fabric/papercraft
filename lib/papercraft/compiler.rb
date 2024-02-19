@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'cgi'
+require 'escape_utils'
+
 module Papercraft
   # The Compiler class compiles Papercraft templates
   class Compiler
@@ -51,9 +54,17 @@ module Papercraft
       end
     end
 
+    def __html_encode__(str)
+      CGI.escapeHTML(str)
+    end
+
+    def __uri_encode__(str)
+      EscapeUtils.escape_uri(str)
+    end
+
     def emit_expression
       if @output_mode
-        emit_literal('#{__html_encode__(')
+        emit_literal('#{CGI.escapeHTML(')
         yield
         emit_literal(')}')
       else
@@ -85,7 +96,7 @@ module Papercraft
     def compile(template)
       @block = template.to_proc
       ast = RubyVM::AbstractSyntaxTree.of(@block)
-      # Compiler.pp_ast(ast)
+      Compiler.pp_ast(ast) if ENV['DEBUG'] == '1'
       parse(ast)
       flush_emit_buffer
       self
@@ -137,6 +148,11 @@ module Papercraft
 
     def parse_fcall(node, block = nil)
       tag, args = node.children
+
+      if tag == :html5
+        return emit_html5(node, block)
+      end
+
       args = args.children.compact if args
       text = fcall_inner_text_from_args(args)
       atts = fcall_attributes_from_args(args)
@@ -178,6 +194,13 @@ module Papercraft
 
       last = args.last
       (last.type == :HASH) ? last : nil
+    end
+
+    def emit_html5(node, block = nil)
+      emit_output do
+        emit_literal('<!DOCTYPE html>')
+      end
+      emit_tag(:html, nil) { parse(block) } if block
     end
 
     def emit_tag(tag, atts, &block)
@@ -324,6 +347,10 @@ module Papercraft
     end
 
     def parse_block(node)
+      node.children.each { |c| parse(c) }
+    end
+
+    def parse_begin(node)
       node.children.each { |c| parse(c) }
     end
 

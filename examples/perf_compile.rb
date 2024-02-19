@@ -1,6 +1,6 @@
 require 'bundler/setup'
 require 'papercraft'
-require 'escape_utils'
+require 'erb'
 require 'benchmark/ips'
 
 content = 'foo'
@@ -54,7 +54,7 @@ class Renderer
   end
 
   def render_compiled_template
-    @compiled ||= T.compile.to_proc
+    @compiled ||= T.compile.tap { Kernel.puts '*' * 40; Kernel.puts _1.to_code; Kernel.puts }.to_proc
     buffer = String.new(capacity: 1024)
     @compiled.(buffer, {})
   end

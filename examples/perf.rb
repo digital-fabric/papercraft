@@ -13,7 +13,7 @@ App = Papercraft.html { |title:|
         button "1"
         button "2"
       }
-      emit Content, title: title
+      emit(Content, title: title)
     }
   }
 }
@@ -131,7 +131,7 @@ puts r.render_erb_app.gsub(/\n\s+/, '')
 
 puts "=== Single template"
 Benchmark.ips do |x|
-  x.config(:time => 3, :warmup => 1)
+  x.config(:time => 5, :warmup => 2)
 
   x.report("papercraft") { r.render_papercraft_content }
   x.report("erubis") { r.render_erubis_content }

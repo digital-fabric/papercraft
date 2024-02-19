@@ -6,7 +6,7 @@ require 'kramdown-parser-gfm'
 
 require_relative 'papercraft/template'
 require_relative 'papercraft/renderer'
-# require_relative 'papercraft/compiler'
+require_relative 'papercraft/compiler'
 
 
 # Papercraft is a composable templating library
