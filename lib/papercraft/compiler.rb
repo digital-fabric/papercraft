@@ -450,6 +450,11 @@ module Papercraft
       emit_literal(value.inspect)
     end
 
+    def parse_integer(node)
+      value = node.children.first
+      emit_literal(value.inspect)
+    end
+    
     def parse_true(node)
       emit_expression { emit_literal('true') }
     end
