@@ -4,6 +4,26 @@ require 'cgi'
 require 'escape_utils'
 
 module Papercraft
+  def self.__cache_compiled_template__(value)
+    @compiled_template_cache ||= {}
+    
+    if !(compiled = @compiled_template_cache[value])
+      value = Papercraft.html(&value) if value.is_a?(Proc)
+      compiled = value.compile.to_proc
+      @compiled_template_cache[value] = compiled
+    end
+  end
+
+  def self.__emit__(value, __buf__, *args)
+    case value
+    when Proc, Papercraft::Template
+      compiled = __cache_compiled_template__(value)
+      compiled.(__buf__, *args)
+    else
+      __buf__ << CGI.escapeHTML(value.to_s)
+    end
+  end
+
   # The Compiler class compiles Papercraft templates
   class Compiler
     DEFAULT_CODE_BUFFER_CAPACITY = 8192
@@ -210,7 +230,7 @@ module Papercraft
       when :html5
         return emit_html5(node, block)
       when :emit
-        return emit_emit(args.first, block)
+        return emit_emit(node.children[1], block)
       when :text
         return emit_text_fcall(args.first)
       end
@@ -293,15 +313,23 @@ module Papercraft
       end
     end
 
-    def emit_emit(node, block)
-      case node.type
+    def emit_emit(args, block)
+      value, *rest = args.children.compact
+      case value.type
       when :STR, :LIT, :SYM
-        value = node.children.first.to_s
+        value = value.children.first.to_s
         emit_output { emit_literal(value) }
       when :VCALL
-        emit_code("__buf__ << #{node.children.first}\n")
+        emit_code("__buf__ << #{value.children.first}\n")
+      when :DVAR
+        emit_code("Papercraft.__emit__(#{value.children.first}, __buf__")
+        if !rest.empty?
+          emit_code(", ")
+          parse_list(args, false, 1..-1)
+        end
+        emit_code(")\n")
       when :CONST
-        name = node.children.first.to_s
+        name = value.children.first.to_s
         value = get_const(name)
         case value
         when Papercraft::Template
@@ -430,9 +458,13 @@ module Papercraft
       emit_expression { emit_literal('true') }
     end
 
-    def parse_list(node)
-      emit_literal('[')
-      items = node.children.compact
+    def parse_list(node, emit_array = true, range = nil)
+      emit_literal('[') if emit_array
+      if range
+        items = node.children[range].compact
+      else
+        items = node.children.compact
+      end
       while true
         item = items.shift
         break unless item
@@ -440,7 +472,7 @@ module Papercraft
         parse(item)
         emit_literal(', ') if !items.empty?
       end
-      emit_literal(']')
+      emit_literal(']') if emit_array
     end
 
     def parse_vcall(node)

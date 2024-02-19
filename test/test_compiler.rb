@@ -426,4 +426,23 @@ class SyntaxTest < Minitest::Test
     assert_equal template_body(expected), t.code_buffer.chomp
     assert_equal '<p>bar</p>', t.to_proc.render
   end
+
+  def test_sub_template_with_args
+    sub = ->(x) {
+      p x
+    }
+    t = c {
+      div {
+        emit sub, 40 + 2
+      }
+    }
+
+    expected = <<~RUBY
+      __buf__ << "<div>"
+      Papercraft.__emit__(sub, __buf__, 40 + 2)
+      __buf__ << "</div>"
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+    assert_equal '<div><p>42</p></div>', t.to_proc.render
+  end
 end
