@@ -14,13 +14,13 @@ module Papercraft
     end
   end
 
-  def self.__emit__(value, __buf__, *args)
+  def self.__emit__(value, __buffer__, *args)
     case value
     when Proc, Papercraft::Template
       compiled = __cache_compiled_template__(value)
-      compiled.(__buf__, *args)
+      compiled.(__buffer__, *args)
     else
-      __buf__ << CGI.escapeHTML(value.to_s)
+      __buffer__ << CGI.escapeHTML(value.to_s)
     end
   end
 
@@ -72,7 +72,7 @@ module Papercraft
         value = node.children.first.to_s
         emit_text(value, encoding: :html)
       when :VCALL
-        emit_code("__buf__ << CGI.escapeHTML((#{node.children.first}).to_s)\n")
+        emit_code("__buffer__ << CGI.escapeHTML((#{node.children.first}).to_s)\n")
       when :CONST
         name = node.children.first.to_s
         value = get_const(name)
@@ -124,7 +124,7 @@ module Papercraft
     def flush_emit_buffer
       return if !@emit_buffer
 
-      @code_buffer << "#{'  ' * @level}__buf__ << \"#{@emit_buffer}\"\n"
+      @code_buffer << "#{'  ' * @level}__buffer__ << \"#{@emit_buffer}\"\n"
       @emit_buffer = nil
       true
     end
@@ -158,7 +158,7 @@ module Papercraft
 
     def to_code
       pad = '  ' * @level
-      "#{pad}->(__buf__#{args}) do\n#{prelude}#{@code_buffer}#{pad}  __buf__\n#{pad}end"
+      "#{pad}->(__buffer__#{args}) do\n#{prelude}#{@code_buffer}#{pad}  __buffer__\n#{pad}end"
     end
 
     def args
@@ -245,7 +245,7 @@ module Papercraft
           when Papercraft::Template
             @sub_templates << text
             idx = @sub_templates.size - 1
-            emit_code("__sub_templates__[#{idx}].(__buf__)\n")
+            emit_code("__sub_templates__[#{idx}].(__buffer__)\n")
           when String
             emit_output { emit_text(text) }
           when RubyVM::AbstractSyntaxTree::Node
@@ -320,9 +320,9 @@ module Papercraft
         value = value.children.first.to_s
         emit_output { emit_literal(value) }
       when :VCALL
-        emit_code("__buf__ << #{value.children.first}\n")
+        emit_code("__buffer__ << #{value.children.first}\n")
       when :DVAR
-        emit_code("Papercraft.__emit__(#{value.children.first}, __buf__")
+        emit_code("Papercraft.__emit__(#{value.children.first}, __buffer__")
         if !rest.empty?
           emit_code(", ")
           parse_list(args, false, 1..-1)
@@ -335,7 +335,7 @@ module Papercraft
         when Papercraft::Template
           @sub_templates << value
           idx = @sub_templates.size - 1
-          emit_code("__sub_templates__[#{idx}].(__buf__)\n")
+          emit_code("__sub_templates__[#{idx}].(__buffer__)\n")
         else
           emit_output { emit_literal(value) }
         end
