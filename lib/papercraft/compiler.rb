@@ -12,6 +12,7 @@ module Papercraft
     def initialize
       @level = 1
       @code_buffer = String.new(capacity: DEFAULT_CODE_BUFFER_CAPACITY)
+      @sub_templates = []
     end
 
     def emit_output
@@ -105,7 +106,18 @@ module Papercraft
     attr_reader :code_buffer
 
     def to_code
-      "->(__buffer__, __context__) do\n#{@code_buffer}end"
+      "->(__buffer__, __context__) do\n#{prelude}#{@code_buffer}end"
+    end
+
+    def prelude
+      return nil if @sub_templates.empty?
+
+      converted = @sub_templates.map { |t| convert_sub_template(t)}
+      "__sub_templates__ = [#{converted.join("\n")}]\n"
+    end
+
+    def convert_sub_template(template)
+      template.compile.to_code
     end
 
     def to_proc
@@ -115,8 +127,11 @@ module Papercraft
     def parse(node)
       @line_break = @last_node && node.first_lineno != @last_node.first_lineno
       @last_node = node
-      # puts "- parse(#{node.type}) (break: #{@line_break.inspect})"
-      send(:"parse_#{node.type.downcase}", node)
+      method_name = :"parse_#{node.type.downcase}"
+      if !respond_to?(method_name)
+        raise Papercraft::Error, "Template compiler doesn't know how to convert #{node.type.inspect} node"
+      end
+      send(method_name, node)
     end
 
     def parse_scope(node)
@@ -149,8 +164,11 @@ module Papercraft
     def parse_fcall(node, block = nil)
       tag, args = node.children
 
-      if tag == :html5
+      case tag
+      when :html5
         return emit_html5(node, block)
+      when :emit
+        return emit_emit(node, block)
       end
 
       args = args.children.compact if args
@@ -160,12 +178,15 @@ module Papercraft
         emit_tag(tag, atts) { parse(block) }
       elsif text
         emit_tag(tag, atts) do
-          emit_output do
-            if text.is_a?(String)
-              emit_text(text)
-            else
-              emit_expression { parse(text) }
-            end
+          case text
+          when Papercraft::Template
+            @sub_templates << text
+            idx = @sub_templates.size - 1
+            emit_literal("\n__sub_templates__[#{idx}].(__buffer__, __context__)\n")
+          when String
+            emit_output { emit_text(text) }
+          else
+            emit_output { emit_expression { parse(text) } }
           end
         end
       else
@@ -184,6 +205,19 @@ module Papercraft
         first.children.first.to_s
       when :HASH
         nil
+      when :CONST
+        const_name = first.children.first
+        value = :__undefined__
+        if @block.binding.eval("singleton_class.const_defined?(#{const_name.inspect})")
+          value = @block.binding.eval("singleton_class.const_get(#{const_name.inspect})")
+        elsif Papercraft.const_defined?(const_name)
+          value = Papercraft.const_get(const_name)
+        end
+        if value.is_a?(Papercraft::Template)
+          value
+        else
+          raise NotImplementedError
+        end
       else
         first
       end
@@ -216,6 +250,14 @@ module Papercraft
       if block
         block.call
         emit_output { emit_literal("</#{tag}>") }
+      end
+    end
+
+    def emit_emit(node, block)
+      value = fcall_inner_text_from_args(node.children)
+      p emit_emit: value
+      emit_output do
+        emit_literal(value)
       end
     end
 

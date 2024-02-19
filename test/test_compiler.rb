@@ -155,8 +155,8 @@ class CompiledTemplateTest < Minitest::Test
   module ::Kernel
     def C(**ctx, &block)
       Papercraft::Template.new(**ctx, &block).compile
-        .tap { |c| 
-          if ENV['DEBUG'] == '1'
+        .tap { |c|
+          if true #ENV['DEBUG'] == '1'
             puts '*' * 40; puts c.to_code; puts
           end
         }
@@ -242,19 +242,34 @@ class CompiledTemplateTest < Minitest::Test
     )
   end
 
-  # A1 = Papercraft.html { a 'foo', href: '/' }
+  A1 = Papercraft.html { a 'foo', href: '/' }
 
-  # def test_that_tag_method_accepts_papercraft_argument
-  #   assert_equal(
-  #     '<p><a href="/">foo</a></p>',
-  #     C { p A1 }.render
-  #   )
-  # end
+  def test_that_tag_method_accepts_papercraft_argument
+    t1 = Papercraft.html {
+      p A1
+    }
+    assert_equal(
+      '<p><a href="/">foo</a></p>',
+      t1.render
+    )
+
+    assert_equal(
+      '<p><a href="/">foo</a></p>',
+      C { p A1 }.render
+    )
+  end
 
   def test_that_tag_method_accepts_block
     assert_equal(
       '<div><p><a href="/">foo</a></p></div>',
       C { div { p { a 'foo', href: '/' } } }.render
+    )
+  end
+
+  def test_emit_string
+    assert_equal(
+      'foo',
+      C { emit 'foo' }.render
     )
   end
 end
