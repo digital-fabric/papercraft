@@ -63,7 +63,7 @@ class CompilerTest < Minitest::Test
 
     code = compiled_template_code(templ)
     expected = <<~RUBY
-      ->(__buffer__) do
+      ->(__buffer__, &__block__) do
         __buffer__ << "<h1>foo</h1><h2>bar</h2>"
         __buffer__
       end
@@ -79,7 +79,7 @@ class CompilerTest < Minitest::Test
 
     code = compiled_template_code(templ)
     expected = <<~RUBY
-      ->(__buffer__) do
+      ->(__buffer__, &__block__) do
         __buffer__ << "<h1 class=\\"foot\\">foo</h1><h2 id=\\"bar\\" onclick=\\"f(&quot;abc&quot;, &quot;def&quot;)\\">bar</h2>"
         __buffer__
       end
@@ -292,7 +292,7 @@ class CompiledTemplateTest < Minitest::Test
 
     c = t.compile
     expected = <<~RUBY.chomp
-      ->(__buffer__) do
+      ->(__buffer__, &__block__) do
         __buffer__ << "foo&amp;bar"
         __buffer__ << CGI.escapeHTML((__baz__).to_s)
         __buffer__ << "boo"
@@ -331,12 +331,12 @@ class CompiledTemplateTest < Minitest::Test
   end
 end
 
-class SyntaxTest < Minitest::Test
+class CompilerSyntaxTest < Minitest::Test
   def template_body(body)
     body.chomp.lines.map { |l| "  #{l}" }.join
   end
 
-  def test_case
+  def test_compiler_syntax_case
     t = C { |x|
       case x
       when :foo
@@ -359,7 +359,7 @@ class SyntaxTest < Minitest::Test
     assert_equal '', t.render
   end
 
-  def test_tag_content_expr
+  def test_compiler_syntax_tag_content_expr
     t = c {
       p (1 + 2)
     }
@@ -372,7 +372,7 @@ class SyntaxTest < Minitest::Test
     assert_equal '<p>3</p>', t.to_proc.render
   end
 
-  def test_tag_content_var
+  def test_compiler_syntax_tag_content_var
     foo = 42
     t = c {
       p foo
@@ -387,7 +387,7 @@ class SyntaxTest < Minitest::Test
 
   FOO = 43
 
-  def test_tag_content_const
+  def test_compiler_syntax_tag_content_const
     t = c {
       p FOO
     }
@@ -399,7 +399,7 @@ class SyntaxTest < Minitest::Test
     assert_equal '<p>43</p>', t.to_proc.render
   end
 
-  def test_method_chain
+  def test_compiler_syntax_method_chain
     t = c {
       1.next.next.next
       p 2.next.next.next
@@ -413,7 +413,7 @@ class SyntaxTest < Minitest::Test
     assert_equal '<p>5</p>', t.to_proc.render
   end
 
-  def test_ivar
+  def test_compiler_syntax_ivar
     @foo = 'bar'
 
     t = c {
@@ -427,7 +427,7 @@ class SyntaxTest < Minitest::Test
     assert_equal '<p>bar</p>', t.to_proc.render
   end
 
-  def test_sub_template_with_args
+  def test_compiler_syntax_sub_template_with_args
     sub = ->(x) {
       p x
     }
@@ -444,5 +444,23 @@ class SyntaxTest < Minitest::Test
     RUBY
     assert_equal template_body(expected), t.code_buffer.chomp
     assert_equal '<div><p>42</p></div>', t.to_proc.render
+  end
+
+  T1 = ->() { div { emit_yield } }
+
+  def test_compiler_syntax_emit_yield
+    t = c {
+      emit(T1) {
+        p 'foo'
+      }
+    }
+
+    expected = <<~RUBY
+      __sub_templates__[0].(__buffer__) {
+        __buffer__ << \"<p>foo</p>\"
+      }
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+    assert_equal '<div><p>foo</p></div>', t.to_proc.render
   end
 end

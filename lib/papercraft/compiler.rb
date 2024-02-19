@@ -158,7 +158,7 @@ module Papercraft
 
     def to_code
       pad = '  ' * @level
-      "#{pad}->(__buffer__#{args}) do\n#{prelude}#{@code_buffer}#{pad}  __buffer__\n#{pad}end"
+      "#{pad}->(__buffer__#{args}, &__block__) do\n#{prelude}#{@code_buffer}#{pad}  __buffer__\n#{pad}end"
     end
 
     def args
@@ -231,6 +231,8 @@ module Papercraft
         return emit_html5(node, block)
       when :emit
         return emit_emit(node.children[1], block)
+      when :emit_yield
+        return emit_emit_yield
       when :text
         return emit_text_fcall(args.first)
       end
@@ -332,10 +334,14 @@ module Papercraft
         name = value.children.first.to_s
         value = get_const(name)
         case value
-        when Papercraft::Template
+        when Papercraft::Template, Proc
+          value = Papercraft.html(&value) if value.is_a?(Proc)
           @sub_templates << value
           idx = @sub_templates.size - 1
-          emit_code("__sub_templates__[#{idx}].(__buffer__)\n")
+          @line_break = false
+          emit_code("__sub_templates__[#{idx}].(__buffer__)")
+          emit_code_block(block) if block
+          emit_code("\n")
         else
           emit_output { emit_literal(value) }
         end
@@ -347,6 +353,19 @@ module Papercraft
       # emit_output do
       #   emit_literal(value)
       # end
+    end
+
+    def emit_code_block(block)
+      emit_code(" {\n")
+      @level += 1
+      parse(block.children[2])
+      flush_emit_buffer
+      @level -= 1
+      emit_code("}")
+    end
+
+    def emit_emit_yield
+      emit_code("__block__.call\n")
     end
 
     def emit_tag_attributes(atts)
@@ -454,7 +473,7 @@ module Papercraft
       value = node.children.first
       emit_literal(value.inspect)
     end
-    
+
     def parse_true(node)
       emit_expression { emit_literal('true') }
     end
@@ -482,6 +501,10 @@ module Papercraft
 
     def parse_vcall(node)
       tag = node.children.first
+      case tag
+      when :emit_yield
+        return emit_emit_yield
+      end
       emit_tag(tag, nil)
     end
 
