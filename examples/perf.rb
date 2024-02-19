@@ -4,7 +4,7 @@ require 'erubis'
 require 'erb'
 require 'benchmark/ips'
 require 'tilt'
-require 'escape_utils'
+require 'cgi'
 
 App = Papercraft.html { |title:|
   html5 {
@@ -36,7 +36,7 @@ Content = Papercraft.html { |title:|
   }
 }
 
-HTML_APP = <<~HTML
+HTML_APP_ERUBIS = <<~HTML
 <!DOCTYPE html>
 <html>
   <body>
@@ -46,9 +46,19 @@ HTML_APP = <<~HTML
 </html>
 HTML
 
+HTML_APP_ERB = <<~HTML
+<!DOCTYPE html>
+<html>
+  <body>
+    <%= render_erb_header(title: 'MyApp') %>
+    <%= render_erb_content %>
+  </body>
+</html>
+HTML
+
 HTML_HEADER = <<~HTML
 <header>
-  <h2 id="title"><%= EscapeUtils.escape_html(title) %></h2>
+  <h2 id="title"><%= CGI.escapeHTML(title) %></h2>
   <button>1</button>
   <button>2</button>
 </header>
@@ -69,7 +79,7 @@ HTML
 
 class Renderer
   def render_erubis_app
-    @erubis_app ||= Tilt::ErubisTemplate.new { HTML_APP }
+    @erubis_app ||= Tilt::ErubisTemplate.new { HTML_APP_ERUBIS }
     @erubis_app.render(self)
   end
 
@@ -84,7 +94,7 @@ class Renderer
   end
 
   def render_erb_app
-    @erb_app ||= Tilt::ERBTemplate.new { HTML_APP }
+    @erb_app ||= Tilt::ERBTemplate.new { HTML_APP_ERB }
     @erb_app.render(self)
   end
 
