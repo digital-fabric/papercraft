@@ -44,6 +44,33 @@ module Papercraft
       @emit_buffer << encode(str, encoding).inspect[1..-2]
     end
 
+    def emit_text_fcall(node)
+      p node_type: node.type
+      case node.type
+      when :STR, :LIT, :SYM
+        value = node.children.first.to_s
+        emit_text(value, encoding: :html)
+      when :VCALL
+        emit_code("__buffer__ << #{node.children.first}\n")
+      when :CONST
+        name = node.children.first.to_s
+        value = get_const(name)
+        emit_text(value, encoding: :html)
+      else
+        raise NotImplementedError
+      end
+    end
+
+    def get_const(name)
+      if @block.binding.eval("singleton_class.const_defined?(#{name.inspect})")
+        @block.binding.eval("singleton_class.const_get(#{name.inspect})")
+      elsif Papercraft.const_defined?(name)
+        Papercraft.const_get(name)
+      else
+        raise NameError, "Constant #{name} not found"
+      end
+    end
+
     def encode(str, encoding)
       case encoding
       when :html
@@ -163,15 +190,17 @@ module Papercraft
 
     def parse_fcall(node, block = nil)
       tag, args = node.children
+      args = args.children.compact if args
 
       case tag
       when :html5
         return emit_html5(node, block)
       when :emit
-        return emit_emit(node, block)
+        return emit_emit(args, block)
+      when :text
+        return emit_text_fcall(args.first)
       end
 
-      args = args.children.compact if args
       text = fcall_inner_text_from_args(args)
       atts = fcall_attributes_from_args(args)
       if block
@@ -207,12 +236,7 @@ module Papercraft
         nil
       when :CONST
         const_name = first.children.first
-        value = :__undefined__
-        if @block.binding.eval("singleton_class.const_defined?(#{const_name.inspect})")
-          value = @block.binding.eval("singleton_class.const_get(#{const_name.inspect})")
-        elsif Papercraft.const_defined?(const_name)
-          value = Papercraft.const_get(const_name)
-        end
+        value = get_const(const_name)
         if value.is_a?(Papercraft::Template)
           value
         else
@@ -253,9 +277,8 @@ module Papercraft
       end
     end
 
-    def emit_emit(node, block)
-      value = fcall_inner_text_from_args(node.children)
-      p emit_emit: value
+    def emit_emit(args, block)
+      value = fcall_inner_text_from_args(args)
       emit_output do
         emit_literal(value)
       end

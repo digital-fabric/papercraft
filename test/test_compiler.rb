@@ -266,10 +266,33 @@ class CompiledTemplateTest < Minitest::Test
     )
   end
 
+  def __baz__; 'baz!'; end
+  A2 = 'boo'
+
+  def test_text
+    t = Papercraft.html {
+      text 'foo&bar'
+      text __baz__
+      text A2
+    }
+
+    c = t.compile
+    expected = <<~RUBY.chomp
+      ->(__buffer__, __context__) do
+        __buffer__ << "foo&amp;bar"
+        __buffer__ << __baz__
+        __buffer__ << "boo"
+      end
+    RUBY
+    assert_equal expected, c.to_code
+
+    assert_equal 'foo&amp;barbaz!boo', c.to_proc.render
+  end
+
   def test_emit_string
     assert_equal(
-      'foo',
-      C { emit 'foo' }.render
+      '<p>foo</p>bar',
+      C { p 'foo' ; emit 'bar' }.render
     )
   end
 end
