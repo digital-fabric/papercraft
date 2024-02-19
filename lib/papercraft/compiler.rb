@@ -138,7 +138,7 @@ module Papercraft
 
     def to_code
       pad = '  ' * @level
-      "#{pad}->(__buf__, __ctx__#{args}) do\n#{prelude}#{@code_buffer}#{pad}  __buf__\n#{pad}end"
+      "#{pad}->(__buf__#{args}) do\n#{prelude}#{@code_buffer}#{pad}  __buf__\n#{pad}end"
     end
 
     def args
@@ -199,8 +199,7 @@ module Papercraft
     end
 
     def parse_ivar(node)
-      ivar = node.children.first.match(/^@(.+)*/)[1]
-      emit_literal("__ctx__[:#{ivar}]")
+      emit_literal(node.children.first.to_s)
     end
 
     def parse_fcall(node, block = nil)
@@ -226,7 +225,7 @@ module Papercraft
           when Papercraft::Template
             @sub_templates << text
             idx = @sub_templates.size - 1
-            emit_code("__sub_templates__[#{idx}].(__buf__, __ctx__)\n")
+            emit_code("__sub_templates__[#{idx}].(__buf__)\n")
           when String
             emit_output { emit_text(text) }
           when RubyVM::AbstractSyntaxTree::Node
@@ -308,7 +307,7 @@ module Papercraft
         when Papercraft::Template
           @sub_templates << value
           idx = @sub_templates.size - 1
-          emit_code("__sub_templates__[#{idx}].(__buf__, __ctx__)\n")
+          emit_code("__sub_templates__[#{idx}].(__buf__)\n")
         else
           emit_output { emit_literal(value) }
         end

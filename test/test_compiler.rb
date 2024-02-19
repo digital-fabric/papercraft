@@ -3,8 +3,8 @@ require 'minitest/autorun'
 require 'papercraft'
 
 module ::Kernel
-  def C(**ctx, &block)
-    Papercraft::Template.new(**ctx, &block).compile
+  def C(&block)
+    Papercraft::Template.new(&block).compile
       .tap { |c|
         if ENV['DEBUG'] == '1'
           puts '*' * 40; puts c.to_code; puts
@@ -13,14 +13,19 @@ module ::Kernel
       .to_proc
   end
 
-  def c(**ctx, &block)
-    Papercraft::Template.new(**ctx, &block).compile
-  end
+  def c(&block)
+    Papercraft::Template.new(&block).compile
+    .tap { |c|
+      if ENV['DEBUG'] == '1'
+        puts '*' * 40; puts c.to_code; puts
+      end
+    }
+end
 end
 
 class ::Proc
   def render(*args)
-    +''.tap { |b| call(b, {}, *args) }
+    +''.tap { |b| call(b, *args) }
   end
 end
 
@@ -58,7 +63,7 @@ class CompilerTest < Minitest::Test
 
     code = compiled_template_code(templ)
     expected = <<~RUBY
-      ->(__buf__, __ctx__) do
+      ->(__buf__) do
         __buf__ << "<h1>foo</h1><h2>bar</h2>"
         __buf__
       end
@@ -74,7 +79,7 @@ class CompilerTest < Minitest::Test
 
     code = compiled_template_code(templ)
     expected = <<~RUBY
-      ->(__buf__, __ctx__) do
+      ->(__buf__) do
         __buf__ << "<h1 class=\\"foot\\">foo</h1><h2 id=\\"bar\\" onclick=\\"f(&quot;abc&quot;, &quot;def&quot;)\\">bar</h2>"
         __buf__
       end
@@ -83,7 +88,7 @@ class CompilerTest < Minitest::Test
 
     template_proc = compiled_template_proc(templ)
     buffer = +''
-    template_proc.(buffer, nil)
+    template_proc.(buffer)
     assert_equal '<h1 class="foot">foo</h1><h2 id="bar" onclick="f(&quot;abc&quot;, &quot;def&quot;)">bar</h2>', buffer
   end
 
@@ -174,7 +179,7 @@ class CompiledTemplateTest < Minitest::Test
     assert_kind_of Papercraft::Compiler, c
     p = c.to_proc
     b = +''
-    p.(b, nil)
+    p.(b)
 
     assert_equal '<h1>foo</h1>', b
   end
@@ -287,7 +292,7 @@ class CompiledTemplateTest < Minitest::Test
 
     c = t.compile
     expected = <<~RUBY.chomp
-      ->(__buf__, __ctx__) do
+      ->(__buf__) do
         __buf__ << "foo&amp;bar"
         __buf__ << CGI.escapeHTML((__baz__).to_s)
         __buf__ << "boo"
@@ -360,7 +365,7 @@ class SyntaxTest < Minitest::Test
     }
 
     expected = <<~RUBY
-    __buf__ << "<p>\#{CGI.escapeHTML((1 + 2).to_s)}</p>"
+      __buf__ << "<p>\#{CGI.escapeHTML((1 + 2).to_s)}</p>"
     RUBY
     assert_equal template_body(expected), t.code_buffer.chomp
 
@@ -374,7 +379,7 @@ class SyntaxTest < Minitest::Test
     }
 
     expected = <<~RUBY
-    __buf__ << "<p>\#{CGI.escapeHTML((foo).to_s)}</p>"
+      __buf__ << "<p>\#{CGI.escapeHTML((foo).to_s)}</p>"
     RUBY
     assert_equal template_body(expected), t.code_buffer.chomp
     assert_equal '<p>42</p>', t.to_proc.render
@@ -388,7 +393,7 @@ class SyntaxTest < Minitest::Test
     }
 
     expected = <<~RUBY
-    __buf__ << "<p>43</p>"
+      __buf__ << "<p>43</p>"
     RUBY
     assert_equal template_body(expected), t.code_buffer.chomp
     assert_equal '<p>43</p>', t.to_proc.render
@@ -401,12 +406,24 @@ class SyntaxTest < Minitest::Test
     }
 
     expected = <<~RUBY
-    1.next.next.next
-    __buf__ << "<p>\#{CGI.escapeHTML((2.next.next.next).to_s)}</p>"
+      1.next.next.next
+      __buf__ << "<p>\#{CGI.escapeHTML((2.next.next.next).to_s)}</p>"
     RUBY
     assert_equal template_body(expected), t.code_buffer.chomp
     assert_equal '<p>5</p>', t.to_proc.render
   end
 
-  def test_
+  def test_ivar
+    @foo = 'bar'
+
+    t = c {
+      p @foo
+    }
+
+    expected = <<~RUBY
+      __buf__ << "<p>\#{CGI.escapeHTML((@foo).to_s)}</p>"
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+    assert_equal '<p>bar</p>', t.to_proc.render
+  end
 end
