@@ -6,11 +6,15 @@ module ::Kernel
   def C(**ctx, &block)
     Papercraft::Template.new(**ctx, &block).compile
       .tap { |c|
-        if true #ENV['DEBUG'] == '1'
+        if ENV['DEBUG'] == '1'
           puts '*' * 40; puts c.to_code; puts
         end
       }
       .to_proc
+  end
+
+  def c(**ctx, &block)
+    Papercraft::Template.new(**ctx, &block).compile
   end
 end
 
@@ -42,6 +46,10 @@ class CompilerTest < Minitest::Test
     compiled_template(tmpl).to_proc
   end
 
+  def template_body(body)
+    body.chomp.lines.map { |l| "  #{l}" }.join
+  end
+
   def test_compiler_simple
     templ = Papercraft.html {
       h1 'foo'
@@ -49,13 +57,13 @@ class CompilerTest < Minitest::Test
     }
 
     code = compiled_template_code(templ)
-    expected = <<~RUBY.chomp.lines.map { |l| "  #{l}" }.join
+    expected = <<~RUBY
       ->(__buf__, __ctx__) do
         __buf__ << "<h1>foo</h1><h2>bar</h2>"
         __buf__
       end
     RUBY
-    assert_equal expected, code
+    assert_equal template_body(expected), code
   end
 
   def test_compiler_simple_with_attributes
@@ -65,13 +73,13 @@ class CompilerTest < Minitest::Test
     }
 
     code = compiled_template_code(templ)
-    expected = <<~RUBY.chomp.lines.map { |l| "  #{l}" }.join
+    expected = <<~RUBY
       ->(__buf__, __ctx__) do
         __buf__ << "<h1 class=\\"foot\\">foo</h1><h2 id=\\"bar\\" onclick=\\"f(&quot;abc&quot;, &quot;def&quot;)\\">bar</h2>"
         __buf__
       end
     RUBY
-    assert_equal expected, code
+    assert_equal template_body(expected), code
 
     template_proc = compiled_template_proc(templ)
     buffer = +''
@@ -86,7 +94,7 @@ class CompilerTest < Minitest::Test
     }
 
     code = compiled_template_body(template)
-    assert_equal "  __buf__ << \"<h1>\#{CGI.escapeHTML(a ? \"foo\" : \"bar\")}</h1>\"\n", code
+    assert_equal "  __buf__ << \"<h1>\#{CGI.escapeHTML((a ? \"foo\" : \"bar\").to_s)}</h1>\"\n", code
   end
 
   def test_compiler_conditional_2
@@ -98,7 +106,7 @@ class CompilerTest < Minitest::Test
     }
 
     code = compiled_template_body(template)
-    expected = <<~RUBY.lines.map { |l| "  #{l}" }.join
+    expected = <<~RUBY
       __buf__ << "<header>hi</header>"
       if a
         __buf__ << "<p>foo</p><p>bar</p>"
@@ -107,7 +115,7 @@ class CompilerTest < Minitest::Test
       end
       __buf__ << "<footer>bye</footer>"
     RUBY
-    assert_equal expected, code
+    assert_equal template_body(expected), code.chomp
   end
 
   def test_compiler_conditional_3
@@ -118,7 +126,7 @@ class CompilerTest < Minitest::Test
     }
 
     code = compiled_template_body(template)
-    expected = <<~RUBY.lines.map { |l| "  #{l}" }.join
+    expected = <<~RUBY
       if a
         __buf__ << "<h1>hi</h1>"
       end
@@ -126,7 +134,7 @@ class CompilerTest < Minitest::Test
         __buf__ << "<h2>bye</h2>"
       end
     RUBY
-    assert_equal expected, code
+    assert_equal template_body(expected), code.chomp
   end
 
   def test_compiler_conditional_4
@@ -143,7 +151,7 @@ class CompilerTest < Minitest::Test
     }
 
     code = compiled_template_body(template)
-    expected = <<~RUBY.lines.map { |l| "  #{l}" }.join
+    expected = <<~RUBY
       if a
         __buf__ << "<h1>foo</h1>"
       else
@@ -154,7 +162,7 @@ class CompilerTest < Minitest::Test
         end
       end
     RUBY
-    assert_equal expected, code
+    assert_equal template_body(expected), code.chomp
   end
 end
 
@@ -281,7 +289,7 @@ class CompiledTemplateTest < Minitest::Test
     expected = <<~RUBY.chomp
       ->(__buf__, __ctx__) do
         __buf__ << "foo&amp;bar"
-        __buf__ << CGI.escapeHTML(__baz__)
+        __buf__ << CGI.escapeHTML((__baz__).to_s)
         __buf__ << "boo"
         __buf__
       end
@@ -319,6 +327,10 @@ class CompiledTemplateTest < Minitest::Test
 end
 
 class SyntaxTest < Minitest::Test
+  def template_body(body)
+    body.chomp.lines.map { |l| "  #{l}" }.join
+  end
+
   def test_case
     t = C { |x|
       case x
@@ -331,6 +343,70 @@ class SyntaxTest < Minitest::Test
       end
     }
 
-    assert_equal('<h1>foo</h1>', t.render(:foo))
+    assert_equal '<h1>foo</h1>', t.render(:foo)
+    assert_equal '<h2>barbaz</h2>', t.render(:bar)
+    assert_equal '<h2>barbaz</h2>', t.render(:baz)
+    assert_equal '<p>noloso</p>', t.render(:bbb)
   end
+
+  def test_empty_template
+    t = C { }
+    assert_equal '', t.render
+  end
+
+  def test_tag_content_expr
+    t = c {
+      p (1 + 2)
+    }
+
+    expected = <<~RUBY
+    __buf__ << "<p>\#{CGI.escapeHTML((1 + 2).to_s)}</p>"
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+
+    assert_equal '<p>3</p>', t.to_proc.render
+  end
+
+  def test_tag_content_var
+    foo = 42
+    t = c {
+      p foo
+    }
+
+    expected = <<~RUBY
+    __buf__ << "<p>\#{CGI.escapeHTML((foo).to_s)}</p>"
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+    assert_equal '<p>42</p>', t.to_proc.render
+  end
+
+  FOO = 43
+
+  def test_tag_content_const
+    t = c {
+      p FOO
+    }
+
+    expected = <<~RUBY
+    __buf__ << "<p>43</p>"
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+    assert_equal '<p>43</p>', t.to_proc.render
+  end
+
+  def test_method_chain
+    t = c {
+      1.next.next.next
+      p 2.next.next.next
+    }
+
+    expected = <<~RUBY
+    1.next.next.next
+    __buf__ << "<p>\#{CGI.escapeHTML((2.next.next.next).to_s)}</p>"
+    RUBY
+    assert_equal template_body(expected), t.code_buffer.chomp
+    assert_equal '<p>5</p>', t.to_proc.render
+  end
+
+  def test_
 end

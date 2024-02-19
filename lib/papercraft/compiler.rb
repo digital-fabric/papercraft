@@ -52,7 +52,7 @@ module Papercraft
         value = node.children.first.to_s
         emit_text(value, encoding: :html)
       when :VCALL
-        emit_code("__buf__ << CGI.escapeHTML(#{node.children.first})\n")
+        emit_code("__buf__ << CGI.escapeHTML((#{node.children.first}).to_s)\n")
       when :CONST
         name = node.children.first.to_s
         value = get_const(name)
@@ -93,9 +93,9 @@ module Papercraft
 
     def emit_expression
       if @output_mode
-        emit_literal('#{CGI.escapeHTML(')
+        emit_literal('#{CGI.escapeHTML((')
         yield
-        emit_literal(')}')
+        emit_literal(').to_s)}')
       else
         yield
       end
@@ -229,8 +229,10 @@ module Papercraft
             emit_code("__sub_templates__[#{idx}].(__buf__, __ctx__)\n")
           when String
             emit_output { emit_text(text) }
-          else
+          when RubyVM::AbstractSyntaxTree::Node
             emit_output { emit_expression { parse(text) } }
+          else
+            emit_text(text.to_s)
           end
         end
       else
@@ -255,7 +257,7 @@ module Papercraft
         if value.is_a?(Papercraft::Template)
           value
         else
-          raise NotImplementedError
+          value
         end
       else
         first
@@ -459,7 +461,7 @@ module Papercraft
     end
 
     def parse_begin(node)
-      node.children.each { |c| parse(c) }
+      node.children.each { |c| parse(c) if c }
     end
 
     def parse_if(node)
