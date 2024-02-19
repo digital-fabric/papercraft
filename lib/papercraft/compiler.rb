@@ -158,12 +158,13 @@ module Papercraft
 
     def to_code
       pad = '  ' * @level
-      "#{pad}->(__buffer__#{args}, &__block__) do\n#{prelude}#{@code_buffer}#{pad}  __buffer__\n#{pad}end"
+      "#{pad}->(__buffer__#{proc_args}, &__block__) do\n#{prelude}#{@code_buffer}#{pad}  __buffer__\n#{pad}end"
     end
 
-    def args
+    def proc_args
       return nil if !@args
       
+      # ", #{@args.map { "#{_1}:" }.join(", ")}"
       ", #{@args.join(", ")}"
     end
 
@@ -171,7 +172,7 @@ module Papercraft
       return nil if @sub_templates.empty?
 
       converted = @sub_templates.map { |t| convert_sub_template(t)}
-      "#{'  ' * @level}  __sub_templates__ = [\n#{converted.join("\n")}\n  ]\n"
+      "#{'  ' * @level}  __sub_templates__ = [\n#{converted.join(",\n")}\n  ]\n"
     end
 
     def convert_sub_template(template)
@@ -195,7 +196,7 @@ module Papercraft
     def parse_scope(node)
       args = node.children[0]
       if args && !args.empty?
-        @args = args
+        @args = args.compact
       end
       parse(node.children[2])
     end
@@ -339,7 +340,12 @@ module Papercraft
           @sub_templates << value
           idx = @sub_templates.size - 1
           @line_break = false
-          emit_code("__sub_templates__[#{idx}].(__buffer__)")
+          emit_code("__sub_templates__[#{idx}].(__buffer__")
+          if !rest.empty?
+            emit_code(", ")
+            parse_list(args, false, 1..-1)
+          end  
+          emit_code(")")
           emit_code_block(block) if block
           emit_code("\n")
         else
@@ -482,8 +488,8 @@ module Papercraft
       emit_expression { emit_literal('true') }
     end
 
-    def parse_list(node, emit_array = true, range = nil)
-      emit_literal('[') if emit_array
+    def parse_list(node, emit_container = true, range = nil)
+      emit_literal('[') if emit_container
       if range
         items = node.children[range].compact
       else
@@ -493,10 +499,30 @@ module Papercraft
         item = items.shift
         break unless item
 
-        parse(item)
+        parse(item, emit_container)
         emit_literal(', ') if !items.empty?
       end
-      emit_literal(']') if emit_array
+      emit_literal(']') if emit_container
+    end
+
+    def parse_hash(node, emit_container = false)
+      emit_literal('{') if emit_container
+      items = node.children.first.children
+      idx = 0
+      while idx < items.size
+        k = items[idx]
+        break if !k
+
+        v = items[idx + 1]
+        p k: k, v: v
+        emit_literal(', ') if idx > 0
+        idx += 2
+
+        parse(k)
+        emit_literal(' => ')
+        parse(v)
+      end
+      emit_literal('}') if emit_container
     end
 
     def parse_vcall(node)

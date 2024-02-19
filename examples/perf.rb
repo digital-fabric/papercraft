@@ -113,39 +113,45 @@ class Renderer
     App.render(title: 'title from context')
   end
 
-  def render_papercraft_content
-    Content.render(title: 'title from context')
+  # def render_papercraft_content
+  #   Content.render(title: 'title from context')
+  # end
+
+  AppCompiled = App.compile
+  puts
+  puts AppCompiled.to_code
+  puts
+  AppCompiledProc = AppCompiled.to_proc
+
+  def render_papercraft_compiled_app
+    AppCompiledProc.(+'', title: 'title from context')
   end
 end
 
 r = Renderer.new
 
+puts '* Papercraft:'
 puts r.render_papercraft_app
+puts
+puts '* Papercraft (compiled):'
+puts r.render_papercraft_compiled_app
+puts
+
+puts '* ERubis:'
 puts r.render_erubis_app.gsub(/\n\s*/, '')
+puts
+
+puts '* ERB:'
 puts r.render_erb_app.gsub(/\n\s+/, '')
-
-# puts r.render_papercraft_content
-# puts r.render_erubis_content
-# puts r.render_erb_content
-
-# puts "=== Template with 2 partials"
-# Benchmark.ips do |x|
-#   x.config(:time => 3, :warmup => 1)
-
-#   x.report("papercraft") { r.render_papercraft_app }
-#   x.report("erubis") { r.render_erubis_app }
-#   x.report("erb") { r.render_erb_app }
-
-#   x.compare!
-# end
 
 puts "=== Single template"
 Benchmark.ips do |x|
   x.config(:time => 5, :warmup => 2)
 
-  x.report("papercraft") { r.render_papercraft_content }
-  x.report("erubis") { r.render_erubis_content }
-  x.report("erb") { r.render_erb_content }
+  x.report("papercraft") { r.render_papercraft_app }
+  x.report("papercraft (compiled)") { r.render_papercraft_compiled_app }
+  x.report("erubis") { r.render_erubis_app }
+  x.report("erb") { r.render_erb_app }
 
   x.compare!
 end
