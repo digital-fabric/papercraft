@@ -180,7 +180,7 @@ module Papercraft
       case first.type
       when :STR
         first.children.first
-      when :LIT
+      when :LIT, :SYM
         first.children.first.to_s
       when :HASH
         nil
@@ -246,7 +246,7 @@ module Papercraft
       case key.type
       when :STR
         emit_literal(key.children.first)
-      when :LIT
+      when :LIT, :SYM
         emit_literal(key.children.first.to_s)
       when :NIL
         emit_literal('nil')
@@ -258,9 +258,11 @@ module Papercraft
     def emit_tag_attribute_value(value, key)
       case value.type
       when :STR
-        encoding = (key.type == :LIT) && (key.children.first == :href) ? :uri : :html
+        type = key.type
+        is_href_attr = (type == :LIT || type == :SYM) && (key.children.first == :href)
+        encoding = is_href_attr ? :uri : :html
         emit_text(value.children.first, encoding: encoding)
-      when :LIT
+      when :LIT, :SYM
         emit_text(value.children.first.to_s)
       else
         parse(value)
@@ -309,6 +311,11 @@ module Papercraft
     end
 
     def parse_lit(node)
+      value = node.children.first
+      emit_literal(value.inspect)
+    end
+
+    def parse_sym(node)
       value = node.children.first
       emit_literal(value.inspect)
     end
