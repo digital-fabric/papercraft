@@ -395,11 +395,8 @@ module Papercraft
           @buffer << S_SPACE << att_repr(k)
         when false, nil
           # emit nothing
-        when Array
-          v = v.join(S_SPACE)
-          @buffer << S_SPACE << att_repr(k) <<
-            S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
         else
+          v = v.join(S_SPACE) if v.is_a?(Array)
           @buffer << S_SPACE << att_repr(k) <<
             S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
         end
