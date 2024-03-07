@@ -23,18 +23,18 @@ module Papercraft
       S_TAG_%<TAG>s_PRE = %<tag_pre>s
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
-      def %<tag>s(text = nil, _for: nil, **props, &block)
+      def %<tag>s(text = nil, _for: nil, **attributes, &block)
         return if @render_fragment && @fragment != @render_fragment
 
-        return _for.each { |*a| %<tag>s(text, **props) { block.(*a)} } if _for
+        return _for.each { |*a| %<tag>s(text, **attributes) { block.(*a)} } if _for
 
-        if text.is_a?(Hash) && props.empty?
-          props = text
+        if text.is_a?(Hash) && attributes.empty?
+          attributes = text
           text = nil
         end
 
         @buffer << S_TAG_%<TAG>s_PRE
-        emit_props(props) unless props.empty?
+        emit_attributes(attributes) unless attributes.empty?
 
         if block
           @buffer << S_GT
@@ -57,18 +57,18 @@ module Papercraft
       S_TAG_%<TAG>s_PRE = %<tag_pre>s
       S_TAG_%<TAG>s_CLOSE = %<tag_close>s
 
-      def %<tag>s(text = nil, _for: nil, **props, &block)
+      def %<tag>s(text = nil, _for: nil, **attributes, &block)
         return if @render_fragment && @fragment != @render_fragment
         
-        return _for.each { |*a| %<tag>s(text, **props) { block.(*a)} } if _for
+        return _for.each { |*a| %<tag>s(text, **attributes) { block.(*a)} } if _for
 
-        if text.is_a?(Hash) && props.empty?
-          props = text
+        if text.is_a?(Hash) && attributes.empty?
+          attributes = text
           text = nil
         end
 
         @buffer << S_TAG_%<TAG>s_PRE
-        emit_props(props) unless props.empty?
+        emit_attributes(attributes) unless attributes.empty?
 
         if block
           @buffer << S_GT
@@ -164,22 +164,22 @@ module Papercraft
     #
     # @param sym [Symbol, String] XML tag
     # @param text [String, nil] tag content
-    # @param **props [Hash] tag attributes
+    # @param **attributes [Hash] tag attributes
     # @return [void]
-    def tag(sym, text = nil, _for: nil, **props, &block)
+    def tag(sym, text = nil, _for: nil, **attributes, &block)
       return if @render_fragment && @fragment != @render_fragment
         
-      return _for.each { |*a| tag(sym, text, **props) { block.(*a)} } if _for
+      return _for.each { |*a| tag(sym, text, **attributes) { block.(*a)} } if _for
 
-      if text.is_a?(Hash) && props.empty?
-        props = text
+      if text.is_a?(Hash) && attributes.empty?
+        attributes = text
         text = nil
       end
 
       tag = tag_repr(sym)
 
       @buffer << S_LT << tag
-      emit_props(props) unless props.empty?
+      emit_attributes(attributes) unless attributes.empty?
 
       if block
         @buffer << S_GT
@@ -386,10 +386,10 @@ module Papercraft
 
     # Emits tag attributes into the rendering buffer.
     #
-    # @param props [Hash] tag attributes
+    # @param attributes [Hash] tag attributes
     # @return [void]
-    def emit_props(props)
-      props.each { |k, v|
+    def emit_attributes(attributes)
+      attributes.each { |k, v|
         case v
         when true
           @buffer << S_SPACE << att_repr(k)

@@ -11,11 +11,11 @@ module Papercraft
     # Emits the p tag (overrides Object#p)
     #
     # @param text [String] text content of tag
-    # @param **props [Hash] tag attributes
+    # @param **attributes [Hash] tag attributes
     # @para block [Proc] nested HTML block
     # @return [void]
-    def p(text = nil, **props, &block)
-      method_missing(:p, text, **props, &block)
+    def p(text = nil, **attributes, &block)
+      method_missing(:p, text, **attributes, &block)
     end
 
     S_HTML5_DOCTYPE = '<!DOCTYPE html>'
@@ -48,11 +48,11 @@ module Papercraft
     # Emits an inline CSS style element.
     #
     # @param css [String] CSS code
-    # @param **props [Hash] optional element attributes
+    # @param **attributes [Hash] optional element attributes
     # @return [void]
-    def style(css, **props, &block)
+    def style(css, **attributes, &block)
       @buffer << '<style'
-      emit_props(props) unless props.empty?
+      emit_attributes(attributes) unless attributes.empty?
 
       @buffer << '>' << css << '</style>'
     end
@@ -60,11 +60,11 @@ module Papercraft
     # Emits an inline JS script element.
     #
     # @param js [String, nil] Javascript code
-    # @param **props [Hash] optional element attributes
+    # @param **attributes [Hash] optional element attributes
     # @return [void]
-    def script(js = nil, **props, &block)
+    def script(js = nil, **attributes, &block)
       @buffer << '<script'
-      emit_props(props) unless props.empty?
+      emit_attributes(attributes) unless attributes.empty?
 
       if js
         @buffer << '>' << js << '</script>'
