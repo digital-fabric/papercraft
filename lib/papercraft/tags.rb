@@ -389,7 +389,7 @@ module Papercraft
     # @param attributes [Hash] tag attributes
     # @return [void]
     def emit_attributes(attributes)
-      attributes.each { |k, v|
+      attributes.each do |k, v|
         case v
         when true
           @buffer << S_SPACE << att_repr(k)
@@ -400,7 +400,8 @@ module Papercraft
           @buffer << S_SPACE << att_repr(k) <<
             S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
         end
-      }
+      end
     end
+    
   end
 end
