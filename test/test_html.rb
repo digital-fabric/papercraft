@@ -173,7 +173,7 @@ class AttributesTest < Minitest::Test
     )
 
     assert_equal(
-      '<a href="/?q=a%20b"></a>',
+      '<a href="/?q=a b"></a>',
       Papercraft.html { a href: '/?q=a b' }.render
     )
   end

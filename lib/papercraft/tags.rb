@@ -390,23 +390,18 @@ module Papercraft
     # @return [void]
     def emit_props(props)
       props.each { |k, v|
-        case k
-        when :src, :href
-          @buffer << S_SPACE << k.to_s << S_EQUAL_QUOTE << EscapeUtils.escape_uri(v) << S_QUOTE
+        case v
+        when true
+          @buffer << S_SPACE << att_repr(k)
+        when false, nil
+          # emit nothing
+        when Array
+          v = v.join(S_SPACE)
+          @buffer << S_SPACE << att_repr(k) <<
+            S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
         else
-          case v
-          when true
-            @buffer << S_SPACE << att_repr(k)
-          when false, nil
-            # emit nothing
-          when Array
-            v = v.join(' ')
-            @buffer << S_SPACE << att_repr(k) <<
-              S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
-          else
-            @buffer << S_SPACE << att_repr(k) <<
-              S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
-          end
+          @buffer << S_SPACE << att_repr(k) <<
+            S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
         end
       }
     end

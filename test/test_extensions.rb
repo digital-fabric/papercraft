@@ -124,7 +124,7 @@ class ExtensionsTest < Minitest::Test
     }
 
     assert_equal(
-      '<div class="card" style="width: 18rem"><div class="card-body"><h4 class="card-title">Card title</h4><h5 class="card-subtitle">Card subtitle</h5><p class="card-text">Some quick example text to build on the card title and make up the bulk of the cards content.</p><a class="card-link" href="%23foo">Card link</a><a class="card-link" href="%23bar">Another link</a></div></div>',
+      '<div class="card" style="width: 18rem"><div class="card-body"><h4 class="card-title">Card title</h4><h5 class="card-subtitle">Card subtitle</h5><p class="card-text">Some quick example text to build on the card title and make up the bulk of the cards content.</p><a class="card-link" href="#foo">Card link</a><a class="card-link" href="#bar">Another link</a></div></div>',
       page.render
     )
   end
