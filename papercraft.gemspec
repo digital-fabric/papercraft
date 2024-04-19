@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--title", "Papercraft", "--main", "README.md"]
   s.extra_rdoc_files = ["README.md", "papercraft.png"]
   s.require_paths = ["lib"]
-  s.required_ruby_version = '>= 3.0'
+  s.required_ruby_version = '>= 3.2'
 
   s.add_runtime_dependency      'sirop',                '~>0.3'
   s.add_runtime_dependency      'escape_utils',         '~>1.3.0'

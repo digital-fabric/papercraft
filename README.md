@@ -98,6 +98,8 @@ hello.render('world')
 
 ## Installing Papercraft
 
+**Note**: Papercraft requires Ruby version 3.2 or newer.
+
 Using bundler:
 
 ```ruby
