@@ -2,700 +2,154 @@
 
 require 'cgi'
 require 'escape_utils'
+require 'sirop'
 
-module Papercraft
-  def self.__cache_compiled_template__(value)
-    @compiled_template_cache ||= {}
-    
-    if !(compiled = @compiled_template_cache[value])
-      value = Papercraft.html(&value) if value.is_a?(Proc)
-      compiled = value.compile.to_proc
-      @compiled_template_cache[value] = compiled
-    end
+class Papercraft::Compiler < Sirop::Sourcifier
+  def initialize
+    super
+    @html_buffer = +''
   end
 
-  def self.__emit__(value, __buffer__, *args)
-    case value
-    when Proc, Papercraft::Template
-      compiled = __cache_compiled_template__(value)
-      compiled.(__buffer__, *args)
+  def compile(node)
+    inject_buffer_parameter(node)
+
+    @buffer.clear
+    @html_buffer.clear
+    visit(node)
+    @buffer
+  end
+
+  def inject_buffer_parameter(node)
+    node.inject_parameters('__buffer__')
+  end
+
+  def emit(str)
+    if @embed_mode
+      @embed_buffer << str
     else
-      __buffer__ << CGI.escapeHTML(value.to_s)
+      @buffer << str
     end
   end
 
-  # The Compiler class compiles Papercraft templates
-  class Compiler
-    DEFAULT_CODE_BUFFER_CAPACITY = 8192
-    DEFAULT_EMIT_BUFFER_CAPACITY = 4096
+  def embed_visit(node, pre = '', post = '')
+    @embed_mode = true
+    @embed_buffer = +''
+    visit(node)
+    @embed_mode = false
+    @html_buffer << "#{pre}#{@embed_buffer}#{post}"
+  end
 
-    def initialize
-      @level = 0
-      @code_buffer = String.new(capacity: DEFAULT_CODE_BUFFER_CAPACITY)
-      @sub_templates = []
+  def html_embed_visit(node)
+    embed_visit(node, '#{CGI.escapeHTML(', ')}')
+  end
+
+  def tag_attr_embed_visit(node)
+    embed_visit(node, '#{', '}')
+  end
+
+  def adjust_whitespace(loc)
+    super(loc) if !@embed_mode
+  end
+
+  def emit_code(loc, semicolon: false)
+    flush_html_buffer if !@embed_mode
+    super
+  end
+
+  def emit_html(str)
+    @html_buffer << str
+  end
+
+  def flush_html_buffer
+    return if @html_buffer.empty?
+
+    if @last_loc_start
+      adjust_whitespace(@html_location_start) if @html_location_start
     end
+    @buffer << "__buffer__ << \"#{@html_buffer}\""
+    @html_buffer.clear
+    @last_loc_end = loc_end(@html_location_end) if @html_location_end
 
-    def emit_output
-      @output_mode = true
-      yield
-      @output_mode = false
+    @html_location_start = nil
+    @html_location_end = nil
+  end
+
+  def visit_call_node(node)
+    return super if node.receiver
+
+    @html_location_start ||= node.location
+    inner_text, attrs = tag_args(node)
+    block = node.block
+
+    if inner_text
+      emit_tag_open(node, attrs)
+      emit_tag_inner_text(inner_text)
+      emit_tag_close(node)
+    elsif block
+      emit_tag_open(node, attrs)
+      visit(block.body)
+      @html_location_start ||= node.block.closing_loc
+      emit_tag_close(node)
+    else
+      emit_tag_open_close(node, attrs)
     end
+    @html_location_end = node.location
+  end
 
-    def emit_code_line_break
-      return if @code_buffer.empty?
+  def tag_args(node)
+    args = node.arguments&.arguments
+    return nil if !args
 
-      @code_buffer << "\n" if @code_buffer[-1] != "\n"
-      @line_break = nil
+    if args[0]&.is_a?(Prism::KeywordHashNode)
+      [nil, args[0]]
+    elsif args[1]&.is_a?(Prism::KeywordHashNode)
+      args
+    else
+      [args && args[0], nil]
     end
+  end
 
-    def emit_buffer
-      @emit_buffer ||= String.new(capacity: DEFAULT_EMIT_BUFFER_CAPACITY)
+  def emit_tag_open(node, attrs)
+    emit_html("<#{node.name}")
+    emit_tag_attributes(node, attrs) if attrs
+    emit_html(">")
+  end
+
+  def emit_tag_close(node)
+    emit_html("</#{node.name}>")
+  end
+
+  def emit_tag_open_close(node, attrs)
+    emit_html("<#{node.name}")
+    emit_tag_attributes(node, attrs) if attrs
+    emit_html("/>")
+  end
+
+  def emit_tag_inner_text(node)
+    case node
+    when Prism::StringNode, Prism::SymbolNode
+      @html_buffer << CGI.escapeHTML(node.unescaped)
+    else
+      html_embed_visit(node)
     end
+  end
 
-    def emit_literal(lit)
-      if @output_mode
-        emit_code_line_break if @line_break
-        emit_buffer << lit
-      else
-        emit_code(lit)
-      end
+  def emit_tag_attributes(node, attrs)
+    attrs.elements.each do |e|
+      emit_html(" ")
+      emit_tag_attribute_node(e.key)
+      emit_html('=\"')
+      emit_tag_attribute_node(e.value)
+      emit_html('\"')
     end
-
-    def emit_text(str, encoding: :html)
-      emit_code_line_break if @line_break
-      emit_buffer << encode(str, encoding).inspect[1..-2]
-    end
-
-    def emit_text_fcall(node)
-      case node.type
-      when :STR, :LIT, :SYM
-        value = node.children.first.to_s
-        emit_text(value, encoding: :html)
-      when :VCALL
-        emit_code("__buffer__ << CGI.escapeHTML((#{node.children.first}).to_s)\n")
-      when :CONST
-        name = node.children.first.to_s
-        value = get_const(name)
-        emit_text(value, encoding: :html)
-      else
-        raise NotImplementedError
-      end
-    end
-
-    def get_const(name)
-      if @block.binding.eval("singleton_class.const_defined?(#{name.inspect})")
-        @block.binding.eval("singleton_class.const_get(#{name.inspect})")
-      elsif Papercraft.const_defined?(name)
-        Papercraft.const_get(name)
-      else
-        raise NameError, "Constant #{name} not found"
-      end
-    end
-
-    def encode(str, encoding)
-      case encoding
-      when :html
-        __html_encode__(str)
-      when :uri
-        __uri_encode__(str)
-      else
-        raise "Invalid encoding #{encoding.inspect}"
-      end
-    end
-
-    def __html_encode__(str)
-      CGI.escapeHTML(str)
-    end
-
-    def __uri_encode__(str)
-      EscapeUtils.escape_uri(str)
-    end
-
-    def emit_expression
-      if @output_mode
-        emit_literal('#{CGI.escapeHTML((')
-        yield
-        emit_literal(').to_s)}')
-      else
-        yield
-      end
-    end
-
-    def flush_emit_buffer
-      return if !@emit_buffer
-
-      @code_buffer << "#{'  ' * @level}__buffer__ << \"#{@emit_buffer}\"\n"
-      @emit_buffer = nil
-      true
-    end
-
-    def emit_code(code)
-      if flush_emit_buffer || @line_break
-        emit_code_line_break if @line_break
-        @code_buffer << "#{'  ' * @level}#{code}"
-      else
-        if @code_buffer.empty? || (@code_buffer[-1] == "\n")
-          @code_buffer << "#{'  ' * @level}#{code}"
-        else
-          @code_buffer << "#{code}"
-        end
-      end
-    end
-
-    def compile(template, initial_level = 0)
-      @block = template.to_proc
-      @level = initial_level
-      ast = RubyVM::AbstractSyntaxTree.of(@block)
-      Compiler.pp_ast(ast) if ENV['DEBUG'] == '1'
-      @level += 1
-      parse(ast)
-      flush_emit_buffer
-      @level -= 1
-      self
-    end
-
-    attr_reader :code_buffer
-
-    def to_code
-      pad = '  ' * @level
-      "#{pad}->(__buffer__#{proc_args}, &__block__) do\n#{prelude}#{@code_buffer}#{pad}  __buffer__\n#{pad}end"
-    end
-
-    def proc_args
-      return nil if !@args
-      
-      # ", #{@args.map { "#{_1}:" }.join(", ")}"
-      ", #{@args.join(", ")}"
-    end
-
-    def prelude
-      return nil if @sub_templates.empty?
-
-      converted = @sub_templates.map { |t| convert_sub_template(t)}
-      "#{'  ' * @level}  __sub_templates__ = [\n#{converted.join(",\n")}\n  ]\n"
-    end
-
-    def convert_sub_template(template)
-      template.compile(@level + 2).to_code
-    end
-
-    def to_proc
-      @block.binding.eval(to_code)
-    end
-
-    def parse(node, line_break = true)
-      @line_break = line_break && @last_node && node.first_lineno != @last_node.first_lineno
-      @last_node = node
-      method_name = :"parse_#{node.type.downcase}"
-      if !respond_to?(method_name)
-        raise Papercraft::Error, "Template compiler doesn't know how to convert #{node.type.inspect} node"
-      end
-      send(method_name, node)
-    end
-
-    def parse_scope(node)
-      args = node.children[0]
-      if args && !args.empty?
-        @args = args.compact
-      end
-      parse(node.children[2])
-    end
-
-    def parse_iter(node)
-      call, scope = node.children
-      if call.type == :FCALL
-        parse_fcall(call, scope)
-      else
-        parse(call)
-        emit_code(" do")
-        args = scope.children[0]
-        emit_code(" |#{args.join(', ')}|") if args
-        emit_code("\n")
-        @level += 1
-        parse(scope)
-        flush_emit_buffer
-        @level -= 1
-        emit_code("end\n")
-      end
-    end
-
-    def parse_ivar(node)
-      emit_literal(node.children.first.to_s)
-    end
-
-    def parse_fcall(node, block = nil)
-      tag, args = node.children
-      args = args.children.compact if args
-
-      case tag
-      when :html5
-        return emit_html5(node, block)
-      when :emit
-        return emit_emit(node.children[1], block)
-      when :emit_yield
-        return emit_emit_yield
-      when :text
-        return emit_text_fcall(args.first)
-      end
-
-      text = fcall_inner_text_from_args(args)
-      atts = fcall_attributes_from_args(args)
-      if block
-        emit_tag(tag, atts) { parse(block) }
-      elsif text
-        emit_tag(tag, atts) do
-          case text
-          when Papercraft::Template
-            @sub_templates << text
-            idx = @sub_templates.size - 1
-            emit_code("__sub_templates__[#{idx}].(__buffer__)\n")
-          when String
-            emit_output { emit_text(text) }
-          when RubyVM::AbstractSyntaxTree::Node
-            emit_output { emit_expression { parse(text) } }
-          else
-            emit_text(text.to_s)
-          end
-        end
-      else
-        emit_tag(tag, atts)
-      end
-    end
-
-    def fcall_inner_text_from_args(args)
-      return nil if !args
-
-      first = args.first
-      case first.type
-      when :STR
-        first.children.first
-      when :LIT, :SYM
-        first.children.first.to_s
-      when :HASH
-        nil
-      when :CONST
-        const_name = first.children.first
-        value = get_const(const_name)
-        if value.is_a?(Papercraft::Template)
-          value
-        else
-          value
-        end
-      else
-        first
-      end
-    end
-
-    def fcall_attributes_from_args(args)
-      return nil if !args
-
-      last = args.last
-      (last.type == :HASH) ? last : nil
-    end
-
-    def emit_html5(node, block = nil)
-      emit_output do
-        emit_literal('<!DOCTYPE html>')
-      end
-      emit_tag(:html, nil) { parse(block) } if block
-    end
-
-    def emit_tag(tag, atts, &block)
-      emit_output do
-        if atts
-          emit_literal("<#{tag}")
-          emit_tag_attributes(atts)
-          emit_literal(block ? '>' : '/>')
-        else
-          emit_literal(block ? "<#{tag}>" : "<#{tag}/>")
-        end
-      end
-      if block
-        block.call
-        emit_output { emit_literal("</#{tag}>") }
-      end
-    end
-
-    def emit_emit(args, block)
-      value, *rest = args.children.compact
-      case value.type
-      when :STR, :LIT, :SYM
-        value = value.children.first.to_s
-        emit_output { emit_literal(value) }
-      when :VCALL
-        emit_code("__buffer__ << #{value.children.first}\n")
-      when :DVAR
-        emit_code("Papercraft.__emit__(#{value.children.first}, __buffer__")
-        if !rest.empty?
-          emit_code(", ")
-          parse_list(args, false, 1..-1)
-        end
-        emit_code(")\n")
-      when :CONST
-        name = value.children.first.to_s
-        value = get_const(name)
-        case value
-        when Papercraft::Template, Proc
-          value = Papercraft.html(&value) if value.is_a?(Proc)
-          @sub_templates << value
-          idx = @sub_templates.size - 1
-          @line_break = false
-          emit_code("__sub_templates__[#{idx}].(__buffer__")
-          if !rest.empty?
-            emit_code(", ")
-            parse_list(args, false, 1..-1)
-          end  
-          emit_code(")")
-          emit_code_block(block) if block
-          emit_code("\n")
-        else
-          emit_output { emit_literal(value) }
-        end
-      else
-        raise NotImplementedError
-      end
-
-      # value = fcall_inner_text_from_args(args)
-      # emit_output do
-      #   emit_literal(value)
-      # end
-    end
-
-    def emit_code_block(block)
-      emit_code(" {\n")
-      @level += 1
-      parse(block.children[2])
-      flush_emit_buffer
-      @level -= 1
-      emit_code("}")
-    end
-
-    def emit_emit_yield
-      emit_code("__block__.call\n")
-    end
-
-    def emit_tag_attributes(atts)
-      list = atts.children.first.children
-      while true
-        key = list.shift
-        break unless key
-
-        value = list.shift
-        value_type = value.type
-        case value_type
-        when :FALSE, :NIL
-          next
-        end
-
-        emit_literal(' ')
-        emit_tag_attribute_key(key)
-        next if value_type == :TRUE
-
-        emit_literal('=\"')
-        emit_tag_attribute_value(value, key)
-        emit_literal('\"')
-      end
-    end
-
-    def emit_tag_attribute_key(key)
-      case key.type
-      when :STR
-        emit_literal(key.children.first)
-      when :LIT, :SYM
-        emit_literal(key.children.first.to_s)
-      when :NIL
-        emit_literal('nil')
-      else
-        emit_expression { parse(key) }
-      end
-    end
-
-    def emit_tag_attribute_value(value, key)
-      case value.type
-      when :STR
-        type = key.type
-        is_href_attr = (type == :LIT || type == :SYM) && (key.children.first == :href)
-        encoding = is_href_attr ? :uri : :html
-        emit_text(value.children.first, encoding: encoding)
-      when :LIT, :SYM
-        emit_text(value.children.first.to_s)
-      else
-        parse(value)
-      end
-    end
-
-    def parse_call(node)
-      receiver, method, args = node.children
-      if receiver.type == :VCALL && receiver.children == [:context]
-        emit_literal('__ctx__')
-      else
-        parse(receiver)
-      end
-      if method == :[]
-        emit_literal('[')
-        args = args.children.compact
-        while true
-          arg = args.shift
-          break unless arg
-
-          parse(arg)
-          emit_literal(', ') if !args.empty?
-        end
-        emit_literal(']')
-      else
-        emit_literal('.')
-        emit_literal(method.to_s)
-        if args
-          emit_literal('(')
-          args = args.children.compact
-          while true
-            arg = args.shift
-            break unless arg
-
-            parse(arg)
-            emit_literal(', ') if !args.empty?
-          end
-          emit_literal(')')
-        end
-      end
-    end
-
-    def parse_str(node)
-      str = node.children.first
-      emit_literal(str.inspect)
-    end
-
-    def parse_lit(node)
-      value = node.children.first
-      emit_literal(value.inspect)
-    end
-
-    def parse_sym(node)
-      value = node.children.first
-      emit_literal(value.inspect)
-    end
-
-    def parse_integer(node)
-      value = node.children.first
-      emit_literal(value.inspect)
-    end
-
-    def parse_true(node)
-      emit_expression { emit_literal('true') }
-    end
-
-    def parse_false(node)
-      emit_expression { emit_literal('true') }
-    end
-
-    def parse_list(node, emit_container = true, range = nil)
-      emit_literal('[') if emit_container
-      if range
-        items = node.children[range].compact
-      else
-        items = node.children.compact
-      end
-      while true
-        item = items.shift
-        break unless item
-
-        parse(item, emit_container)
-        emit_literal(', ') if !items.empty?
-      end
-      emit_literal(']') if emit_container
-    end
-
-    def parse_hash(node, emit_container = false)
-      emit_literal('{') if emit_container
-      items = node.children.first.children
-      idx = 0
-      while idx < items.size
-        k = items[idx]
-        break if !k
-
-        v = items[idx + 1]
-        p k: k, v: v
-        emit_literal(', ') if idx > 0
-        idx += 2
-
-        parse(k)
-        emit_literal(' => ')
-        parse(v)
-      end
-      emit_literal('}') if emit_container
-    end
-
-    def parse_vcall(node)
-      tag = node.children.first
-      case tag
-      when :emit_yield
-        return emit_emit_yield
-      end
-      emit_tag(tag, nil)
-    end
-
-    def parse_opcall(node)
-      left, op, right = node.children
-      parse(left)
-      emit_literal(" #{op} ")
-      right.children.compact.each { |c| parse(c) }
-    end
-
-    def parse_block(node)
-      node.children.each { |c| parse(c) }
-    end
-
-    def parse_begin(node)
-      node.children.each { |c| parse(c) if c }
-    end
-
-    def parse_if(node)
-      cond, then_branch, else_branch = node.children
-      if @output_mode
-        emit_if_output(cond, then_branch, else_branch)
-      else
-        emit_if_code(cond, then_branch, else_branch)
-      end
-    end
-
-    def parse_unless(node)
-      cond, then_branch, else_branch = node.children
-      if @output_mode
-        emit_unless_output(cond, then_branch, else_branch)
-      else
-        emit_unless_code(cond, then_branch, else_branch)
-      end
-    end
-
-    def emit_if_output(cond, then_branch, else_branch)
-      parse(cond)
-      emit_literal(" ? ")
-      parse(then_branch)
-      emit_literal(" : ")
-      if else_branch
-        parse(else_branch)
-      else
-        emit_literal(nil)
-      end
-    end
-
-    def emit_unless_output(cond, then_branch, else_branch)
-      parse(cond)
-      emit_literal(" ? ")
-      if else_branch
-        parse(else_branch)
-      else
-        emit_literal(nil)
-      end
-      emit_literal(" : ")
-      parse(then_branch)
-    end
-
-    def emit_if_code(cond, then_branch, else_branch)
-      emit_code('if ')
-      parse(cond)
-      emit_code("\n")
-      @level += 1
-      parse(then_branch)
-      flush_emit_buffer
-      @level -= 1
-      if else_branch
-        emit_code("else\n")
-        @level += 1
-        parse(else_branch)
-        flush_emit_buffer
-        @level -= 1
-      end
-      emit_code("end\n")
-    end
-
-    def emit_unless_code(cond, then_branch, else_branch)
-      emit_code('unless ')
-      parse(cond)
-      emit_code("\n")
-      @level += 1
-      parse(then_branch)
-      flush_emit_buffer
-      @level -= 1
-      if else_branch
-        emit_code("else\n")
-        @level += 1
-        parse(else_branch)
-        flush_emit_buffer
-        @level -= 1
-      end
-      emit_code("end\n")
-    end
-
-    def parse_dvar(node)
-      emit_literal(node.children.first.to_s)
-    end
-
-    def parse_case(node)
-      value       = node.children[0]
-      when_clause = node.children[1]
-      emit_code("case ")
-      parse(value)
-      emit_code("\n")
-      parse_when(when_clause)
-      emit_code("end\n")
-    end
-
-    def parse_when(node)
-      values      = node.children[0]
-      then_clause = node.children[1]
-      else_clause = node.children[2]
-
-      emit_code('when ')
-      last_value = nil
-      emit_when_clause_values(values)
-      emit_code("\n")
-      @level += 1
-      parse(then_clause)
-      @level -= 1
-      
-      return if !else_clause
-
-      if else_clause.type == :WHEN
-        parse_when(else_clause)
-      else
-        emit_code("else\n")
-        @level += 1
-        @level -= 1
-        parse(else_clause)
-      end
-    end
-
-    def emit_when_clause_values(values)
-      if values.type != :LIST
-        raise Papercraft::Error, "Expected LIST node, found #{values.type} node"
-      end
-
-      idx = 0
-      list_items = values.children
-      while idx < list_items.size
-        value = list_items[idx]
-        break if !value
-
-        emit_code(', ') if idx > 0
-        parse(value, idx > 0)
-        idx += 1
-      end
-    end
-
-    def self.pp_ast(node, level = 0)
-      case node
-      when RubyVM::AbstractSyntaxTree::Node
-        puts "#{'  ' * level}#{node.type.inspect}"
-        node.children.each { |c| pp_ast(c, level + 1) }
-      when Array
-        puts "#{'  ' * level}["
-        node.each { |c| pp_ast(c, level + 1) }
-        puts "#{'  ' * level}]"
-      else
-        puts "#{'  ' * level}#{node.inspect}"
-        return
-      end
+  end
+
+  def emit_tag_attribute_node(node)
+    case node
+    when Prism::StringNode, Prism::SymbolNode
+      @html_buffer << node.unescaped
+    else
+      tag_attr_embed_visit(node)
     end
   end
 end
