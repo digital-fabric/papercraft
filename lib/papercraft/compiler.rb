@@ -56,7 +56,7 @@ class Papercraft::Compiler < Sirop::Sourcifier
   end
 
   def html_embed_visit(node)
-    embed_visit(node, '#{CGI.escapeHTML(', ')}')
+    embed_visit(node, '#{CGI.escapeHTML((', ').to_s)}')
   end
 
   def tag_attr_embed_visit(node, key)

@@ -26,7 +26,9 @@ class CompilerTest < Minitest::Test
       assert_equal compiled_src, compiled_code
 
       compiled_proc = eval(compiled_code, proc.binding)
-      assert_equal html, compiled_proc.call(+'')
+      compiled_html = +''
+      compiled_proc.call(compiled_html)
+      assert_equal html, compiled_html
     end
   end
 end
