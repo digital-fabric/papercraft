@@ -4,6 +4,17 @@ require_relative './tags'
 require 'cgi'
 
 module Papercraft
+  def self.format_html_attr(tag)
+    tag.to_s.tr('_', '-')
+  end
+
+  def self.format_html_attrs(attrs)
+    attrs.reduce(+'') do |html, (k, v)|
+      html << ' ' if !html.empty?
+      html << "#{format_html_attr(k)}=\"#{v}\""
+    end
+  end
+
   # HTML Markup extensions
   module HTML
     include Tags

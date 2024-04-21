@@ -4,6 +4,22 @@ require 'cgi'
 require 'escape_utils'
 require 'sirop'
 
+class Sirop::Sourcifier
+  # VISIT_PLANS.merge!({
+  #   self:         :emit_verbatim
+  # })
+
+  def visit_self_node(node)
+    emit_verbatim(node)
+  end
+
+  def visit_hash_node(node)
+    emit_code(node.opening_loc)
+    visit_comma_separated_nodes(node.elements)
+    emit_code(node.closing_loc)
+  end
+end
+
 class Papercraft::Compiler < Sirop::Sourcifier
   def initialize
     super
@@ -43,8 +59,12 @@ class Papercraft::Compiler < Sirop::Sourcifier
     embed_visit(node, '#{CGI.escapeHTML(', ')}')
   end
 
-  def tag_attr_embed_visit(node)
-    embed_visit(node, '#{', '}')
+  def tag_attr_embed_visit(node, key)
+    if key
+      embed_visit(node, '#{Papercraft.format_html_attr(', ')}')
+    else
+      embed_visit(node, '#{', '}')
+    end
   end
 
   def adjust_whitespace(loc)
@@ -135,21 +155,31 @@ class Papercraft::Compiler < Sirop::Sourcifier
   end
 
   def emit_tag_attributes(node, attrs)
+    # puts
+    # p emit_tag_attributes: node, attrs: attrs
+
     attrs.elements.each do |e|
       emit_html(" ")
-      emit_tag_attribute_node(e.key)
-      emit_html('=\"')
-      emit_tag_attribute_node(e.value)
-      emit_html('\"')
+
+      if e.is_a?(Prism::AssocSplatNode)
+        embed_visit(e.value, '#{Papercraft.format_html_attrs(', ')}')
+      else
+        emit_tag_attribute_node(e.key, true)
+        emit_html('=\"')
+        emit_tag_attribute_node(e.value)
+        emit_html('\"')
+      end  
     end
   end
 
-  def emit_tag_attribute_node(node)
+  def emit_tag_attribute_node(node, key = false)
     case node
     when Prism::StringNode, Prism::SymbolNode
-      @html_buffer << node.unescaped
+      value = node.unescaped
+      value = Papercraft.format_html_attr(value) if key
+      @html_buffer << value
     else
-      tag_attr_embed_visit(node)
+      tag_attr_embed_visit(node, key)
     end
   end
 end

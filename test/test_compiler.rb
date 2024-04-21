@@ -13,7 +13,7 @@ class CompilerTest < Minitest::Test
     compiled_src = IO.read(compiled_fn).chomp
     html = IO.read(html_fn)
 
-    define_method(:"test_compile_#{name}") do
+    define_method(:"test_compile_#{test_name}") do
       proc = eval(original_src, binding, fn)
       node = Sirop.to_ast(proc) { |str| }
       assert_kind_of Prism::Node, node
@@ -25,7 +25,7 @@ class CompilerTest < Minitest::Test
       assert_equal html, Papercraft.html(&proc).render
       assert_equal compiled_src, compiled_code
 
-      compiled_proc = eval(compiled_code)
+      compiled_proc = eval(compiled_code, proc.binding)
       assert_equal html, compiled_proc.call(+'')
     end
   end
