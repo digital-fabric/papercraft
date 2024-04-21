@@ -9,11 +9,25 @@ class Sirop::Sourcifier
   #   self:         :emit_verbatim
   # })
 
+  def emit_nothing(node)
+    # emit nothing
+  end
+
   def visit_self_node(node)
     emit_verbatim(node)
   end
 
+  def visit_numbered_parameters_node(node)
+    emit_nothing(node)
+  end
+
   def visit_hash_node(node)
+    emit_code(node.opening_loc)
+    visit_comma_separated_nodes(node.elements)
+    emit_code(node.closing_loc)
+  end
+
+  def visit_array_node(node)
     emit_code(node.opening_loc)
     visit_comma_separated_nodes(node.elements)
     emit_code(node.closing_loc)
