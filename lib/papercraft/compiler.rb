@@ -5,6 +5,32 @@ require 'escape_utils'
 require 'sirop'
 
 class Papercraft::Compiler < Sirop::Sourcifier
+  module AuxMethods
+    def format_html_attr(tag)
+      tag.to_s.tr('_', '-')
+    end
+  
+    def format_html_attrs(attrs)
+      attrs.reduce(+'') do |html, (k, v)|
+        html << ' ' if !html.empty?
+        html << "#{format_html_attr(k)}=\"#{v}\""
+      end
+    end
+
+    def render_emit_call(o, *a, **b, &block)
+      case o
+      when nil
+        # do nothing
+      when ::Proc
+        raise NotImplementedError
+      else
+        o.to_s
+      end
+    end
+  end
+  
+  Papercraft.extend(AuxMethods)
+
   def initialize
     super
     @html_buffer = +''
@@ -85,24 +111,13 @@ class Papercraft::Compiler < Sirop::Sourcifier
 
     case node.name
     when :text
-      return emit_html_text(node)
-    end
-
-    inner_text, attrs = tag_args(node)
-    block = node.block
-
-    if inner_text
-      emit_tag_open(node, attrs)
-      emit_tag_inner_text(inner_text)
-      emit_tag_close(node)
-    elsif block
-      emit_tag_open(node, attrs)
-      visit(block.body)
-      @html_location_start ||= node.block.closing_loc
-      emit_tag_close(node)
+      emit_html_text(node)
+    when :emit
+      emit_html_emit(node)
     else
-      emit_tag_open_close(node, attrs)
+      emit_html_tag(node)
     end
+
     @html_location_end = node.location
   end
 
@@ -178,5 +193,27 @@ class Papercraft::Compiler < Sirop::Sourcifier
     return nil if !args
 
     emit_tag_inner_text(args[0])
+  end
+
+  def emit_html_emit(node)
+    embed_visit(node.arguments, '#{Papercraft.render_emit_call(', ')}')
+  end
+
+  def emit_html_tag(node)
+    inner_text, attrs = tag_args(node)
+    block = node.block
+
+    if inner_text
+      emit_tag_open(node, attrs)
+      emit_tag_inner_text(inner_text)
+      emit_tag_close(node)
+    elsif block
+      emit_tag_open(node, attrs)
+      visit(block.body)
+      @html_location_start ||= node.block.closing_loc
+      emit_tag_close(node)
+    else
+      emit_tag_open_close(node, attrs)
+    end
   end
 end
