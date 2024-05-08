@@ -3,11 +3,11 @@
 require_relative './helper'
 
 class CompilerTest < Minitest::Test
-  Dir["#{FIXTURES_PATH}/*_source.rb"].each do |fn|
+  Dir["#{FIXTURES_PATH}/compiler/*_source.rb"].each do |fn|
     basename = File.basename(fn)
     test_name = basename.match(/^(.+)_source\.rb$/)[1]
-    compiled_fn = File.join(FIXTURES_PATH, "#{test_name}_compiled.rb")
-    html_fn = File.join(FIXTURES_PATH, "#{test_name}.html")
+    compiled_fn = File.join(FIXTURES_PATH, "compiler/#{test_name}_compiled.rb")
+    html_fn = File.join(FIXTURES_PATH, "compiler/#{test_name}.html")
 
     original_src = IO.read(fn).chomp
     compiled_src = IO.read(compiled_fn).chomp
