@@ -218,9 +218,10 @@ module Papercraft
     # Emits text into the rendering buffer, escaping any special characters to
     # the respective XML entities.
     #
-    # @param data [String] text
+    # @param data [String, nil] text
     # @return [void]
-    def text(data)
+    def text(data = nil)
+      return if !data
       return if @render_fragment && @fragment != @render_fragment
         
       @buffer << escape_text(data)

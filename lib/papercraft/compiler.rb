@@ -82,6 +82,12 @@ class Papercraft::Compiler < Sirop::Sourcifier
     return super if node.receiver
 
     @html_location_start ||= node.location
+
+    case node.name
+    when :text
+      return emit_html_text(node)
+    end
+
     inner_text, attrs = tag_args(node)
     block = node.block
 
@@ -165,5 +171,12 @@ class Papercraft::Compiler < Sirop::Sourcifier
     else
       tag_attr_embed_visit(node, key)
     end
+  end
+
+  def emit_html_text(node)
+    args = node.arguments&.arguments
+    return nil if !args
+
+    emit_tag_inner_text(args[0])
   end
 end
