@@ -22,7 +22,7 @@ class Papercraft::Compiler < Sirop::Sourcifier
       when nil
         # do nothing
       when ::Proc
-        raise NotImplementedError
+        Papercraft.html(&o).render(*a, **b, &block)
       else
         o.to_s
       end
@@ -49,20 +49,22 @@ class Papercraft::Compiler < Sirop::Sourcifier
     node.inject_parameters('__buffer__')
   end
 
-  def emit(str)
-    if @embed_mode
-      @embed_buffer << str
-    else
-      @buffer << str
-    end
-  end
-
   def embed_visit(node, pre = '', post = '')
+    tmp_last_loc_start = @last_loc_start
+    tmp_last_loc_end = @last_loc_end
+    @last_loc_start = loc_start(node.location)
+    @last_loc_end = loc_end(node.location)
+
     @embed_mode = true
-    @embed_buffer = +''
+    tmp_buffer = @buffer
+    @buffer = +''
     visit(node)
     @embed_mode = false
-    @html_buffer << "#{pre}#{@embed_buffer}#{post}"
+    @html_buffer << "#{pre}#{@buffer}#{post}"
+    @buffer = tmp_buffer
+
+    @last_loc_start = tmp_last_loc_start
+    @last_loc_end = tmp_last_loc_end
   end
 
   def html_embed_visit(node)
@@ -75,10 +77,6 @@ class Papercraft::Compiler < Sirop::Sourcifier
     else
       embed_visit(node, '#{', '}')
     end
-  end
-
-  def adjust_whitespace(loc)
-    super(loc) if !@embed_mode
   end
 
   def emit_code(loc, semicolon: false)
@@ -105,7 +103,7 @@ class Papercraft::Compiler < Sirop::Sourcifier
   end
 
   def visit_call_node(node)
-    return super if node.receiver
+    return super if node.receiver || @embed_mode
 
     @html_location_start ||= node.location
 
@@ -160,9 +158,6 @@ class Papercraft::Compiler < Sirop::Sourcifier
   end
 
   def emit_tag_attributes(node, attrs)
-    # puts
-    # p emit_tag_attributes: node, attrs: attrs
-
     attrs.elements.each do |e|
       emit_html(" ")
 
@@ -188,17 +183,6 @@ class Papercraft::Compiler < Sirop::Sourcifier
     end
   end
 
-  def emit_html_text(node)
-    args = node.arguments&.arguments
-    return nil if !args
-
-    emit_tag_inner_text(args[0])
-  end
-
-  def emit_html_emit(node)
-    embed_visit(node.arguments, '#{Papercraft.render_emit_call(', ')}')
-  end
-
   def emit_html_tag(node)
     inner_text, attrs = tag_args(node)
     block = node.block
@@ -215,5 +199,19 @@ class Papercraft::Compiler < Sirop::Sourcifier
     else
       emit_tag_open_close(node, attrs)
     end
+  end
+
+  def emit_html_text(node)
+    args = node.arguments&.arguments
+    return nil if !args
+
+    emit_tag_inner_text(args[0])
+  end
+
+  def emit_html_emit(node)
+    args = node.arguments&.arguments
+    return nil if !args
+
+    embed_visit(node.arguments, '#{Papercraft.render_emit_call(', ')}')
   end
 end

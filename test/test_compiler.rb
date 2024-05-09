@@ -22,12 +22,17 @@ class CompilerTest < Minitest::Test
       compiled_code = Papercraft::Compiler.new.compile(node)
       puts compiled_code if ENV['DEBUG'] == '1'
 
+      # render source proc
       assert_equal html, Papercraft.html(&proc).render
+      
+      # compile
       assert_equal compiled_src, compiled_code
 
       compiled_proc = eval(compiled_code, proc.binding)
       compiled_html = +''
       compiled_proc.call(compiled_html)
+
+      # render compiled proc
       assert_equal html, compiled_html
     end
   end
