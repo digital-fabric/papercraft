@@ -21,6 +21,8 @@ class Papercraft::Compiler < Sirop::Sourcifier
       case o
       when nil
         # do nothing
+      when Papercraft::Template
+        o.render(*a, **b, &block)
       when ::Proc
         Papercraft.html(&o).render(*a, **b, &block)
       else
