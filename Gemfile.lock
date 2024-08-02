@@ -20,10 +20,12 @@ GEM
       kramdown (~> 2.0)
     minitest (5.22.3)
     prism (0.27.0)
-    rexml (3.2.6)
+    rexml (3.3.3)
+      strscan
     rouge (4.2.1)
     sirop (0.4)
       prism (~> 0.27.0)
+    strscan (3.1.0)
     tilt (2.2.0)
 
 PLATFORMS
