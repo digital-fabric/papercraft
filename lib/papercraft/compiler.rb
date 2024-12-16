@@ -39,6 +39,7 @@ class Papercraft::Compiler < Sirop::Sourcifier
   end
 
   def compile(node)
+    @root_node = node
     inject_buffer_parameter(node)
 
     @buffer.clear
@@ -96,7 +97,13 @@ class Papercraft::Compiler < Sirop::Sourcifier
     if @last_loc_start
       adjust_whitespace(@html_location_start) if @html_location_start
     end
-    @buffer << "__buffer__ << \"#{@html_buffer}\""
+    if @defer_proc_mode
+      @buffer << "__b__ << \"#{@html_buffer}\""
+    elsif @defer_mode
+      @buffer << "__parts__ << \"#{@html_buffer}\""
+    else
+      @buffer << "__buffer__ << \"#{@html_buffer}\""
+    end
     @html_buffer.clear
     @last_loc_end = loc_end(@html_location_end) if @html_location_end
 
@@ -114,6 +121,10 @@ class Papercraft::Compiler < Sirop::Sourcifier
       emit_html_text(node)
     when :emit
       emit_html_emit(node)
+    when :emit_yield
+      raise NotImplementedError, "emit_yield is not yet supported in compiled templates"
+    when :defer
+      emit_html_deferred(node)
     else
       emit_html_tag(node)
     end
@@ -215,5 +226,38 @@ class Papercraft::Compiler < Sirop::Sourcifier
     return nil if !args
 
     embed_visit(node.arguments, '#{Papercraft.render_emit_call(', ')}')
+  end
+
+  def emit_html_deferred(node)
+    raise NotImplementedError, "#defer in embed mode is not supported in compiled templates" if @embed_mode
+
+    block = node.block
+    return if not block
+
+    setup_defer_mode if !@defer_mode
+
+    flush_html_buffer
+    @buffer << ';__parts__ << ->(__b__) '
+    @defer_proc_mode = true
+    visit(node.block)
+    @defer_proc_mode = nil
+  end
+
+  DEFER_PREFIX_EMPTY = "; __parts__ = []"
+  DEFER_PREFIX_NOT_EMPTY = "; __parts__ = [__buffer__.dup]; __buffer__.clear"
+  DEFER_POSTFIX = ";__parts__.each { |p| p.is_a?(Proc) ? p.(__buffer__) : (__buffer__ << p) }"
+
+  def setup_defer_mode
+    @defer_mode = true
+    if @html_buffer && !@html_buffer.empty?
+      @buffer << DEFER_PREFIX_NOT_EMPTY
+    else
+      @buffer << DEFER_PREFIX_EMPTY
+    end
+
+    @root_node.after_body do
+      flush_html_buffer
+      @buffer << DEFER_POSTFIX
+    end
   end
 end

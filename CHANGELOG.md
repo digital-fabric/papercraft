@@ -1,3 +1,7 @@
+## 1.3 2024-12-16
+
+- Update dependencies
+
 ## 1.2 2023-08-21
 
 - Update dependencies
