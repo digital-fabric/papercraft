@@ -1,13 +1,8 @@
 # frozen_string_literal: true
 
-require 'kramdown'
-require 'rouge'
-require 'kramdown-parser-gfm'
-
 require_relative 'papercraft/template'
 require_relative 'papercraft/renderer'
-require_relative 'papercraft/compiler'
-
+# require_relative 'papercraft/compiler'
 
 # Papercraft is a composable templating library
 module Papercraft
@@ -82,6 +77,11 @@ module Papercraft
     # @param opts [Hash] Kramdown option overrides
     # @return [String] HTML
     def markdown(markdown, **opts)
+      # require relevant deps on use
+      require 'kramdown'
+      require 'rouge'
+      require 'kramdown-parser-gfm'
+      
       opts = default_kramdown_options.merge(opts)
       Kramdown::Document.new(markdown, **opts).to_html
     end

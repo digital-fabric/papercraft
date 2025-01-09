@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './helper'
+require_relative '../lib/papercraft/compiler'
 
 class CompilerTest < Minitest::Test
   Dir["#{FIXTURES_PATH}/compiler/*_source.rb"].each do |fn|
