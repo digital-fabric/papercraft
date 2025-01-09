@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    papercraft (1.3)
+    papercraft (1.4)
       escape_utils (~> 1.3.0)
       kramdown (~> 2.5.1)
       kramdown-parser-gfm (~> 1.1.0)

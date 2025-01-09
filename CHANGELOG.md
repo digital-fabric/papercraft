@@ -1,3 +1,7 @@
+## 1.4 2025-01-09
+
+- Compiler: add support defer
+
 ## 1.3 2024-12-16
 
 - Update dependencies
