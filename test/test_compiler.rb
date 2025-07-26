@@ -21,6 +21,7 @@ class CompilerTest < Minitest::Test
 
       p node if ENV['DEBUG'] == '1'
       compiled_code = Papercraft::Compiler.new.compile(node)
+      # compiled_code = Papercraft::TemplateCompiler.compile_to_code(proc)
       puts compiled_code if ENV['DEBUG'] == '1'
 
       # render source proc

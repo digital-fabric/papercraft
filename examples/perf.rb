@@ -1,5 +1,6 @@
 require 'bundler/setup'
 require 'papercraft'
+require 'papercraft/compiler'
 require 'erubis'
 require 'erb'
 require 'benchmark/ips'
@@ -17,6 +18,11 @@ App = Papercraft.html { |title:|
     }
   }
 }
+
+p App.block
+pp Sirop.to_ast(App.block)
+exit!
+
 
 Header = Papercraft.html { |title:|
   header {

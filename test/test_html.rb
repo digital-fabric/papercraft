@@ -409,6 +409,21 @@ class EmitTest < Minitest::Test
       outer.render(&inner)
     )
   end
+
+  def test_emit_yield_syntropy
+    c = Class.new
+    layout = c.module_eval "Papercraft.html { |**a|
+      body { emit_yield(**a) }
+    }"
+
+    body = layout.apply {
+      h1 'bar'
+    }
+
+    html = body.render
+
+    assert_equal '<body><h1>bar</h1></body>', html
+  end
 end
 
 class ScopeTest < Minitest::Test

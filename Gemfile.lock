@@ -6,7 +6,7 @@ PATH
       kramdown (~> 2.5.1)
       kramdown-parser-gfm (~> 1.1.0)
       rouge (~> 4.5.1)
-      sirop (~> 0.5)
+      sirop (~> 0.7)
 
 GEM
   remote: https://rubygems.org/
@@ -18,12 +18,12 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    minitest (5.25.4)
-    prism (0.27.0)
-    rexml (3.4.0)
-    rouge (4.5.1)
-    sirop (0.5)
-      prism (~> 0.27.0)
+    minitest (5.25.5)
+    prism (1.4.0)
+    rexml (3.4.1)
+    rouge (4.5.2)
+    sirop (0.7)
+      prism (~> 1.4.0)
     tilt (2.2.0)
 
 PLATFORMS

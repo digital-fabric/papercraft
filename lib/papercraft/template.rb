@@ -88,6 +88,7 @@ module Papercraft
 
     # Determines the rendering mode: `:html` or `:xml`.
     attr_accessor :mode
+    attr_reader :block
 
     STOCK_MIME_TYPE = {
       html: 'text/html',
@@ -105,6 +106,7 @@ module Papercraft
     def initialize(mode: :html, mime_type: nil, &block)
       @mode = mode
       @mime_type = mime_type || STOCK_MIME_TYPE[mode]
+      @block = block
       super(&block)
     end
 
@@ -201,7 +203,11 @@ module Papercraft
     end
 
     def compile(*args)
-      Papercraft::Compiler.new.compile(self, *args)
+      p @block
+      ast = Sirop.to_ast(@block)
+      pp ast
+      exit!
+      Papercraft::Compiler.new.compile(ast, *args)
     end
   end
 end
