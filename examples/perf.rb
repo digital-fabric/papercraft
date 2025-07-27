@@ -122,10 +122,6 @@ class Renderer
   AppCompiledProc = Papercraft::TemplateCompiler.compile(App)
 
   def render_papercraft_compiled_app
-    puts '*' * 40
-    puts AppCompiledCode
-    puts
-    exit!
 
     buffer = +''
     AppCompiledProc.(buffer, title: 'title from context')
@@ -154,7 +150,7 @@ Benchmark.ips do |x|
   x.config(:time => 5, :warmup => 2)
 
   x.report("papercraft") { r.render_papercraft_app }
-  # x.report("papercraft (compiled)") { r.render_papercraft_compiled_app }
+  x.report("papercraft (compiled)") { r.render_papercraft_compiled_app }
   x.report("erubis") { r.render_erubis_app }
   x.report("erb") { r.render_erb_app }
 

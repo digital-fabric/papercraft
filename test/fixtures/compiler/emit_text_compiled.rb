@@ -1,3 +1,3 @@
 ->(__buffer__) {
-  __buffer__ << "foo&bar<br>#{Papercraft.render_emit_call(x)}"
+  __buffer__ << "foo&bar<br>#{Papercraft.render_emit_call(x)}"; __buffer__
 }

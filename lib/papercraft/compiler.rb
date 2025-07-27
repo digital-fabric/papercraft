@@ -163,6 +163,7 @@ module Papercraft
       flush_html_parts!(semicolon_prefix: true)
       emit_postlude
       if wrap
+        emit('; __buffer__')
         adjust_whitespace(orig_ast.closing_loc)
         emit('}')
       end

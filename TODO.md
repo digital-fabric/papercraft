@@ -7,10 +7,19 @@
       - emit
       - emit_markdown
       - etc.
+- [v] 
 - [v] Add support for special tags: especially html5
 - [v] Add support for defer
+- [ ] Make compiled proc return the buffer
+- [ ] Add support for inlining emitted sub-templates
+- [ ] Add support for emit_yield?
+
+
 
 ## Enhancements
+
+- [ ] Behind the scenes compile every 
+
 
 - [ ] Automatic compilation
 - [ ] Once everything's compiled, add support for following:
@@ -33,3 +42,4 @@
         p['my-id'] 'foo' #=> <p id="my-id">foo</p>
       }
       ```
+
