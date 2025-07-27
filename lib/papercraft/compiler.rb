@@ -6,7 +6,7 @@ require 'sirop'
 
 module Papercraft
   class TagNode
-    attr_reader :location, :tag, :tag_location, :inner_text, :attributes, :block
+    attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block
 
     def initialize(call_node, compiler)
       @call_node = call_node
@@ -39,11 +39,12 @@ module Papercraft
   end
 
   class EmitNode
-    attr_reader :call_node, :location
+    attr_reader :call_node, :location, :block
 
-    def initialize(call_node, _compiler)
+    def initialize(call_node, compiler)
       @call_node = call_node
       @location = call_node.location
+      @block = call_node.block && compiler.visit(call_node.block)
     end
 
     def accept(visitor)
@@ -116,6 +117,12 @@ module Papercraft
       else
         TagNode.new(node, self)
       end
+    end
+  end
+
+  class VerbatimSourcifier < Sirop::Sourcifier
+    def visit_tag_node(node)
+      visit(node.call_node)
     end
   end
 
@@ -198,7 +205,8 @@ module Papercraft
           emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(first_arg)})}")
         end
       else
-        emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(node.call_node.arguments)})}")
+        block_embed = node.block ? " #{format_code(node.block, VerbatimSourcifier)}" : ''
+        emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(node.call_node.arguments)})#{block_embed}}")
       end
     end
 
@@ -255,8 +263,8 @@ module Papercraft
 
     private
 
-    def format_code(node)
-      TemplateCompiler.new(minimize_whitespace: true).to_source(node)
+    def format_code(node, klass = TemplateCompiler)
+      klass.new(minimize_whitespace: true).to_source(node)
     end
 
     VOID_TAGS = %w(area base br col embed hr img input link meta param source track wbr)

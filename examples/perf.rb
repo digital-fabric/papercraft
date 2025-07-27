@@ -119,20 +119,16 @@ class Renderer
   # end
   # 
   AppCompiledCode = Papercraft::TemplateCompiler.compile_to_code(App)
-  AppCompiled = Papercraft::TemplateCompiler.compile(App)
-  # puts '*' * 40
-  # puts AppCompiledCode
-  # exit
-
-  # AppCompiled = App.compilels
-  # puts
-  # puts AppCompiled.to_code
-  # puts
-  # AppCompiledProc = AppCompiled.to_proc
+  AppCompiledProc = Papercraft::TemplateCompiler.compile(App)
 
   def render_papercraft_compiled_app
+    puts '*' * 40
+    puts AppCompiledCode
+    puts
+    exit!
+
     buffer = +''
-    AppCompiled.(buffer, title: 'title from context')
+    AppCompiledProc.(buffer, title: 'title from context')
     buffer
   end
 end
@@ -142,9 +138,9 @@ r = Renderer.new
 puts '* Papercraft:'
 puts r.render_papercraft_app
 puts
-# puts '* Papercraft (compiled):'
-# puts r.render_papercraft_compiled_app
-# puts
+puts '* Papercraft (compiled):'
+puts r.render_papercraft_compiled_app
+puts
 
 puts '* ERubis:'
 puts r.render_erubis_app.gsub(/\n\s*/, '')
