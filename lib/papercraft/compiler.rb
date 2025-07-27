@@ -78,6 +78,21 @@ module Papercraft
     end
   end
 
+  class CustomTagNode
+    attr_reader :tag, :call_node, :location, :block
+
+    def initialize(call_node, compiler)
+      @call_node = call_node
+      @tag = call_node.name
+      @location = call_node.location
+      @block = call_node.block && compiler.visit(call_node.block)
+    end
+
+    def accept(visitor)
+      visitor.visit_custom_tag_node(self)
+    end
+  end
+
   class TagTransformer < Prism::MutationCompiler
     include Prism::DSL
 
@@ -96,6 +111,8 @@ module Papercraft
         TextNode.new(node, self)
       when :defer
         DeferNode.new(node, self)
+      when :html5, :emit_markdown
+        CustomTagNode.new(node, self)
       else
         TagNode.new(node, self)
       end
@@ -219,6 +236,21 @@ module Papercraft
       flush_html_parts!
       adjust_whitespace(block.closing_loc)
       emit("}")
+    end
+
+    def visit_custom_tag_node(node)
+      case node.tag
+      when :html5
+        emit_html(node.location, '<!DOCTYPE html><html>')
+        visit(node.block.body) if node.block
+        emit_html(node.block.closing_loc, '</html>')
+      when :emit_markdown
+        args = node.call_node.arguments&.arguments
+        md = args && args.first
+        return if !md
+        
+        emit_html(node.location, "#\{Papercraft.markdown(#{format_code(md)})}")
+      end
     end
 
     private
