@@ -47,7 +47,7 @@ class HtmlTest < Minitest::Test
       link_stylesheet '/assets/style.css'
     }
     assert_equal(
-      '<link rel="stylesheet" href="/assets/style.css"/>',
+      '<link rel="stylesheet" href="/assets/style.css">',
       html.render
     )
 
@@ -55,7 +55,7 @@ class HtmlTest < Minitest::Test
       link_stylesheet '/assets/style.css', media: 'print'
     }
     assert_equal(
-      '<link media="print" rel="stylesheet" href="/assets/style.css"/>',
+      '<link media="print" rel="stylesheet" href="/assets/style.css">',
       html.render
     )
   end
@@ -180,12 +180,12 @@ class AttributesTest < Minitest::Test
 
   def test_valueless_attributes
     assert_equal(
-      '<input type="checkbox" checked/>',
+      '<input type="checkbox" checked>',
       Papercraft.html { input type: 'checkbox', checked: true }.render
     )
 
     assert_equal(
-      '<input type="checkbox"/>',
+      '<input type="checkbox">',
       Papercraft.html { input type: 'checkbox', checked: false }.render
     )
   end
@@ -396,7 +396,7 @@ class EmitTest < Minitest::Test
     assert_raises { r.render(foo: 'bar') }
 
     assert_equal(
-      '<body><p>foo</p><hr/></body>',
+      '<body><p>foo</p><hr></body>',
       r.render { p 'foo'; hr; }
     )
   end

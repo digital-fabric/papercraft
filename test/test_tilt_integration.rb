@@ -59,6 +59,6 @@ class TiltIntegrationTest < Minitest::Test
     }
 
     html = t.render(Object.new, a: 'foo', b: 'bar') { hr }
-    assert_equal '<h1>foo</h1><p>bar</p><hr/>', html
+    assert_equal '<h1>foo</h1><p>bar</p><hr>', html
   end
 end

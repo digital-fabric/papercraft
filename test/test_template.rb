@@ -89,7 +89,7 @@ class EmitYieldTest < Minitest::Test
     assert_raises(Papercraft::Error) { r.render(foo: 'bar') }
 
     assert_equal(
-      '<body><p>foo</p><hr/></body>',
+      '<body><p>foo</p><hr></body>',
       r.render { p 'foo'; hr; }
     )
   end
@@ -204,7 +204,7 @@ class ConstComponentTest < Minitest::Test
     ])
 
     assert_equal(
-      '<!DOCTYPE html><html><head><h1>Hello from composed templates</h1></head><body><ul><li><input name="1" type="checkbox"/><label for="1">foo</label></li><li><input name="2" type="checkbox" checked/><label for="2">bar</label></li></ul></body></html>',
+      '<!DOCTYPE html><html><head><h1>Hello from composed templates</h1></head><body><ul><li><input name="1" type="checkbox"><label for="1">foo</label></li><li><input name="2" type="checkbox" checked><label for="2">bar</label></li></ul></body></html>',
       html
     )
   end
