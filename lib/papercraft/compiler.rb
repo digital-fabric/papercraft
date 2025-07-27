@@ -123,8 +123,19 @@ module Papercraft
     end
 
     def format_compiled_template(ast, orig_ast, wrap = true)
-      emit("->(__buffer__) {\n") if wrap
-      visit(ast)      
+      if wrap
+        emit('->(__buffer__')
+
+        params = orig_ast.parameters
+        params = params&.parameters
+        if params
+          emit(', ')
+          emit(format_code(params))
+        end
+        
+        emit(") {\n")
+      end
+      visit(ast)
       flush_html_parts!(semicolon_prefix: true)
       emit_postlude
       if wrap
