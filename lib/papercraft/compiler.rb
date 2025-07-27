@@ -20,7 +20,6 @@ module Papercraft
       else
         @tag_location = @location
       end
-      p tag: @tag, tag_location: @tag_location
 
       args = call_node.arguments&.arguments
       return if !args
@@ -42,13 +41,40 @@ module Papercraft
   class EmitNode
     attr_reader :call_node, :location
 
-    def initialize(call_node, compiler)
+    def initialize(call_node, _compiler)
       @call_node = call_node
       @location = call_node.location
     end
 
     def accept(visitor)
       visitor.visit_emit_node(self)
+    end
+  end
+
+  class TextNode
+    attr_reader :call_node, :location
+
+    def initialize(call_node, _compiler)
+      @call_node = call_node
+      @location = call_node.location
+    end
+
+    def accept(visitor)
+      visitor.visit_text_node(self)
+    end
+  end
+
+  class DeferNode
+    attr_reader :call_node, :location, :block
+
+    def initialize(call_node, compiler)
+      @call_node = call_node
+      @location = call_node.location
+      @block = call_node.block && compiler.visit(call_node.block)
+    end
+
+    def accept(visitor)
+      visitor.visit_defer_node(self)
     end
   end
 
@@ -61,11 +87,15 @@ module Papercraft
 
     def visit_call_node(node)
       # We're only interested in compiling method calls without a receiver
-      return node if node.receiver
+      return super(node) if node.receiver
 
       case node.name
       when :emit
         EmitNode.new(node, self)
+      when :text
+        TextNode.new(node, self)
+      when :defer
+        DeferNode.new(node, self)
       else
         TagNode.new(node, self)
       end
@@ -73,16 +103,16 @@ module Papercraft
   end
 
   class TemplateCompiler < Sirop::Sourcifier
-    def self.compile_to_code(obj, wrap = true)
-      ast = Sirop.to_ast(obj)
+    def self.compile_to_code(proc, wrap = true)
+      ast = Sirop.to_ast(proc)
 
       transformed_ast = TagTransformer.transform(ast.body)
       new.format_compiled_template(transformed_ast, ast, wrap)
     end
 
-    def self.compile(obj, orig_binding = nil, wrap = true)
-      code = compile_to_code(obj, wrap)
-      orig_binding ? orig_binding.eval(code) : eval(code)
+    def self.compile(proc, wrap = true)
+      code = compile_to_code(proc, wrap)
+      eval(code, proc.binding)
     end
 
     def initialize(**)
@@ -94,8 +124,9 @@ module Papercraft
 
     def format_compiled_template(ast, orig_ast, wrap = true)
       emit("->(__buffer__) {\n") if wrap
-      visit(ast)
-      flush_html_parts!
+      visit(ast)      
+      flush_html_parts!(semicolon_prefix: true)
+      emit_postlude
       if wrap
         adjust_whitespace(orig_ast.closing_loc)
         emit('}')
@@ -111,22 +142,72 @@ module Papercraft
     def visit_tag_node(node)
       is_void = is_void_element?(node.tag)
       emit_html(node.tag_location, format_html_tag_open(node.tag, node.attributes))
-      if !is_void
-        visit(node.block.body) if node.block
-        emit_html(node.location, format_literal(node.inner_text)) if node.inner_text
+      return if is_void
+
+      visit(node.block.body) if node.block
+      if node.inner_text
+        if is_static_node?(node.inner_text)
+          emit_html(node.location, CGI.escape_html(format_literal(node.inner_text)))
+        else
+          convert_to_s = !is_string_type_node?(node.inner_text)
+          if convert_to_s
+            emit_html(node.location, "#\{CGI.escape_html((#{format_code(node.inner_text)}).to_s)}")
+          else
+            emit_html(node.location, "#\{CGI.escape_html(#{format_code(node.inner_text)})}")
+          end
+        end
       end
-      emit_html(node.location, format_html_tag_close(node.tag)) if !is_void
+      emit_html(node.location, format_html_tag_close(node.tag))
     end
 
     def visit_emit_node(node)
       args = node.call_node.arguments.arguments
       first_arg = args.first
-      p visit_emit_node: args.length, first: first_arg, a: args.length == 1, b: is_static_node?(first_arg)
-      if args.length == 1 && is_static_node?(first_arg)
-        emit_html(node.location, format_literal(first_arg))
-      # else
-      #   raise "Failed!!!!"
+      if args.length == 1
+        if is_static_node?(first_arg)
+          emit_html(node.location, format_literal(first_arg))
+        else
+          emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(first_arg)})}")
+        end
+      else
+        emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(node.call_node.arguments)})}")
       end
+    end
+
+    def visit_text_node(node)
+      return if !node.call_node.arguments
+
+      args = node.call_node.arguments.arguments
+      first_arg = args.first
+      if args.length == 1
+        if is_static_node?(first_arg)
+          emit_html(node.location, CGI.escape_html(format_literal(first_arg)))
+        else
+          emit_html(node.location, "#\{CGI.escape_html(#{format_code(first_arg)}.to_s)}")
+        end
+      else
+        raise "Don't know how to compile #{node}"
+      end
+    end
+
+    def visit_defer_node(node)
+      block = node.block
+      return if !block
+
+      flush_html_parts!
+
+      if !@defer_mode
+        adjust_whitespace(node.call_node.message_loc)
+        emit("__orig_buffer__ = __buffer__; __parts__ = __buffer__ = []; ")
+        @defer_mode = true
+      end
+
+      adjust_whitespace(block.opening_loc)
+      emit("__buffer__ << ->{")
+      visit(block.body)
+      flush_html_parts!
+      adjust_whitespace(block.closing_loc)
+      emit("}")
     end
 
     private
@@ -186,6 +267,15 @@ module Papercraft
       STATIC_NODE_TYPES.include?(node.class)
     end
 
+    STRING_TYPE_NODE_TYPES = [
+      Prism::StringNode,
+      Prism::InterpolatedStringNode
+    ]
+
+    def is_string_type_node?(node)
+      STRING_TYPE_NODE_TYPES.include?(node.class)
+    end
+
     def format_html_attributes(node)
       elements = node.elements
       dynamic_attributes = elements.any? do
@@ -218,10 +308,13 @@ module Papercraft
       @pending_html_parts << str
     end
 
-    def flush_html_parts!
+    def flush_html_parts!(semicolon_prefix: false)
       return if @pending_html_parts.empty?
 
       adjust_whitespace(@html_loc_start)
+      if semicolon_prefix && @buffer !~ /\n\s*$/m
+        emit '; '
+      end
 
       str = @pending_html_parts.join
       @pending_html_parts.clear
@@ -233,12 +326,16 @@ module Papercraft
       @html_loc_start = nil
       @html_loc_end = nil
 
-      emit "__buffer__ << \"#{str}\"\n"
+      emit "__buffer__ << \"#{str}\""
+    end
+
+    def emit_postlude
+      return if !@defer_mode
+
+      emit("; __buffer__ = __orig_buffer__; __parts__.each { it.is_a?(Proc) ? it.() : (__buffer__ << it) }")
     end
   end
-end
 
-class Papercraft::Compiler < Sirop::Sourcifier
   module AuxMethods
     def format_html_attr_key(tag)
       tag.to_s.tr('_', '-')
@@ -266,232 +363,4 @@ class Papercraft::Compiler < Sirop::Sourcifier
   end
   
   Papercraft.extend(AuxMethods)
-
-  def initialize
-    super
-    @html_buffer = +''
-  end
-
-  def compile(node)
-    @root_node = node
-    inject_buffer_parameter(node)
-
-    @buffer.clear
-    @html_buffer.clear
-    visit(node)
-    @buffer
-  end
-
-  def inject_buffer_parameter(node)
-    node.inject_parameters('__buffer__')
-  end
-
-  def embed_visit(node, pre = '', post = '')
-    tmp_last_loc_start = @last_loc_start
-    tmp_last_loc_end = @last_loc_end
-    @last_loc_start = loc_start(node.location)
-    @last_loc_end = loc_end(node.location)
-
-    @embed_mode = true
-    tmp_buffer = @buffer
-    @buffer = +''
-    visit(node)
-    @embed_mode = false
-    @html_buffer << "#{pre}#{@buffer}#{post}"
-    @buffer = tmp_buffer
-
-    @last_loc_start = tmp_last_loc_start
-    @last_loc_end = tmp_last_loc_end
-  end
-
-  def html_embed_visit(node)
-    embed_visit(node, '#{CGI.escape_html((', ').to_s)}')
-  end
-
-  def tag_attr_embed_visit(node, key)
-    if key
-      embed_visit(node, '#{Papercraft.format_html_attr_key(', ')}')
-    else
-      embed_visit(node, '#{', '}')
-    end
-  end
-
-  def emit_code(loc, semicolon: false)
-    flush_html_buffer if !@embed_mode
-    super
-  end
-
-  def emit_html(str)
-    @html_buffer << str
-  end
-
-  def flush_html_buffer
-    return if @html_buffer.empty?
-
-    if @last_loc_start
-      adjust_whitespace(@html_location_start) if @html_location_start
-    end
-    if @defer_proc_mode
-      @buffer << "__b__ << \"#{@html_buffer}\""
-    elsif @defer_mode
-      @buffer << "__parts__ << \"#{@html_buffer}\""
-    else
-      @buffer << "__buffer__ << \"#{@html_buffer}\""
-    end
-    @html_buffer.clear
-    @last_loc_end = loc_end(@html_location_end) if @html_location_end
-
-    @html_location_start = nil
-    @html_location_end = nil
-  end
-
-  def visit_call_node(node)
-    return super if node.receiver || @embed_mode
-
-    @html_location_start ||= node.location
-
-    case node.name
-    when :text
-      emit_html_text(node)
-    when :emit
-      emit_html_emit(node)
-    when :emit_yield
-      raise NotImplementedError, "emit_yield is not yet supported in compiled templates"
-    when :defer
-      emit_html_deferred(node)
-    else
-      emit_html_tag(node)
-    end
-
-    @html_location_end = node.location
-  end
-
-  def tag_args(node)
-    args = node.arguments&.arguments
-    return nil if !args
-
-    if args[0]&.is_a?(Prism::KeywordHashNode)
-      [nil, args[0]]
-    elsif args[1]&.is_a?(Prism::KeywordHashNode)
-      args
-    else
-      [args && args[0], nil]
-    end
-  end
-
-  def emit_tag_open(node, attrs)
-    emit_html("<#{node.name}")
-    emit_tag_attributes(node, attrs) if attrs
-    emit_html(">")
-  end
-
-  def emit_tag_close(node)
-    emit_html("</#{node.name}>")
-  end
-
-  def emit_tag_open_close(node, attrs)
-    emit_html("<#{node.name}")
-    emit_tag_attributes(node, attrs) if attrs
-    emit_html("/>")
-  end
-
-  def emit_tag_inner_text(node)
-    case node
-    when Prism::StringNode, Prism::SymbolNode
-      @html_buffer << CGI.escapeHTML(node.unescaped)
-    else
-      html_embed_visit(node)
-    end
-  end
-
-  def emit_tag_attributes(node, attrs)
-    attrs.elements.each do |e|
-      emit_html(" ")
-
-      if e.is_a?(Prism::AssocSplatNode)
-        embed_visit(e.value, '#{Papercraft.format_html_attrs(', ')}')
-      else
-        emit_tag_attribute_node(e.key, true)
-        emit_html('=\"')
-        emit_tag_attribute_node(e.value)
-        emit_html('\"')
-      end  
-    end
-  end
-
-  def emit_tag_attribute_node(node, key = false)
-    case node
-    when Prism::StringNode, Prism::SymbolNode
-      value = node.unescaped
-      value = Papercraft.format_html_attr_key(value) if key
-      @html_buffer << value
-    else
-      tag_attr_embed_visit(node, key)
-    end
-  end
-
-  def emit_html_tag(node)
-    inner_text, attrs = tag_args(node)
-    block = node.block
-
-    if inner_text
-      emit_tag_open(node, attrs)
-      emit_tag_inner_text(inner_text)
-      emit_tag_close(node)
-    elsif block
-      emit_tag_open(node, attrs)
-      visit(block.body)
-      @html_location_start ||= node.block.closing_loc
-      emit_tag_close(node)
-    else
-      emit_tag_open_close(node, attrs)
-    end
-  end
-
-  def emit_html_text(node)
-    args = node.arguments&.arguments
-    return nil if !args
-
-    emit_tag_inner_text(args[0])
-  end
-
-  def emit_html_emit(node)
-    args = node.arguments&.arguments
-    return nil if !args
-
-    embed_visit(node.arguments, '#{Papercraft.render_emit_call(', ')}')
-  end
-
-  def emit_html_deferred(node)
-    raise NotImplementedError, "#defer in embed mode is not supported in compiled templates" if @embed_mode
-
-    block = node.block
-    return if not block
-
-    setup_defer_mode if !@defer_mode
-
-    flush_html_buffer
-    @buffer << ';__parts__ << ->(__b__) '
-    @defer_proc_mode = true
-    visit(node.block)
-    @defer_proc_mode = nil
-  end
-
-  DEFER_PREFIX_EMPTY = "; __parts__ = []"
-  DEFER_PREFIX_NOT_EMPTY = "; __parts__ = [__buffer__.dup]; __buffer__.clear"
-  DEFER_POSTFIX = ";__parts__.each { |p| p.is_a?(Proc) ? p.(__buffer__) : (__buffer__ << p) }"
-
-  def setup_defer_mode
-    @defer_mode = true
-    if @html_buffer && !@html_buffer.empty?
-      @buffer << DEFER_PREFIX_NOT_EMPTY
-    else
-      @buffer << DEFER_PREFIX_EMPTY
-    end
-
-    @root_node.after_body do
-      flush_html_buffer
-      @buffer << DEFER_POSTFIX
-    end
-  end
 end

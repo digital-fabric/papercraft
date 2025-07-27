@@ -32,7 +32,7 @@ class HtmlTest < Minitest::Test
       text 'hi'
       hr
     }
-    assert_equal '<hr/><input value="foo"/><br/>hi<hr/>', h.render
+    assert_equal '<hr><input value="foo"><br>hi<hr>', h.render
   end
 
   def test_html5

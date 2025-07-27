@@ -20,8 +20,7 @@ class CompilerTest < Minitest::Test
       assert_kind_of Prism::Node, node
 
       p node if ENV['DEBUG'] == '1'
-      compiled_code = Papercraft::Compiler.new.compile(node)
-      # compiled_code = Papercraft::TemplateCompiler.compile_to_code(proc)
+      compiled_code = Papercraft::TemplateCompiler.compile_to_code(proc)
       puts compiled_code if ENV['DEBUG'] == '1'
 
       # render source proc

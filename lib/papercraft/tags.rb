@@ -69,20 +69,7 @@ module Papercraft
 
         @buffer << S_TAG_%<TAG>s_PRE
         emit_attributes(attributes) unless attributes.empty?
-
-        if block
-          @buffer << S_GT
-          instance_eval(&block)
-          @buffer << S_TAG_%<TAG>s_CLOSE
-        elsif Proc === text
-          @buffer << S_GT
-          emit(text)
-          @buffer << S_TAG_%<TAG>s_CLOSE
-        elsif text
-          @buffer << S_GT << escape_text(text.to_s) << S_TAG_%<TAG>s_CLOSE
-        else
-          @buffer << S_SLASH_GT
-        end
+        @buffer << S_GT
       end
     EOF
 
@@ -180,6 +167,12 @@ module Papercraft
 
       @buffer << S_LT << tag
       emit_attributes(attributes) unless attributes.empty?
+      
+      if is_void_element_tag?(sym)
+        @buffer << S_SLASH_GT
+        return
+      end
+
 
       if block
         @buffer << S_GT
@@ -191,8 +184,6 @@ module Papercraft
         @buffer << S_LT_SLASH << tag << S_GT
       elsif text
         @buffer << S_GT << escape_text(text.to_s) << S_LT_SLASH << tag << S_GT
-      elsif is_void_element_tag?(sym)
-        @buffer << S_SLASH_GT
       else
         @buffer << S_GT_LT_SLASH << tag << S_GT
       end
