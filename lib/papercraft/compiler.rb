@@ -294,8 +294,12 @@ module Papercraft
           nil
         else
           k = format_literal(key) 
-          v = format_literal(value)
-          "#{Papercraft.format_html_attr_key(k)}=\\\"#{CGI.escape_html(v)}\\\""
+          if is_static_node?(value)
+            value = format_literal(value)
+            "#{Papercraft.format_html_attr_key(k)}=\\\"#{value}\\\""
+          else
+            "#{Papercraft.format_html_attr_key(k)}=\\\"#\{#{format_code(value)}}\\\""
+          end
         end
       end
 

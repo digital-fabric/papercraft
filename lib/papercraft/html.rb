@@ -149,7 +149,7 @@ module Papercraft
     # @param text [String] text
     # @return [String] escaped text
     def escape_text(text)
-      CGI.escapeHTML(text.to_s)
+      CGI.escape_html(text.to_s)
     end
 
     # Converts a tag to its string representation. Underscores will be converted

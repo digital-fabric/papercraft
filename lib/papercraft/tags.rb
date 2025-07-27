@@ -45,9 +45,9 @@ module Papercraft
           emit(text)
           @buffer << S_TAG_%<TAG>s_CLOSE
         elsif text
-          @buffer << S_GT << escape_text(text.to_s) << S_TAG_%<TAG>s_CLOSE
+          @buffer << ">#\{escape_text(text.to_s)}</%<repr>s>"
         else
-          @buffer << S_GT << S_TAG_%<TAG>s_CLOSE
+          @buffer << "></%<repr>s>"
         end
       end
     EOF
@@ -165,27 +165,26 @@ module Papercraft
 
       tag = tag_repr(sym)
 
-      @buffer << S_LT << tag
+      @buffer << "<#{tag}"
       emit_attributes(attributes) unless attributes.empty?
       
       if is_void_element_tag?(sym)
-        @buffer << S_SLASH_GT
+        @buffer << ">"
         return
       end
-
 
       if block
         @buffer << S_GT
         instance_eval(&block)
-        @buffer << S_LT_SLASH << tag << S_GT
+        @buffer << "</#{tag}>"
       elsif Proc === text
         @buffer << S_GT
         emit(text)
-        @buffer << S_LT_SLASH << tag << S_GT
+        @buffer << "</#{tag}>"
       elsif text
-        @buffer << S_GT << escape_text(text.to_s) << S_LT_SLASH << tag << S_GT
+        @buffer << ">#{escape_text(text.to_s)}</#{tag}>"
       else
-        @buffer << S_GT_LT_SLASH << tag << S_GT
+        @buffer << "></#{tag}>"
       end
     end
 
@@ -308,6 +307,7 @@ module Papercraft
       code = tmpl % {
         tag: tag,
         TAG: tag.upcase,
+        repr: repr,
         tag_pre: "<#{repr}".inspect,
         tag_close: "</#{repr}>".inspect
       }
@@ -384,13 +384,13 @@ module Papercraft
       attributes.each do |k, v|
         case v
         when true
-          @buffer << S_SPACE << att_repr(k)
+          @buffer << " #{att_repr(k)}"
         when false, nil
           # emit nothing
         else
           v = v.join(S_SPACE) if v.is_a?(Array)
-          @buffer << S_SPACE << att_repr(k) <<
-            S_EQUAL_QUOTE << escape_text(v) << S_QUOTE
+
+          @buffer << " #{att_repr(k)}=\"#{v}\""
         end
       end
     end

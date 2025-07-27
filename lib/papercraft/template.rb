@@ -203,11 +203,12 @@ module Papercraft
     end
 
     def compile(*args)
-      p @block
-      ast = Sirop.to_ast(@block)
-      pp ast
-      exit!
-      Papercraft::Compiler.new.compile(ast, *args)
+      compiled_template = Papercraft::TemplateCompiler.compile(proc)
+      ->(*a, **b) {
+        buffer = +''
+        compiled_template.(buffer)
+        buffer
+      }
     end
   end
 end

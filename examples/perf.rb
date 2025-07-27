@@ -19,11 +19,6 @@ App = Papercraft.html { |title:|
   }
 }
 
-p App.block
-pp Sirop.to_ast(App.block)
-exit!
-
-
 Header = Papercraft.html { |title:|
   header {
     h2(title, id: 'title')
@@ -75,7 +70,7 @@ HTML_CONTENT = <<~HTML
   <h3>title from context</h3>
   <p>Hello, world!</p>
   <div>
-    <a href="<%= EscapeUtils.escape_uri('http://google.com/?a=1&b=2&c=3%204') %>">
+    <a href="<%= 'http://google.com/?a=1&b=2&c=3%204' %>">
       <h3>foo bar</h3>
     </a>
     <p>lorem ipsum </p>
@@ -116,21 +111,29 @@ class Renderer
 
 
   def render_papercraft_app
-    App.render(title: 'title from context')
+    App.render(title: 'title from context') 
   end
 
   # def render_papercraft_content
   #   Content.render(title: 'title from context')
   # end
+  # 
+  AppCompiledCode = Papercraft::TemplateCompiler.compile_to_code(App)
+  AppCompiled = Papercraft::TemplateCompiler.compile(App)
+  # puts '*' * 40
+  # puts AppCompiledCode
+  # exit
 
-  AppCompiled = App.compile
-  puts
-  puts AppCompiled.to_code
-  puts
-  AppCompiledProc = AppCompiled.to_proc
+  # AppCompiled = App.compilels
+  # puts
+  # puts AppCompiled.to_code
+  # puts
+  # AppCompiledProc = AppCompiled.to_proc
 
   def render_papercraft_compiled_app
-    AppCompiledProc.(+'', title: 'title from context')
+    buffer = +''
+    AppCompiled.(buffer, title: 'title from context')
+    buffer
   end
 end
 
@@ -139,9 +142,9 @@ r = Renderer.new
 puts '* Papercraft:'
 puts r.render_papercraft_app
 puts
-puts '* Papercraft (compiled):'
-puts r.render_papercraft_compiled_app
-puts
+# puts '* Papercraft (compiled):'
+# puts r.render_papercraft_compiled_app
+# puts
 
 puts '* ERubis:'
 puts r.render_erubis_app.gsub(/\n\s*/, '')
@@ -155,7 +158,7 @@ Benchmark.ips do |x|
   x.config(:time => 5, :warmup => 2)
 
   x.report("papercraft") { r.render_papercraft_app }
-  x.report("papercraft (compiled)") { r.render_papercraft_compiled_app }
+  # x.report("papercraft (compiled)") { r.render_papercraft_compiled_app }
   x.report("erubis") { r.render_erubis_app }
   x.report("erb") { r.render_erb_app }
 

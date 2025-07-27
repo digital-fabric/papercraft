@@ -26,7 +26,11 @@ class CompilerTest < Minitest::Test
       # render source proc
       assert_equal html, Papercraft.html(&proc).render
       
-      # compile
+      if ENV['DEBUG'] == '1'
+        puts '*' * 40
+        puts compiled_code
+        puts '=' * 40
+      end
       assert_equal compiled_src, compiled_code
 
       compiled_proc = eval(compiled_code, proc.binding)
