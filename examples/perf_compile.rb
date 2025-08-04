@@ -1,11 +1,11 @@
 require 'bundler/setup'
-require 'papercraft'
+require 'p2'
 require 'erb'
 require 'benchmark/ips'
 
 content = 'foo'
 
-T = Papercraft.html {
+T = P2.html {
   html5 {
     head {
       title 'some title'

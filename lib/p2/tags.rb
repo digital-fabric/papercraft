@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-require_relative './extension_proxy'
 require 'escape_utils'
 
-module Papercraft
-  # Markup (HTML/XML) extensions
+module P2
+  # Markup extensions
   module Tags
     S_LT              = '<'
     S_GT              = '>'
@@ -76,9 +75,9 @@ module Papercraft
     INITIAL_BUFFER_CAPACITY = 8192
 
     # Initializes a tag renderer.
-    def initialize(render_fragment = nil, &template)
+    def initialize(&template)
       @buffer = String.new(capacity: INITIAL_BUFFER_CAPACITY)
-      super(render_fragment)
+      super
     end
 
     # Returns the rendered template.
@@ -103,14 +102,14 @@ module Papercraft
     end
 
     # Defers the given block to be evaluated later. Deferred evaluation allows
-    # Papercraft templates to inject state into sibling components, regardless
+    # P2 templates to inject state into sibling components, regardless
     # of the component's order in the container component. For example, a nested
     # component may set an instance variable used by another component. This is
-    # an elegant solution to the problem of setting the XML page's title, or
+    # an elegant solution to the problem of setting the HTML page's title, or
     # adding elements to the `<head>` section. Here's how a title can be
     # controlled from a nested component:
     #
-    #   layout = Papercraft.html {
+    #   layout = P2.html {
     #     html {
     #       head {
     #         defer { title @title }
@@ -138,18 +137,18 @@ module Papercraft
     end
 
 
-    # Emits an XML tag with the given content, properties and optional block.
-    # This method is an alternative to emitting XML tags using dynamically
+    # Emits an HTML tag with the given content, properties and optional block.
+    # This method is an alternative to emitting HTML tags using dynamically
     # created methods. This is particularly useful when using extensions that
-    # have method names that clash with XML tags, such as `button` or `a`, or
-    # when you need to override the behaviour of a particular XML tag.
+    # have method names that clash with HTML tags, such as `button` or `a`, or
+    # when you need to override the behaviour of a particular HTML tag.
     #
     # The following two method calls have the same effect:
     #
     # button 'text', id: 'button1'
     # tag :button, 'text', id: 'button1'
     #
-    # @param sym [Symbol, String] XML tag
+    # @param sym [Symbol, String] HTML tag
     # @param text [String, nil] tag content
     # @param **attributes [Hash] tag attributes
     # @return [void]
@@ -206,7 +205,7 @@ module Papercraft
     end
 
     # Emits text into the rendering buffer, escaping any special characters to
-    # the respective XML entities.
+    # the respective HTML entities.
     #
     # @param data [String, nil] text
     # @return [void]
@@ -220,7 +219,7 @@ module Papercraft
     # Defines a custom tag. This is handy for defining helper or extension
     # methods inside the template body.
     #
-    #   Papercraft.html {
+    #   P2.html {
     #     def_tag(:section) { |title, &inner|
     #       div {
     #         h1 title
@@ -241,41 +240,6 @@ module Papercraft
     end
 
     alias_method :orig_extend, :extend
-
-    # Extends the template with the provided module or map of modules. When
-    # given a module, the template body will be extended with the module,
-    # and will have access to all the module's methods:
-    #
-    #   module CustomTags
-    #     def label(text)
-    #       span text, class: 'label'
-    #     end
-    #   end
-    #
-    #   Papercraft.html {
-    #     extend CustomTags
-    #     label('foo')
-    #   }
-    #
-    # When given a hash, each module in the hash is namespaced, and can be
-    # accessed using its key:
-    #
-    #   Papercraft.html {
-    #     extend custom: CustomTags
-    #     custom.label('foo')
-    #   }
-    #
-    # @param ext [Module, Hash] extension module or hash mapping symbols to modules
-    # @return [Object] self
-    def extend(ext)
-      if ext.is_a?(Module)
-        orig_extend(ext)
-      else
-        ext.each do |sym, mod|
-          define_extension_method(sym, mod)
-        end
-      end
-    end
 
     private
 
@@ -312,17 +276,6 @@ module Papercraft
         tag_close: "</#{repr}>".inspect
       }
       self.class.class_eval(code, __FILE__, line)
-    end
-
-    # Defines a namespace referring to the given module.
-    #
-    # @param sym [Symbol] namespace
-    # @param mod [Module] module
-    # @return [void]
-    def define_extension_method(sym, mod)
-      self.singleton_class.define_method(sym) do
-        (@extension_proxies ||= {})[mod] ||= ExtensionProxy.new(self, mod)
-      end
     end
 
     # Emits an arbitrary object by converting it to string, then adding it to

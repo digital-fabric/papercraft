@@ -4,7 +4,7 @@ require 'cgi'
 require 'escape_utils'
 require 'sirop'
 
-module Papercraft
+module P2
   class TagNode
     attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block
 
@@ -203,11 +203,11 @@ module Papercraft
         if is_static_node?(first_arg)
           emit_html(node.location, format_literal(first_arg))
         else
-          emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(first_arg)})}")
+          emit_html(node.location, "#\{P2.render_emit_call(#{format_code(first_arg)})}")
         end
       else
         block_embed = node.block ? " #{format_code(node.block, VerbatimSourcifier)}" : ''
-        emit_html(node.location, "#\{Papercraft.render_emit_call(#{format_code(node.call_node.arguments)})#{block_embed}}")
+        emit_html(node.location, "#\{P2.render_emit_call(#{format_code(node.call_node.arguments)})#{block_embed}}")
       end
     end
 
@@ -258,7 +258,7 @@ module Papercraft
         md = args && args.first
         return if !md
         
-        emit_html(node.location, "#\{Papercraft.markdown(#{format_code(md)})}")
+        emit_html(node.location, "#\{P2.markdown(#{format_code(md)})}")
       end
     end
 
@@ -334,7 +334,7 @@ module Papercraft
         it.is_a?(Prism::AssocSplatNode) || !is_static_node?(it.key)
       end
 
-      return "#\{Papercraft.format_html_attrs(#{format_code(node)})}" if dynamic_attributes
+      return "#\{P2.format_html_attrs(#{format_code(node)})}" if dynamic_attributes
 
       parts = elements.map do
         key = it.key
@@ -348,9 +348,9 @@ module Papercraft
           k = format_literal(key) 
           if is_static_node?(value)
             value = format_literal(value)
-            "#{Papercraft.format_html_attr_key(k)}=\\\"#{value}\\\""
+            "#{P2.format_html_attr_key(k)}=\\\"#{value}\\\""
           else
-            "#{Papercraft.format_html_attr_key(k)}=\\\"#\{#{format_code(value)}}\\\""
+            "#{P2.format_html_attr_key(k)}=\\\"#\{#{format_code(value)}}\\\""
           end
         end
       end
@@ -408,15 +408,15 @@ module Papercraft
       case o
       when nil
         # do nothing
-      when Papercraft::Template
+      when P2::Template
         o.render(*a, **b, &block)
       when ::Proc
-        Papercraft.html(&o).render(*a, **b, &block)
+        P2.html(&o).render(*a, **b, &block)
       else
         o.to_s
       end
     end
   end
   
-  Papercraft.extend(AuxMethods)
+  P2.extend(AuxMethods)
 end

@@ -1,7 +1,7 @@
 require 'bundler/setup'
-require 'papercraft'
+require 'p2'
 
-App = Papercraft.html { |**props|
+App = P2.html { |**props|
   html5 {
     body {
       emit(Header, title: props[:title]) {
@@ -13,14 +13,14 @@ App = Papercraft.html { |**props|
   }
 }
 
-Header = Papercraft.html { |title:|
+Header = P2.html { |title:|
   header {
     h2(title, id: 'title')
     emit_yield
   }
 }
 
-Content = Papercraft.html { |title:|
+Content = P2.html { |title:|
   article {
     h3 title
     p "Hello, world!"

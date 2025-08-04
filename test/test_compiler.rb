@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './helper'
-require_relative '../lib/papercraft/compiler'
+require_relative '../lib/p2/compiler'
 
 class CompilerTest < Minitest::Test
   Dir["#{FIXTURES_PATH}/compiler/*_source.rb"].each do |fn|
@@ -20,11 +20,11 @@ class CompilerTest < Minitest::Test
       assert_kind_of Prism::Node, node
 
       p node if ENV['DEBUG'] == '1'
-      compiled_code = Papercraft::TemplateCompiler.compile_to_code(proc)
+      compiled_code = P2::TemplateCompiler.compile_to_code(proc)
       puts compiled_code if ENV['DEBUG'] == '1'
 
       # render source proc
-      assert_equal html, Papercraft.html(&proc).render
+      assert_equal html, P2.html(&proc).render
       
       if ENV['DEBUG'] == '1'
         puts '*' * 40

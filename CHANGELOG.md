@@ -64,7 +64,7 @@
 
 ## 0.19 2022-02-05
 
-- Rename `Papercraft::Component` to `Papercraft::Template`
+- Rename `P2::Component` to `P2::Template`
 
 ## 0.18 2022-02-04
 
@@ -74,13 +74,13 @@
 
 ## 0.17 2022-01-23
 
-- Refactor markdown code, add `Papercraft.markdown` method (#8)
+- Refactor markdown code, add `P2.markdown` method (#8)
 
 ## 0.16 2022-01-23
 
 - Implement JSON templating (#7)
 - Add support for MIME types (#6)
-- Change entrypoint from `Kernel#H`, `Kernel#X` to `Papercraft.html`, `.xml` (#5)
+- Change entrypoint from `Kernel#H`, `Kernel#X` to `P2.html`, `.xml` (#5)
 
 ## 0.15 2022-01-20
 
@@ -126,10 +126,10 @@
 ## 0.8 2021-12-22
 
 - Cleanup and refactor code
-- Add Papercraft.xml global method for XML templates
+- Add P2.xml global method for XML templates
 - Make `Component` a descendant of `Proc`
 - Introduce new component API
-- Rename Rubyoshka to Papercraft
+- Rename Rubyoshka to P2
 - Convert underscores to dashes for tag  and attribute names (@jaredcwhite)
 
 ## 0.7 2021-09-29

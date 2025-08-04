@@ -2,8 +2,9 @@
 
 require_relative './tags'
 require 'cgi'
+require 'json'
 
-module Papercraft
+module P2
   # HTML Markup extensions
   module HTML
     include Tags
@@ -113,18 +114,18 @@ module Papercraft
       script code, type: 'module'
     end
 
-    # Converts and emits the given markdown. Papercraft uses
+    # Converts and emits the given markdown. P2 uses
     # [Kramdown](https://github.com/gettalong/kramdown/) to do the Markdown to
     # HTML conversion. Optional Kramdown settings can be provided in order to
     # control the conversion. Those are merged with the default Kramdown
     # settings, which can be controlled using
-    # `Papercraft::HTML.kramdown_options`.
+    # `P2::HTML.kramdown_options`.
     #
     # @param markdown [String] Markdown content
     # @param **opts [Hash] Kramdown options
     # @return [void]
     def emit_markdown(markdown, **opts)
-      emit Papercraft.markdown(markdown, **opts)
+      emit P2.markdown(markdown, **opts)
     end
 
     private

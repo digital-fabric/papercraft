@@ -1,13 +1,13 @@
 require 'bundler/setup'
-require 'papercraft'
-require 'papercraft/compiler'
+require 'p2'
+require 'p2/compiler'
 require 'erubis'
 require 'erb'
 require 'benchmark/ips'
 require 'tilt'
 require 'cgi'
 
-App = Papercraft.html { |title:|
+App = P2.html { |title:|
   html5 {
     body {
       emit(Header, title: title) {
@@ -19,14 +19,14 @@ App = Papercraft.html { |title:|
   }
 }
 
-Header = Papercraft.html { |title:|
+Header = P2.html { |title:|
   header {
     h2(title, id: 'title')
     emit_yield
   }
 }
 
-Content = Papercraft.html { |title:|
+Content = P2.html { |title:|
   article {
     h3 title
     p "Hello, world!"
@@ -110,18 +110,18 @@ class Renderer
   end
 
 
-  def render_papercraft_app
+  def render_p2_app
     App.render(title: 'title from context') 
   end
 
-  # def render_papercraft_content
+  # def render_p2_content
   #   Content.render(title: 'title from context')
   # end
   # 
-  AppCompiledCode = Papercraft::TemplateCompiler.compile_to_code(App)
-  AppCompiledProc = Papercraft::TemplateCompiler.compile(App)
+  AppCompiledCode = P2::TemplateCompiler.compile_to_code(App)
+  AppCompiledProc = P2::TemplateCompiler.compile(App)
 
-  def render_papercraft_compiled_app
+  def render_p2_compiled_app
 
     buffer = +''
     AppCompiledProc.(buffer, title: 'title from context')
@@ -131,11 +131,11 @@ end
 
 r = Renderer.new
 
-puts '* Papercraft:'
-puts r.render_papercraft_app
+puts '* P2:'
+puts r.render_p2_app
 puts
-puts '* Papercraft (compiled):'
-puts r.render_papercraft_compiled_app
+puts '* P2 (compiled):'
+puts r.render_p2_compiled_app
 puts
 
 puts '* ERubis:'
@@ -149,8 +149,8 @@ puts "=== Single template"
 Benchmark.ips do |x|
   x.config(:time => 5, :warmup => 2)
 
-  x.report("papercraft") { r.render_papercraft_app }
-  x.report("papercraft (compiled)") { r.render_papercraft_compiled_app }
+  x.report("p2") { r.render_p2_app }
+  x.report("p2 (compiled)") { r.render_p2_compiled_app }
   x.report("erubis") { r.render_erubis_app }
   x.report("erb") { r.render_erb_app }
 

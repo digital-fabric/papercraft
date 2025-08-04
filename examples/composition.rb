@@ -1,5 +1,5 @@
 require 'bundler/setup'
-require 'papercraft'
+require 'p2'
 
 Title = ->(title) { h1 title }
 
@@ -18,7 +18,7 @@ ItemList = ->(items) {
   }
 }
 
-page = Papercraft.html { |title, items|
+page = P2.html { |title, items|
   html5 {
     head { Title(title) }
     body { ItemList(items) }

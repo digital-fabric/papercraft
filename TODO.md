@@ -1,3 +1,9 @@
+## Reimplement
+
+
+
+
+
 ## Compiler
 
 - [v] Finish work on compiler: integrate HTML emission with whitespace
@@ -25,7 +31,7 @@
 - [ ] Once everything's compiled, add support for following:
 
       ```ruby
-      Papercraft.html {
+      P2.html {
         # class
         p.my_class 'foo' #=> <p class="my-class">foo</p>
 

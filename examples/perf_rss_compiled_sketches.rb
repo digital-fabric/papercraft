@@ -1,5 +1,5 @@
 require 'bundler/setup'
-require 'papercraft'
+require 'p2'
 require 'benchmark/ips'
 require 'date'
 require 'time'
@@ -47,7 +47,7 @@ props = {
   ]
 }
 
-tmpl1 = Papercraft.xml(mime_type: 'text/xml; charset=utf-8') { |articles:|
+tmpl1 = P2.xml(mime_type: 'text/xml; charset=utf-8') { |articles:|
   rss(version: '2.0', 'xmlns:atom' => 'http://www.w3.org/2005/Atom') {
     channel {
       title 'Noteflakes'
