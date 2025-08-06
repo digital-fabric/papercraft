@@ -8,18 +8,11 @@ module P2
   class TagNode
     attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block
 
-    def initialize(call_node, compiler)
+    def initialize(call_node, transformer)
       @call_node = call_node
       @location = call_node.location
       @tag = call_node.name
-      @block = call_node.block && compiler.visit(call_node.block)
-      if @block
-        offset = @location.start_offset
-        length = call_node.block.opening_loc.start_offset - offset
-        @tag_location = @location.copy(start_offset: offset, length: length)
-      else
-        @tag_location = @location
-      end
+      prepare_block(transformer)
 
       args = call_node.arguments&.arguments
       return if !args
@@ -40,6 +33,18 @@ module P2
 
     def accept(visitor)
       visitor.visit_tag_node(self)
+    end
+
+    def prepare_block(transformer)
+      @block = call_node.block
+      if @block.is_a?(Prism::BlockNode)
+        @block = transformer.visit(@block)
+        offset = @location.start_offset
+        length = @block.opening_loc.start_offset - offset
+        @tag_location = @location.copy(start_offset: offset, length: length)
+      else
+        @tag_location = @location
+      end
     end
   end
 
@@ -122,7 +127,7 @@ module P2
       case node.name
       when :raise
         super(node)
-      when :emit
+      when :emit, :e
         EmitNode.new(node, self)
       when :text
         TextNode.new(node, self)
@@ -152,7 +157,12 @@ module P2
       transformed_ast = TagTransformer.transform(ast.body)
       compiler = new.with_source_map(proc)
       compiler.format_compiled_template(transformed_ast, ast, wrap:, binding: proc.binding)
-      [compiler.source_map, compiler.buffer]
+      [compiler.source_map, compiler.buffer].tap do |(src_map, code)|
+        if ENV['DEBUG'] == '1'
+          puts '*' * 40
+          puts code
+        end
+      end
     end
 
     def self.compile(proc, wrap: true)
@@ -229,7 +239,15 @@ module P2
       emit_html(node.tag_location, format_html_tag_open(tag, node.attributes))
       return if is_void
 
-      visit(node.block.body) if node.block
+      case node.block
+      when Prism::BlockNode
+        visit(node.block.body)
+      when Prism::BlockArgumentNode
+        flush_html_parts!
+        adjust_whitespace(node.block)
+        emit("; #{format_code(node.block.expression)}.render_to_buffer(__buffer__)")
+      end
+
       if node.inner_text
         if is_static_node?(node.inner_text)
           emit_html(node.location, CGI.escape_html(format_literal(node.inner_text)))
@@ -320,11 +338,10 @@ module P2
         visit(node.block.body) if node.block
         emit_html(node.block.closing_loc, '</html>')
       when :emit_markdown, :markdown
-        args = node.call_node.arguments&.arguments
-        md = args && args.first
-        return if !md
+        args = node.call_node.arguments
+        return if !args
 
-        emit_html(node.location, "#\{P2.markdown(#{format_code(md)})}")
+        emit_html(node.location, "#\{P2.markdown(#{format_code(args)})}")
       end
     end
 
@@ -353,8 +370,7 @@ module P2
     end
 
     def format_html_tag_open(tag, attributes)
-      tag = "#\{#{format_code(tag)}}" if tag.is_a?(Prism::Node)
-
+      tag = convert_tag(tag)
       if attributes && attributes&.elements.size > 0
         "<#{tag} #{format_html_attributes(attributes)}>"
       else
@@ -363,9 +379,19 @@ module P2
     end
 
     def format_html_tag_close(tag)
-      tag = "#\{#{format_code(tag)}}" if tag.is_a?(Prism::Node)
-
+      tag = convert_tag(tag)
       "</#{tag}>"
+    end
+
+    def convert_tag(tag)
+      case tag
+      when Prism::SymbolNode, Prism::StringNode
+        P2.format_tag(tag.unescaped)
+      when Prism::Node
+        "#\{P2.format_tag(#{format_code(tag)})}"
+      else
+        P2.format_tag(tag)
+      end
     end
 
     def format_literal(node)
@@ -447,11 +473,11 @@ module P2
       @pending_html_parts << str
     end
 
-    def flush_html_parts!(semicolon_prefix: false)
+    def flush_html_parts!(semicolon_prefix: true)
       return if @pending_html_parts.empty?
 
       adjust_whitespace(@html_loc_start)
-      if semicolon_prefix && @buffer !~ /\n\s*$/m
+      if semicolon_prefix && @buffer =~ /[^\s]\s*$/m
         emit '; '
       end
 
@@ -476,6 +502,10 @@ module P2
   end
 
   module AuxMethods
+    def format_tag(tag)
+      tag.to_s.gsub('_', '-')
+    end
+
     def format_html_attr_key(tag)
       tag.to_s.tr('_', '-')
     end
@@ -489,6 +519,7 @@ module P2
           html << format_html_attr_key(k)
         else
           html << ' ' if !html.empty?
+          v = v.join(' ') if v.is_a?(Array)
           html << "#{format_html_attr_key(k)}=\"#{v}\""
         end
       end
@@ -498,10 +529,8 @@ module P2
       case o
       when nil
         # do nothing
-      when P2::Template
-        o.render(*a, **b, &block)
       when ::Proc
-        P2.html(&o).render(*a, **b, &block)
+        o.render(*a, **b, &block)
       else
         o.to_s
       end

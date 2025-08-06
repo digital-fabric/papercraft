@@ -5,53 +5,61 @@ require 'minitest/autorun'
 require 'p2'
 
 class ParametersTest < Minitest::Test
-  def test_ordinal_parameters
-    h = P2.html { |foo| h1 foo }
+  def test_simple_template
+    h = ->(foo) { h1 foo }
 
-    assert_equal '<h1></h1>', h.render
+    assert_raises(ArgumentError) { h.render }
+    assert_equal '<h1>bar</h1>', h.render('bar')
+  end
+
+  def test_ordinal_parameters
+    # h = -> { h1 foo }
+    h = proc { |foo = 'baz'| h1 foo }
+
+    assert_equal '<h1>baz</h1>', h.render
     assert_equal '<h1>bar</h1>', h.render('bar')
 
-    h = P2.html { |foo, *rest| h2 foo; h3 rest.inspect }
-    assert_equal '<h2></h2><h3>[]</h3>', h.render
+    h = proc { |foo = 'default', *rest| h2 foo; h3 rest.inspect }
+    assert_equal '<h2>default</h2><h3>[]</h3>', h.render
     assert_equal '<h2>23</h2><h3>[]</h3>', h.render(23)
     assert_equal '<h2>42</h2><h3>[43, 44]</h3>',
       h.render(42, 43, 44)
 
-    h = P2.html { |foo = true| emit foo ? 'yes' : 'no' }
+    h = proc { |foo = true| emit foo ? 'yes' : 'no' }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(false)
   end
 
   def test_named_parameters
-    h = P2.html { |foo:| h1 foo }
-    assert_raises(P2::Error) { h.render }
-    assert_raises(P2::Error) { h.render(bar: 1) }
+    h = proc { |foo:| h1 foo }
+    assert_raises(ArgumentError) { h.render }
+    assert_raises(ArgumentError) { h.render(bar: 1) }
     assert_equal '<h1>bar</h1>', h.render(foo: 'bar')
 
-    h = P2.html { |foo:, bar:| h2 foo; h3 bar }
-    assert_raises(P2::Error) { h.render }
-    assert_raises(P2::Error) { h.render(foo: 1) }
-    assert_raises(P2::Error) { h.render(bar: 2) }
+    h = proc { |foo:, bar:| h2 foo; h3 bar }
+    assert_raises(ArgumentError) { h.render }
+    assert_raises(ArgumentError) { h.render(foo: 1) }
+    assert_raises(ArgumentError) { h.render(bar: 2) }
     assert_equal '<h2>42</h2><h3>43</h3>',
       h.render(foo: 42, bar: 43)
 
-    h = P2.html { |foo: true| emit foo ? 'yes' : 'no' }
+    h = proc { |foo: true| emit foo ? 'yes' : 'no' }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(foo: false)
   end
 
   def test_mixed_parameters
-    h = P2.html { |foo, bar:, baz:| h1 foo; h2 bar; h3 baz }
-    assert_raises(P2::Error) { h.render }
-    assert_raises(P2::Error) { h.render(1) }
-    assert_raises(P2::Error) { h.render(1, foo: 2) }
-    assert_raises(P2::Error) { h.render(baz: 4) }
+    h = proc { |foo, bar:, baz:| h1 foo; h2 bar; h3 baz }
+    assert_raises(ArgumentError) { h.render }
+    assert_raises(ArgumentError) { h.render(1) }
+    assert_raises(ArgumentError) { h.render(1, foo: 2) }
+    assert_raises(ArgumentError) { h.render(baz: 4) }
     assert_equal '<h1>1</h1><h2>2</h2><h3>3</h3>',
       h.render(1, bar: 2, baz: 3)
 
-    h = P2.html { |foo, bar: 5, baz:| h1 foo; h2 bar; h3 baz }
-    assert_raises(P2::Error) { h.render }
-    assert_raises(P2::Error) { h.render(1) }
+    h = proc { |foo, bar: 5, baz:| h1 foo; h2 bar; h3 baz }
+    assert_raises(ArgumentError) { h.render }
+    assert_raises(ArgumentError) { h.render(1) }
     assert_equal '<h1>1</h1><h2>5</h2><h3>3</h3>',
       h.render(1, baz: 3)
   end
@@ -59,13 +67,13 @@ end
 
 class EmitComponentTest < Minitest::Test
   def test_emit_with_proc_params
-    r = P2.html { |p| body { emit p } }
+    r = proc { |p| body { emit p } }
     assert_equal '<body><h1>hi</h1></body>', r.render(proc { h1 'hi' })
     assert_equal '<body><foo></foo></body>', r.render(proc { foo })
   end
 
   def test_emit_with_params
-    r = P2.html { |foo| body { emit foo, bar: 2 } }
+    r = proc { |foo| body { emit foo, bar: 2 } }
     assert_raises(P2::Error) { r.render(proc { |baz:| h1 baz }) }
     assert_equal '<body><h1>2</h1></body>', r.render(proc { |bar:| h1 bar })
   end
@@ -74,7 +82,7 @@ class EmitComponentTest < Minitest::Test
     hdr = proc { |foo:|
       header { h1 foo; emit_yield }
     }
-    template = P2.html {
+    template = proc {
       emit(hdr, foo: 'bar') {
         button 'hi'
       }
@@ -83,10 +91,10 @@ class EmitComponentTest < Minitest::Test
   end
 end
 
-class EmitYieldTest < Minitest::Test
-  def test_emit_yield
-    r = P2.html { body { emit_yield } }
-    assert_raises(P2::Error) { r.render(foo: 'bar') }
+class YieldTest < Minitest::Test
+  def test_yield
+    r = proc { body { yield } }
+    assert_raises(ArgumentError) { r.render(foo: 'bar') }
 
     assert_equal(
       '<body><p>foo</p><hr></body>',
@@ -94,10 +102,10 @@ class EmitYieldTest < Minitest::Test
     )
   end
 
-  def test_emit_yield_with_params
-    r = P2.html { |foo:| body { emit_yield(bar: foo * 10) } }
-    assert_raises(P2::Error) { r.render(foo: 1) }
-    assert_raises(P2::Error) { r.render { |bar:| p bar } }
+  def test_yield_with_params
+    r = proc { |foo:| body { yield(bar: foo * 10) } }
+    assert_raises(LocalJumpError) { r.render(foo: 1) }
+    assert_raises(ArgumentError) { r.render { |bar:| p bar } }
     assert_equal(
       '<body><p>420</p></body>',
       r.render(foo: 42) { |bar:| p bar }
@@ -107,33 +115,39 @@ end
 
 class ApplyTest < Minitest::Test
   def test_apply_with_parameters
-    a = P2.html { |foo| body { emit foo } }
+    a = proc { |foo| body { emit foo } }
     b = a.apply(proc { p 'hi' })
-    assert_kind_of P2::Template, b
+
+    assert_kind_of Proc, b
+    assert b.compiled?
     assert_equal(
       '<body><p>hi</p></body>',
-      b.render('hi')
+      b.render
     )
   end
 
   def test_apply_with_block
-    a = P2.html { |foo| body { emit_yield(foo) } }
+    a = proc { |foo| body { yield(foo) } }
     b = a.apply(&->(foo) { p foo })
-    assert_kind_of P2::Template, b
     assert_equal '<body><p>hi</p></body>', b.render('hi')
     assert_equal (a.render('foo') { |foo| p foo }), b.render('foo')
   end
 
   def test_apply_with_parameters_and_block
-    a = P2.html { |a:, b:| foo(a); body { emit_yield b } }
-    b = a.apply(a: 'bar', b: 'baz') { |b| p b }
+    a = proc { |a:, b:|
+      foo(a);
+      body {
+        yield b
+      } 
+    }
+    b = a.apply(a: 'bar', b: 'baz') { |x, **| p x }
 
-    assert_kind_of P2::Template, b
+    assert_kind_of Proc, b
     assert_equal '<foo>bar</foo><body><p>baz</p></body>', b.render
   end
 
   def test_apply_with_partial_parameters
-    a = P2.html { |foo:, bar:| p foo; p bar }
+    a = proc { |foo:, bar:| p foo; p bar }
     b = a.apply(foo: 'aaa')
 
     assert_raises { b.render }
@@ -141,9 +155,9 @@ class ApplyTest < Minitest::Test
     assert_equal '<p>aaa</p><p>bbb</p>', b.render(bar: 'bbb')
   end
 
-  def test_apply_with_block_with_emit_yield
-    a = P2.html { body { emit_yield } }
-    b = a.apply { article { emit_yield } }
+  def test_apply_with_block_with_yield
+    a = proc { body { yield } }
+    b = a.apply { article { yield } }
 
     c = b.render { h1 'foo' }
     assert_equal '<body><article><h1>foo</h1></article></body>', c
@@ -169,7 +183,7 @@ ItemList = ->(items) {
 
 class ConstComponentTest < Minitest::Test
   def test_nested_composition
-    page = P2.html { |title, items|
+    page = proc { |title, items|
       html5 {
         head { Title(title) }
         body { ItemList(items) }
@@ -188,52 +202,75 @@ class ConstComponentTest < Minitest::Test
   end
 end
 
-class EnumeratorTest < Minitest::Test
-  def test_enumerator_tag
-    data = %w{foo bar baz}
-
-    t = P2.html {
-      tr(_for: data) { |d| span d }
+class TagsTest < Minitest::Test
+  def test_tag
+    t = -> {
+      h1 'foo'
+      tag :h2, 'bar'
     }
-
-    assert_equal(
-      '<tr><span>foo</span></tr><tr><span>bar</span></tr><tr><span>baz</span></tr>',
-      t.render
-    )
-
-    t = P2.html {
-      tr(_for: data.each_with_index) { |d, i| span i; span d }
-    }
-
-    assert_equal(
-      '<tr><span>0</span><span>foo</span></tr><tr><span>1</span><span>bar</span></tr><tr><span>2</span><span>baz</span></tr>',
-      t.render
-    )
+    html = t.render
+    assert_equal('<h1>foo</h1><h2>bar</h2>', html)
   end
 
-  def test_nested_enumerator_tags
-    data = [
-      { name: 'foo', age: 16 },
-      { name: 'bar', age: 32 },
-      { name: 'baz', age: 64 },
-    ]
-
-    fields = [:name, :age]
-
-    t = P2.html {
-      tbody {
-        tr(_for: data) { |row|
-          td(_for: fields.each_with_index) { |field, idx|
-            div_class = idx == 0 ? 'text-bold' : 'text-center p-4'
-            div row[field], class: div_class
-          }
-        }
+  def test_tag_with_attrs_and_block
+    t = -> {
+      h1 'foo', id: '42'
+      tag(:h2, id: '43') {
+        span 'bar'
       }
     }
+    html = t.render
+    assert_equal('<h1 id="42">foo</h1><h2 id="43"><span>bar</span></h2>', html)
+  end
 
-    assert_equal(
-      '<tbody><tr><td><div class="text-bold">foo</div></td><td><div class="text-center p-4">16</div></td></tr><tr><td><div class="text-bold">bar</div></td><td><div class="text-center p-4">32</div></td></tr><tr><td><div class="text-bold">baz</div></td><td><div class="text-center p-4">64</div></td></tr></tbody>',
-      t.render
-    )
+  def test_dynamic_tag
+    t = ->(t) {
+      tag t, 'foo'
+    }
+    html = t.render(:em)
+    assert_equal('<em>foo</em>', html)
+  end
+
+  def test_emit_markdown
+    t = -> {
+      div {
+        emit_markdown "# Foo\n\nLorem ipsum"
+      }
+    }
+    html = t.render
+    assert_equal("<div><h1 id=\"foo\">Foo</h1>\n\n<p>Lorem ipsum</p>\n</div>", html)
+  end  
+
+  def test_markdown
+    t = -> {
+      div {
+        markdown "# Foo\n\nLorem ipsum"
+      }
+    }
+    html = t.render
+    assert_equal("<div><h1 id=\"foo\">Foo</h1>\n\n<p>Lorem ipsum</p>\n</div>", html)
+  end
+end
+
+class ExceptionBacktraceTest < Minitest::Test
+  def capture_exception
+    yield
+    nil
+  rescue Exception => e
+    e
+  end
+
+  def test_exception_backtrace
+    t = ->(x) {
+      h1 'foo'
+      raise if x
+      h2 'bar'
+    }
+
+    html = t.render false
+    assert_equal '<h1>foo</h1><h2>bar</h2>', html
+
+    e = capture_exception { t.render true }
+    assert_kind_of RuntimeError, e
   end
 end

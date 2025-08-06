@@ -28,7 +28,6 @@ class ::Proc
   end
 
   def render(*a, **b, &c)
-    # p render: { a:, b:, c:}
     compiled_proc.(+'', *a, **b, &c)
   end
 
@@ -49,17 +48,9 @@ class ::Proc
     
     ->(__buffer__, *x, **y, &z) {
       c_proc = c_compiled && ->(__buffer__, *d, **e) {
-        # Kernel.p(
-        #   c_proc: 1,
-        #   a:, b:, c:, d:, e:, z:
-        # )      
         c_compiled.(__buffer__, *a, *d, **b, **e, &z)
       }.compiled!
       
-      # Kernel.p(
-      #   apply: 1,
-      #   a:, b:, c:, x:, y:, z:
-      # )      
       compiled.(__buffer__, *a, *x, **b, **y, &c_proc)
     }.compiled!
   end
