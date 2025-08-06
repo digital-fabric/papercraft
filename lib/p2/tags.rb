@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'escape_utils'
-
 module P2
   # Markup extensions
   module Tags

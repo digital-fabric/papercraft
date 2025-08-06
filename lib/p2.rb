@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require_relative 'p2/re'
+
+
+
 require_relative 'p2/template'
 require_relative 'p2/renderer'
-# require_relative 'p2/compiler'
+require_relative 'p2/compiler'
 
 # P2 is a composable templating library
 module P2

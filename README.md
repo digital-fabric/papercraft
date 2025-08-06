@@ -72,7 +72,6 @@ hello.render(name: 'world')
 - [Adding Tags](#adding-tags)
 - [Tag and Attribute Formatting](#tag-and-attribute-formatting)
 - [Escaping Content](#escaping-content)
-- [Direct Iteration](#direct-iteration)
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
 - [Template Blocks](#template-blocks)
@@ -208,66 +207,6 @@ escaping algorithm depends on the template type. For HTML templates, P2 uses
 
 In order to emit raw HTML, you can use the `#emit` method as [described
 below](#emitting-raw-html).
-
-## Direct Iteration
-
-P2 enables iterating directly  over any enumerable data source. Instead
-of rendering each item in a given data container by wrapping it inside of an
-`#each` block, we can simply pass the data source *directly* to the tag using
-the `_for` attribute. This is particularly useful when we need to create a set
-of nested tags for each item. Consider the following example:
-
-```ruby
-data = %w{foo bar}
-
--> {
-  data.each { |item|
-    tr {
-      td item
-    }
-  }
-}.render #=> '<tr><td>foo</td></tr><tr><td>bar</td></tr>'
-```
-
-Instead of using `data.each` to iterate over the list of data, we can directly
-pass the data source to the `tr` tag using the special `_for` attribute:
-
-```ruby
--> {
-  tr(_for: data) { |item|
-    td item
-  }
-}.render #=> '<tr><td>foo</td></tr><tr><td>bar</td></tr>'
-```
-
-Note that this will work with any data source that is an `Enumerable` or an
-`Enumerator`. For example, you can use `#each_with_index` or iterate over a
-hash. P2 will pass all yielded values to the given block:
-
-```ruby
-data = %{foo bar}
--> {
-  tr(_for: data.each_with_index) { |item, idx|
-    td idx + 1
-    td item
-  }
-}.render #=> '<tr><td>1</td><td>foo</td></tr><tr><td>2</td><td>bar</td></tr>'
-
-data = [
-  { name: 'foo', age: 16 },
-  { name: 'bar', age: 32 }
-]
--> {
-  div(_for: data, class: 'row') { |row|
-    div(_for: row) { |k, v|
-      span k
-      span v
-    }
-  }
-}.render
-#=> '<div class="row"><div><span>name</span><span>foo</span></div><div><span>age</span><span>16</span></div></div>'
-#=> '<div class="row"><div><span>name</span><span>bar</span></div><div><span>age</span><span>32</span></div></div>'
-```
 
 ## Template Parameters
 

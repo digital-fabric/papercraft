@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'cgi'
-require 'escape_utils'
 require 'sirop'
+require 'securerandom'
 
 module P2
   class TagNode
@@ -23,6 +23,11 @@ module P2
 
       args = call_node.arguments&.arguments
       return if !args
+
+      if @tag == :tag
+        @tag = args[0]
+        args = args[1..]
+      end
 
       if args.size == 1 && args.first.is_a?(Prism::KeywordHashNode)
         @inner_text = nil
@@ -94,6 +99,15 @@ module P2
     end
   end
 
+  class TemplateYieldNode
+    attr_reader :yield_node, :location
+
+    def initialize(yield_node, compiler)
+      @yield_node = yield_node
+      @location = yield_node.location
+    end
+  end
+
   class TagTransformer < Prism::MutationCompiler
     include Prism::DSL
 
@@ -106,13 +120,15 @@ module P2
       return super(node) if node.receiver
 
       case node.name
+      when :raise
+        super(node)
       when :emit
         EmitNode.new(node, self)
       when :text
         TextNode.new(node, self)
       when :defer
         DeferNode.new(node, self)
-      when :html5, :emit_markdown
+      when :html5, :emit_markdown, :markdown
         CustomTagNode.new(node, self)
       else
         TagNode.new(node, self)
@@ -127,28 +143,52 @@ module P2
   end
 
   class TemplateCompiler < Sirop::Sourcifier
-    def self.compile_to_code(proc, wrap = true)
+    def self.compile_to_code(proc, wrap: true)
       ast = Sirop.to_ast(proc)
 
+      # adjust ast root if proc is defined with proc {} / lambda {} syntax
+      ast = ast.block if ast.is_a?(Prism::CallNode)
+
       transformed_ast = TagTransformer.transform(ast.body)
-      new.format_compiled_template(transformed_ast, ast, wrap)
+      compiler = new.with_source_map(proc)
+      compiler.format_compiled_template(transformed_ast, ast, wrap:, binding: proc.binding)
+      [compiler.source_map, compiler.buffer]
     end
 
-    def self.compile(proc, wrap = true)
-      code = compile_to_code(proc, wrap)
-      eval(code, proc.binding)
+    def self.compile(proc, wrap: true)
+      source_map, code = compile_to_code(proc, wrap:)
+      eval(code, proc.binding, source_map[:compiled_fn])
     end
+
+    attr_reader :source_map
 
     def initialize(**)
       super(**)
       @pending_html_parts = []
       @html_loc_start = nil
       @html_loc_end = nil
+      @yield_used = nil
     end
 
-    def format_compiled_template(ast, orig_ast, wrap = true)
+    def with_source_map(orig_proc)
+      @source_map = {
+        source_fn: orig_proc.source_location.first,
+        compiled_fn: "::#{SecureRandom.alphanumeric(8)}"
+      }
+      @source_map_line_ofs = 1
+      self
+    end
+
+    def format_compiled_template(ast, orig_ast, wrap:, binding:)
+      # generate source code
+      @binding = binding
+      visit(ast)
+      flush_html_parts!(semicolon_prefix: true)
+
+      source_code = @buffer
+      @buffer = +''
       if wrap
-        emit('->(__buffer__')
+        emit("(#{@source_map.inspect}).then { |src_map| ->(__buffer__")
 
         params = orig_ast.parameters
         params = params&.parameters
@@ -156,16 +196,20 @@ module P2
           emit(', ')
           emit(format_code(params))
         end
+
+        if @yield_used
+          emit(', &__block__')
+        end
         
-        emit(") {\n")
+        emit(") do\n")
       end
-      visit(ast)
-      flush_html_parts!(semicolon_prefix: true)
+      @buffer << source_code
       emit_postlude
       if wrap
         emit('; __buffer__')
         adjust_whitespace(orig_ast.closing_loc)
-        emit('}')
+        emit(";") if @buffer !~ /\n\s*$/m
+        emit("rescue Exception => e; P2.translate_backtrace(e, src_map); raise e; end }")
       end
       @buffer
     end
@@ -176,8 +220,13 @@ module P2
     end
 
     def visit_tag_node(node)
-      is_void = is_void_element?(node.tag)
-      emit_html(node.tag_location, format_html_tag_open(node.tag, node.attributes))
+      tag = node.tag
+      if tag.is_a?(Symbol) && tag =~ /^[A-Z]/
+        return visit_const_tag_node(node.call_node)
+      end
+
+      is_void = is_void_element?(tag)
+      emit_html(node.tag_location, format_html_tag_open(tag, node.attributes))
       return if is_void
 
       visit(node.block.body) if node.block
@@ -193,7 +242,22 @@ module P2
           end
         end
       end
-      emit_html(node.location, format_html_tag_close(node.tag))
+      emit_html(node.location, format_html_tag_close(tag))
+    end
+
+    def visit_const_tag_node(node)
+      flush_html_parts!
+      adjust_whitespace(node.location)
+      if node.receiver
+        emit(node.receiver.location)
+        emit('::')
+      end
+      emit("; #{node.name}.render_to_buffer(__buffer__")
+      if node.arguments
+        emit(', ')
+        visit(node.arguments)
+      end
+      emit(');')
     end
 
     def visit_emit_node(node)
@@ -249,17 +313,31 @@ module P2
 
     def visit_custom_tag_node(node)
       case node.tag
+      when :tag
+        args = node.call_node.arguments&.arguments        
       when :html5
         emit_html(node.location, '<!DOCTYPE html><html>')
         visit(node.block.body) if node.block
         emit_html(node.block.closing_loc, '</html>')
-      when :emit_markdown
+      when :emit_markdown, :markdown
         args = node.call_node.arguments&.arguments
         md = args && args.first
         return if !md
-        
+
         emit_html(node.location, "#\{P2.markdown(#{format_code(md)})}")
       end
+    end
+
+    def visit_yield_node(node)
+      adjust_whitespace(node.location)
+      flush_html_parts!
+      @yield_used = true
+      emit("; (__block__ ? __block__.render_to_buffer(__buffer__")
+      if node.arguments
+        emit(', ')
+        visit(node.arguments)
+      end
+      emit(") : raise(LocalJumpError, 'no block given (yield)'))")
     end
 
     private
@@ -275,6 +353,8 @@ module P2
     end
 
     def format_html_tag_open(tag, attributes)
+      tag = "#\{#{format_code(tag)}}" if tag.is_a?(Prism::Node)
+
       if attributes && attributes&.elements.size > 0
         "<#{tag} #{format_html_attributes(attributes)}>"
       else
@@ -283,6 +363,8 @@ module P2
     end
 
     def format_html_tag_close(tag)
+      tag = "#\{#{format_code(tag)}}" if tag.is_a?(Prism::Node)
+
       "</#{tag}>"
     end
 
@@ -292,7 +374,7 @@ module P2
         node.unescaped
       when Prism::IntegerNode, Prism::FloatNode
         node.value.to_s
-      when Prism::InterpolatedStringNode
+      when Prism::InterpolatedStringNode  
         format_code(node)[1..-2]
       when Prism::TrueNode
         'true'
@@ -331,7 +413,8 @@ module P2
     def format_html_attributes(node)
       elements = node.elements
       dynamic_attributes = elements.any? do
-        it.is_a?(Prism::AssocSplatNode) || !is_static_node?(it.key)
+        it.is_a?(Prism::AssocSplatNode) ||
+          !is_static_node?(it.key) || !is_static_node?(it.value)
       end
 
       return "#\{P2.format_html_attrs(#{format_code(node)})}" if dynamic_attributes
@@ -398,9 +481,16 @@ module P2
     end
   
     def format_html_attrs(attrs)
-      attrs.reduce(+'') do |html, (k, v)|
-        html << ' ' if !html.empty?
-        html << "#{format_html_attr_key(k)}=\"#{v}\""
+      attrs.each_with_object(+'') do |(k, v), html|
+        case v
+        when nil, false
+        when true
+          html << ' ' if !html.empty?
+          html << format_html_attr_key(k)
+        else
+          html << ' ' if !html.empty?
+          html << "#{format_html_attr_key(k)}=\"#{v}\""
+        end
       end
     end
 
@@ -415,6 +505,21 @@ module P2
       else
         o.to_s
       end
+    end
+
+    def translate_backtrace(e, source_map)
+      re = /^(#{source_map[:compiled_fn]}\:(\d+))/
+      source_fn = source_map[:source_fn]
+      backtrace = e.backtrace.map {
+        if (m = it.match(re))
+          line = m[2].to_i
+          source_line = source_map[line] || '?'
+          it.sub(m[1], "#{source_fn}:#{source_line}")
+        else
+          it
+        end
+      }
+      e.set_backtrace(backtrace)
     end
   end
   
