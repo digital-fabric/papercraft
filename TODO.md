@@ -1,3 +1,5 @@
+- [ ] Add support for `emit ->(x) { p x }, 
+
 - [ ] Fluent interface with ids and classes and other utilities:
 
       ```ruby
