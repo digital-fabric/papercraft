@@ -24,24 +24,23 @@
 
 ## What is P2?
 
-P2 is a templating engine for dynamically producing [HTML](#html-templates). P2
-templates are expressed as Ruby procs, leading to easier debugging, better
-protection against HTML/XML injection attacks, and better code reuse.
+P2 is a templating engine for dynamically producing HTML. P2 templates are
+expressed as Ruby procs, leading to easier debugging, better protection against
+HTML/XML injection attacks, and better code reuse.
 
-P2 templates can be composed in a variety of ways, facilitating the
-usage of layout templates, and enabling a component-oriented approach to
-building complex web interfaces.
+P2 templates can be composed in a variety of ways, facilitating the usage of
+layout templates, and enabling a component-oriented approach to building complex
+web interfaces.
 
-In P2, dynamic data is passed explicitly to the template as block
-arguments, making the data flow easy to follow and understand. P2 also
-lets developers create derivative templates using full or partial parameter
-application.
+In P2, dynamic data is passed explicitly to the template as block arguments,
+making the data flow easy to follow and understand. P2 also lets developers
+create derivative templates using full or partial parameter application.
 
 P2 includes built-in support for rendering Markdown (using
 [Kramdown](https://github.com/gettalong/kramdown/)).
 
-P2 automatically escapes all text emitted in templates according to the
-template type. For more information see the section on [escaping
+P2 automatically escapes all text emitted in templates according to the template
+type. For more information see the section on [escaping
 content](#escaping-content).
 
 ```ruby
@@ -75,7 +74,6 @@ hello.render(name: 'world')
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
 - [Template Blocks](#template-blocks)
-- [Plain Procs as Templates](#plain-procs-as-templates)
 - [Template Composition](#template-composition)
 - [Parameter and Block Application](#parameter-and-block-application)
 - [Higher-Order Templates](#higher-order-templates)
@@ -228,8 +226,8 @@ greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 
 ## Template Logic
 
-Since P2 templates are just a bunch of Ruby, you can easily embed your
-view logic right in the template:
+Since P2 templates are just a bunch of Ruby, you can easily embed your view
+logic right in the template:
 
 ```ruby
 -> { |user = nil|
@@ -256,28 +254,10 @@ page = -> {
 page.render { h1 'hi' }
 ```
 
-## Plain Procs as Templates
-
-With P2 you can write a template as a plain Ruby proc, and later render
-it by passing it as a block to `P2.html`:
-
-```ruby
-greeting = proc { |name| h1 "Hello, #{name}!" }
-P2.html(&greeting).render('world')
-```
-
-Components can also be expressed using lambda notation:
-
-```ruby
-greeting = ->(name) { h1 "Hello, #{name}!" }
-P2.html(&greeting).render('world')
-```
-
 ## Template Composition
 
-P2 makes it easy to compose multiple templates into a whole HTML
-document. A P2 template can contain other templates, as the following
-example shows.
+P2 makes it easy to compose multiple templates into a whole HTML document. A P2
+template can contain other templates, as the following example shows.
 
 ```ruby
 Title = ->(title) { h1 title }
@@ -329,8 +309,8 @@ Parameters and blocks can be applied to a template without it being rendered, by
 using `#apply`. This mechanism is what allows template composition and the
 creation of higher-order templates.
 
-The `#apply` method returns a new template which applies the given parameters and
-or block to the original template:
+The `#apply` method returns a new template which applies the given parameters
+and or block to the original template:
 
 ```ruby
 # parameter application
@@ -350,10 +330,10 @@ wrapped_hello_world.render #=> "<div><h1>Hello, world!</h1></div>"
 
 ## Higher-Order Templates
 
-P2 also lets you create higher-order templates, that is,
-templates that take other templates as parameters, or as blocks. Higher-order
-templates are handy for creating layouts, wrapping templates in arbitrary
-markup, enhancing templates or injecting template parameters.
+P2 also lets you create higher-order templates, that is, templates that take
+other templates as parameters, or as blocks. Higher-order templates are handy
+for creating layouts, wrapping templates in arbitrary markup, enhancing
+templates or injecting template parameters.
 
 Here is a higher-order template that takes a template as parameter:
 

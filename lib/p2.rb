@@ -1,12 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'p2/re'
-
-
-
-require_relative 'p2/template'
-require_relative 'p2/renderer'
 require_relative 'p2/compiler'
+require_relative 'p2/proc_ext'
 
 # P2 is a composable templating library
 module P2
@@ -14,20 +9,57 @@ module P2
   class Error < RuntimeError; end
 
   class << self
+    def compile(proc)
+      P2::TemplateCompiler.compile(proc)
+    end
 
-    # Creates a new p2 template. `P2.html` can take either a proc
-    # argument or a block. In both cases, the proc is converted to a
-    # `P2::Template`.
-    #
-    # P2.html(proc { h1 'hi' }).render #=> "<h1>hi</h1>"
-    # P2.html { h1 'hi' }.render #=> "<h1>hi</h1>"
-    #
-    # @param template [Proc] template block
-    # @return [P2::Template] P2 template
-    def html(o = nil, &template)
-      return o if o.is_a?(P2::Template)
-      template ||= o
-      P2::Template.new(mode: :html, &template)
+    def format_tag(tag)
+      tag.to_s.gsub('_', '-')
+    end
+
+    def format_html_attr_key(tag)
+      tag.to_s.tr('_', '-')
+    end
+  
+    def format_html_attrs(attrs)
+      attrs.each_with_object(+'') do |(k, v), html|
+        case v
+        when nil, false
+        when true
+          html << ' ' if !html.empty?
+          html << format_html_attr_key(k)
+        else
+          html << ' ' if !html.empty?
+          v = v.join(' ') if v.is_a?(Array)
+          html << "#{format_html_attr_key(k)}=\"#{v}\""
+        end
+      end
+    end
+
+    def render_emit_call(o, *a, **b, &block)
+      case o
+      when nil
+        # do nothing
+      when ::Proc
+        o.render(*a, **b, &block)
+      else
+        o.to_s
+      end
+    end
+
+    def translate_backtrace(e, source_map)
+      re = /^(#{source_map[:compiled_fn]}\:(\d+))/
+      source_fn = source_map[:source_fn]
+      backtrace = e.backtrace.map {
+        if (m = it.match(re))
+          line = m[2].to_i
+          source_line = source_map[line] || "?(#{line})"
+          it.sub(m[1], "#{source_fn}:#{source_line}")
+        else
+          it
+        end
+      }
+      e.set_backtrace(backtrace)
     end
 
     # Renders Markdown into HTML. The `opts` argument will be merged with the

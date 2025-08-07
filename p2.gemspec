@@ -10,9 +10,8 @@ Gem::Specification.new do |s|
   s.files       = `git ls-files README.md CHANGELOG.md lib`.split
   s.homepage    = 'http://github.com/digital-fabric/p2'
   s.metadata    = {
-    "source_code_uri" => "https://github.com/digital-fabric/p2",
-    "documentation_uri" => "https://www.rubydoc.info/gems/p2",
     "homepage_uri" => "https://github.com/digital-fabric/p2",
+    "documentation_uri" => "https://www.rubydoc.info/gems/p2",
     "changelog_uri" => "https://github.com/digital-fabric/p2/blob/master/CHANGELOG.md"
   }
 
@@ -28,5 +27,5 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency  'minitest',             '~>5.25.4'
   s.add_development_dependency  'benchmark-ips',        '~>2.7.2'
-  s.add_development_dependency  'erubis',               '~>2.7.0'
+  s.add_development_dependency  'tilt',                 '~>2.2.0'
 end

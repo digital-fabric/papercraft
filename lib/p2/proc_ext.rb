@@ -57,10 +57,6 @@ class ::Proc
 end
 
 module P2
-  def self.compile(proc)
-    P2::TemplateCompiler.compile(proc)
-  end
-
   class UncompiledProcWrapper
     def initialize(proc)
       @proc = proc

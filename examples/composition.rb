@@ -18,7 +18,7 @@ ItemList = ->(items) {
   }
 }
 
-page = P2.html { |title, items|
+page = ->(title, items) {
   html5 {
     head { Title(title) }
     body { ItemList(items) }

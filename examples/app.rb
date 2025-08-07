@@ -1,7 +1,7 @@
 require 'bundler/setup'
 require 'p2'
 
-App = P2.html { |**props|
+App = ->(**props) {
   html5 {
     body {
       emit(Header, title: props[:title]) {
@@ -13,14 +13,14 @@ App = P2.html { |**props|
   }
 }
 
-Header = P2.html { |title:|
+Header = ->(title:) {
   header {
     h2(title, id: 'title')
     emit_yield
   }
 }
 
-Content = P2.html { |title:|
+Content = ->(title:) {
   article {
     h3 title
     p "Hello, world!"
