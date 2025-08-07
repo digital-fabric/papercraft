@@ -5,7 +5,7 @@ require_relative './compiler'
 # Extensions to the Proc class
 class ::Proc
   def compiled_code
-    P2::TemplateCompiler.compile_to_code(self)
+    P2::TemplateCompiler.compile_to_code(self).last
   end
 
   def compiled?

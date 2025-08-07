@@ -263,6 +263,7 @@ class ExceptionBacktraceTest < Minitest::Test
   end
 
   def test_exception_backtrace
+    t_line = __LINE__
     t = ->(x) {
       h1 'foo'
       raise if x
@@ -274,5 +275,23 @@ class ExceptionBacktraceTest < Minitest::Test
 
     e = capture_exception { t.render true }
     assert_kind_of RuntimeError, e
+    bt = e.backtrace
+    assert_equal "#{__FILE__}:#{t_line + 3}", bt[0].match(/^(.+\:\d+)/)[1]
+  end
+
+  def test_exception_backtrace_raise_on_last_line
+    t_line = __LINE__
+    t = ->(x) {
+      h1 'foo'
+      raise if x
+    }
+
+    html = t.render false
+    assert_equal '<h1>foo</h1>', html
+
+    e = capture_exception { t.render true }
+    assert_kind_of RuntimeError, e
+    bt = e.backtrace
+    assert_equal "#{__FILE__}:#{t_line + 3}", bt[0].match(/^(.+\:\d+)/)[1]
   end
 end
