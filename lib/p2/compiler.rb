@@ -2,7 +2,7 @@
 
 require 'cgi'
 require 'sirop'
-require 'securerandom'
+require 'digest/md5'
 
 module P2
   class TagNode
@@ -199,15 +199,10 @@ module P2
       # adjust ast root if proc is defined with proc {} / lambda {} syntax
       ast = ast.block if ast.is_a?(Prism::CallNode)
 
+      compiler = new.with_source_map(proc, ast)
       transformed_ast = TagTransformer.transform(ast.body)
-      compiler = new.with_source_map(proc)
       compiler.format_compiled_template(transformed_ast, ast, wrap:, binding: proc.binding)
-      [compiler.source_map, compiler.buffer].tap do |(src_map, code)|
-        if ENV['DEBUG'] == '1'
-          puts '*' * 40
-          puts code
-        end
-      end
+      [compiler.source_map, compiler.buffer]
     end
 
     def self.compile(proc, wrap: true)
@@ -225,10 +220,11 @@ module P2
       @yield_used = nil
     end
 
-    def with_source_map(orig_proc)
+    def with_source_map(orig_proc, orig_ast)
+      ast_digest = Digest::MD5.hexdigest(orig_ast.inspect)
       @source_map = {
         source_fn: orig_proc.source_location.first,
-        compiled_fn: "::#{SecureRandom.alphanumeric(8)}"
+        compiled_fn: "::#{ast_digest}"
       }
       @source_map_line_ofs = 1
       self
