@@ -230,14 +230,6 @@ module P2
       self
     end
 
-    def update_source_map
-      return if !@source_map
-
-      buffer_cur_line = @buffer.count("\n") + 1
-      orig_source_cur_line = @last_loc_start ? @last_loc_start.first : 1
-      @source_map[buffer_cur_line + @source_map_line_ofs] ||= orig_source_cur_line
-    end
-
     def format_compiled_template(ast, orig_ast, wrap:, binding:)
       # generate source code
       @binding = binding
