@@ -4,7 +4,7 @@
   P2
 </h1>
 
-<h4 align="center">Composable templating for Ruby</h4>
+<h4 align="center">Functional HTML templating for Ruby</h4>
 
 <p align="center">
   <a href="http://rubygems.org/gems/p2">
