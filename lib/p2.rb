@@ -48,7 +48,7 @@ module P2
     end
 
     def translate_backtrace(e, source_map)
-      re = /^(#{source_map[:compiled_fn]}\:(\d+))/
+      re = compute_source_map_re(source_map)
       source_fn = source_map[:source_fn]
       backtrace = e.backtrace.map {
         if (m = it.match(re))
@@ -60,6 +60,11 @@ module P2
         end
       }
       e.set_backtrace(backtrace)
+    end
+
+    def compute_source_map_re(source_map)
+      escaped = source_map[:compiled_fn].gsub(/[\(\)]/) { "\\#{it[0]}" }
+      /^(#{escaped}\:(\d+))/
     end
 
     # Renders Markdown into HTML. The `opts` argument will be merged with the

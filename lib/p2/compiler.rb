@@ -2,7 +2,6 @@
 
 require 'cgi'
 require 'sirop'
-require 'digest/md5'
 require 'erb/escape'
 
 module P2
@@ -222,10 +221,10 @@ module P2
     end
 
     def with_source_map(orig_proc, orig_ast)
-      ast_digest = Digest::MD5.hexdigest(orig_ast.inspect)
+      compiled_fn = "::(#{orig_proc.source_location.join(':')})"
       @source_map = {
         source_fn: orig_proc.source_location.first,
-        compiled_fn: "::#{ast_digest}"
+        compiled_fn: compiled_fn
       }
       @source_map_line_ofs = 1
       self
