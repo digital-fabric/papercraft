@@ -26,7 +26,7 @@
 
 P2 is a templating engine for dynamically producing HTML. P2 templates are
 expressed as Ruby procs, leading to easier debugging, better protection against
-HTML/XML injection attacks, and better code reuse.
+HTML injection attacks, and better code reuse.
 
 P2 templates can be composed in a variety of ways, facilitating the usage of
 layout templates, and enabling a component-oriented approach to building complex
@@ -37,11 +37,8 @@ making the data flow easy to follow and understand. P2 also lets developers
 create derivative templates using full or partial parameter application.
 
 P2 includes built-in support for rendering Markdown (using
-[Kramdown](https://github.com/gettalong/kramdown/)).
-
-P2 automatically escapes all text emitted in templates according to the template
-type. For more information see the section on [escaping
-content](#escaping-content).
+[Kramdown](https://github.com/gettalong/kramdown/)). P2 also automatically
+escapes all text emitted in templates.
 
 ```ruby
 require 'p2'
@@ -63,6 +60,16 @@ hello_page = page.apply ->(name:, **) {
 hello.render(name: 'world')
 #=> "<html><head><title>Title</title></head><body><h1>Hello, world!</h1></body></html>"
 ```
+
+P2 features:
+
+- Express HTML using plain Ruby procs.
+- Automatic compilation for super-fast execution (up to 2X faster than ERB templates).
+- Deferred rendering using `defer`.
+- Template composition (for uses such as layouts).
+- Automatic conversion of backtraces for exceptions occurring while rendering,
+  in order to point to the correct spot in the original template code.
+
 
 ## Table of Content
 
