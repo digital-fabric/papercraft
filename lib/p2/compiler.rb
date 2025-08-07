@@ -51,10 +51,59 @@ module P2
   class EmitNode
     attr_reader :call_node, :location, :block
 
-    def initialize(call_node, compiler)
+    include Prism::DSL
+
+    def initialize(call_node, transformer)
       @call_node = call_node
       @location = call_node.location
-      @block = call_node.block && compiler.visit(call_node.block)
+      @transformer = transformer
+      @block = call_node.block && transformer.visit(call_node.block)
+
+      lambda = call_node.arguments && call_node.arguments.arguments[0]
+      return unless lambda.is_a?(Prism::LambdaNode)
+
+      location = lambda.location
+      parameters = lambda.parameters
+      parameters_location = parameters&.location || location
+      params = parameters&.parameters
+      lambda = lambda_node(
+        location: location,
+        parameters: block_parameters_node(
+          location: parameters_location,
+          parameters: parameters_node(
+            location: parameters_location,
+            requireds: [
+              required_parameter_node(
+                location: ad_hoc_string_location('__buffer__'),
+                name: :__buffer__
+              ),
+              *params&.requireds
+            ],
+            optionals: transform_array(params&.optionals),
+            rest: transform(params&.rest),
+            posts: transform_array(params&.posts),
+            keywords: transform_array(params&.keywords),
+            keyword_rest: transform(params&.keyword_rest),
+            block: transform(params&.block)
+          )
+        ),
+        body: transformer.visit(lambda.body)
+      )
+      call_node.arguments.arguments[0] = lambda
+      # pp lambda_body: call_node.arguments.arguments[0]
+    end
+
+    def ad_hoc_string_location(str)
+      src = source(str)
+      Prism::DSL.location(source: src, start_offset: 0, length: str.bytesize)
+    end
+
+    def transform(node)
+      node && @transformer.visit(node)
+    end
+
+    def transform_array(array)
+      array ? array.map { @transformer.visit(it) } : []
     end
 
     def accept(visitor)
@@ -104,15 +153,6 @@ module P2
     end
   end
 
-  class TemplateYieldNode
-    attr_reader :yield_node, :location
-
-    def initialize(yield_node, compiler)
-      @yield_node = yield_node
-      @location = yield_node.location
-    end
-  end
-
   class TagTransformer < Prism::MutationCompiler
     include Prism::DSL
 
@@ -125,6 +165,11 @@ module P2
       return super(node) if node.receiver
 
       case node.name
+      when :emit_yield
+        yield_node(
+          location: node.location,
+          arguments: node.arguments
+        )
       when :raise
         super(node)
       when :emit, :e
@@ -284,12 +329,15 @@ module P2
       if args.length == 1
         if is_static_node?(first_arg)
           emit_html(node.location, format_literal(first_arg))
+        elsif first_arg.is_a?(Prism::LambdaNode)
+          visit(first_arg.body)
         else
           emit_html(node.location, "#\{P2.render_emit_call(#{format_code(first_arg)})}")
         end
       else
-        block_embed = node.block ? " #{format_code(node.block, VerbatimSourcifier)}" : ''
-        emit_html(node.location, "#\{P2.render_emit_call(#{format_code(node.call_node.arguments)})#{block_embed}}")
+        block_embed = node.block ? "&(->(__buffer__) #{format_code(node.block)}.compiled!)" : nil
+        block_embed = ", #{block_embed}" if block_embed && node.call_node.arguments
+        emit_html(node.location, "#\{P2.render_emit_call(#{format_code(node.call_node.arguments)}#{block_embed})}")
       end
     end
 
@@ -542,7 +590,7 @@ module P2
       backtrace = e.backtrace.map {
         if (m = it.match(re))
           line = m[2].to_i
-          source_line = source_map[line] || '?'
+          source_line = source_map[line] || "?(#{line})"
           it.sub(m[1], "#{source_fn}:#{source_line}")
         else
           it

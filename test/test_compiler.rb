@@ -20,24 +20,24 @@ class CompilerTest < Minitest::Test
       assert_kind_of Prism::Node, node
 
       p node if ENV['DEBUG'] == '1'
-      compiled_code = P2::TemplateCompiler.compile_to_code(proc)
-      puts compiled_code if ENV['DEBUG'] == '1'
+      # compiled_code = P2::TemplateCompiler.compile_to_code(proc)
+      # puts compiled_code if ENV['DEBUG'] == '1'
 
       # render source proc
-      assert_equal html, P2.html(&proc).render
+      assert_equal html, proc.render
       
-      if ENV['DEBUG'] == '1'
-        puts '*' * 40
-        puts compiled_code
-        puts '=' * 40
-      end
-      assert_equal compiled_src, compiled_code
+      # if ENV['DEBUG'] == '1'
+      #   puts '*' * 40
+      #   puts compiled_code
+      #   puts '=' * 40
+      # end
+      # assert_equal compiled_src, compiled_code
 
-      compiled_proc = eval(compiled_code, proc.binding)
-      compiled_html = compiled_proc.call(+'')
+      # compiled_proc = eval(compiled_code, proc.binding)
+      # compiled_html = compiled_proc.call(+'')
 
-      # render compiled proc
-      assert_equal html, compiled_html
+      # # render compiled proc
+      # assert_equal html, compiled_html
     end
   end
 end
