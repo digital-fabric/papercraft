@@ -3,6 +3,7 @@
 require 'cgi'
 require 'sirop'
 require 'digest/md5'
+require 'erb/escape'
 
 module P2
   class TagNode
@@ -292,13 +293,13 @@ module P2
 
       if node.inner_text
         if is_static_node?(node.inner_text)
-          emit_html(node.location, CGI.escape_html(format_literal(node.inner_text)))
+          emit_html(node.location, ERB::Escape.html_escape(format_literal(node.inner_text)))
         else
           convert_to_s = !is_string_type_node?(node.inner_text)
           if convert_to_s
-            emit_html(node.location, "#\{CGI.escape_html((#{format_code(node.inner_text)}).to_s)}")
+            emit_html(node.location, "#\{ERB::Escape.html_escape((#{format_code(node.inner_text)}).to_s)}")
           else
-            emit_html(node.location, "#\{CGI.escape_html(#{format_code(node.inner_text)})}")
+            emit_html(node.location, "#\{ERB::Escape.html_escape(#{format_code(node.inner_text)})}")
           end
         end
       end
@@ -345,9 +346,9 @@ module P2
       first_arg = args.first
       if args.length == 1
         if is_static_node?(first_arg)
-          emit_html(node.location, CGI.escape_html(format_literal(first_arg)))
+          emit_html(node.location, ERB::Escape.html_escape(format_literal(first_arg)))
         else
-          emit_html(node.location, "#\{CGI.escape_html(#{format_code(first_arg)}.to_s)}")
+          emit_html(node.location, "#\{ERB::Escape.html_escape(#{format_code(first_arg)}.to_s)}")
         end
       else
         raise "Don't know how to compile #{node}"
