@@ -4,13 +4,15 @@ require 'bundler/inline'
 
 gemfile do
   gem 'p2', path: '.'
-  gem 'benchmark-ips'
+  gem 'benchmark-ips', '>= 2.14.0'
   gem 'tilt'
+  gem 'erubi'
   gem 'phlex'
 end
 
 require 'p2'
 require 'erb'
+require 'erubi'
 require 'benchmark/ips'
 require 'cgi'
 require 'tilt'
@@ -77,11 +79,38 @@ HTML_CONTENT = <<~HTML
 </article>
 HTML
 
-class PhlexApp < Phlex::HTML
-  def initialize(title:)
-    @title = title
-  end
+HTML_APP_ERUBI = <<~HTML
+<!DOCTYPE html>
+<html>
+  <body>
+    <%= render_erubi_header(title: 'title from context') %>
+    <%= render_erubi_content %>
+  </body>
+</html>
+HTML
 
+HTML_HEADER_ERUBI = <<~HTML
+<header>
+  <h2 id="title"><%= CGI.escapeHTML(title) %></h2>
+  <button>1</button>
+  <button>2</button>
+</header>
+HTML
+
+HTML_CONTENT_ERUBI = <<~HTML
+<article>
+  <h3>title from context</h3>
+  <p>Hello, world!</p>
+  <div>
+    <a href="<%= 'http://google.com/?a=1&b=2&c=3%204' %>">
+      <h3>foo bar</h3>
+    </a>
+    <p>lorem ipsum </p>
+  </div>
+</article>
+HTML
+
+class Renderer
   def view_template
     doctype
     html {
@@ -93,6 +122,12 @@ class PhlexApp < Phlex::HTML
         render PhlexContent.new(title: @title)
       }
     }
+  end
+end
+
+class PhlexApp < Phlex::HTML
+  def initialize(title:)
+    @title = title
   end
 end
 
@@ -153,6 +188,27 @@ class Renderer
     @erb_content ||= Tilt::ERBTemplate.new { HTML_CONTENT }
     @erb_content.render(self)
   end
+
+  ERUBI_OPTS = {
+    chain_appends: true,
+    freeze_template_literals: false,
+    bufval: "+''",
+    escape: true,
+  }
+  class_eval(c = <<~RUBY)
+    # frozen_string_literal: true
+    def render_erubi_app
+      #{Erubi::Engine.new(HTML_APP_ERUBI, ERUBI_OPTS).src}
+    end
+
+    def render_erubi_header(title:)
+      #{Erubi::Engine.new(HTML_HEADER_ERUBI, ERUBI_OPTS).src}
+    end
+
+    def render_erubi_content
+      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src}
+    end
+  RUBY
 end
 
 r = Renderer.new
@@ -165,15 +221,19 @@ puts '* Phlex:'
 puts r.render_phlex_app
 puts
 
-puts '* ERB:'
+puts '* TILT+ERB:'
 puts r.render_erb_app.gsub(/\n\s+/, '')
+
+puts '* ERUBI (raw):'
+puts r.render_erubi_app.gsub(/\n\s+/, '')
 
 Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
 
   x.report("p2") { r.render_p2_app }
   x.report("phlex") { r.render_phlex_app }
-  x.report("erb") { r.render_erb_app }
+  x.report("tilt+erb") { r.render_erb_app }
+  x.report("erubi") { r.render_erubi_app }
 
-  x.compare!
+  x.compare!(order: :baseline)
 end
