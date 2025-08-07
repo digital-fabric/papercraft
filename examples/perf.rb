@@ -1,9 +1,20 @@
-require 'bundler/setup'
+# frozen_string_literal: true
+
+require 'bundler/inline'
+
+gemfile do
+  gem 'p2', path: '.'
+  gem 'benchmark-ips'
+  gem 'tilt'
+  gem 'phlex'
+end
+
 require 'p2'
 require 'erb'
 require 'benchmark/ips'
 require 'cgi'
 require 'tilt'
+require 'phlex'
 
 App = ->(title:) {
   html5 {
@@ -66,24 +77,66 @@ HTML_CONTENT = <<~HTML
 </article>
 HTML
 
-class Renderer
-  def render_erb_app
-    @erb_app ||= ERB.new(HTML_APP_ERB)
-    @erb_app.result(binding)
+class PhlexApp < Phlex::HTML
+  def initialize(title:)
+    @title = title
   end
 
-  # def render_erb_header(**locals)
-  #   @erb_header ||= ERB.new(HTML_HEADER)
-  #   @erb_header.result_with_hash(**locals)
-  # end
+  def view_template
+    doctype
+    html {
+      body {
+        render PhlexHeader.new(title: @title) do
+          button { '1' }
+          button { '2' }
+        end
+        render PhlexContent.new(title: @title)
+      }
+    }
+  end
+end
 
-  # def render_erb_content
-  #   @erb_content ||= ERB.new(HTML_CONTENT)
-  #   @erb_content.result
-  # end
+class PhlexHeader < Phlex::HTML
+  def initialize(title:)
+    @title = title
+  end
 
+  def view_template
+    header {
+      h2(id: 'title') { @title }
+      yield
+    }
+  end
+end
+
+class PhlexContent < Phlex::HTML
+  def initialize(title:)
+    @title = title
+  end
+
+  def view_template
+    article {
+      h3 { @title }
+      p { "Hello, world!" }
+      div {
+        a(href: 'http://google.com/?a=1&b=2&c=3 4') { h3 { "foo bar" } }
+        p { "lorem ipsum " }
+      }
+    }
+  end
+end
+
+class Renderer
   def render_p2_app
     App.render(title: 'title from context')
+  end
+
+  def render_phlex_app
+    # we can't do that: phlex components can be rendered only once
+    # @phlex_app ||= PhlexApp.new(title: 'title from context')
+    # @phlex_app.call
+
+    PhlexApp.new(title: 'title from context').call
   end
 
   def render_erb_app
@@ -108,6 +161,10 @@ puts '* P2:'
 puts r.render_p2_app
 puts
 
+puts '* Phlex:'
+puts r.render_phlex_app
+puts
+
 puts '* ERB:'
 puts r.render_erb_app.gsub(/\n\s+/, '')
 
@@ -115,6 +172,7 @@ Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
 
   x.report("p2") { r.render_p2_app }
+  x.report("phlex") { r.render_phlex_app }
   x.report("erb") { r.render_erb_app }
 
   x.compare!
