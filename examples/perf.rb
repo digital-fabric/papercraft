@@ -5,7 +5,6 @@ require 'bundler/inline'
 gemfile do
   gem 'p2', path: '.'
   gem 'benchmark-ips', '>= 2.14.0'
-  gem 'tilt'
   gem 'erubi'
   gem 'phlex'
 end
@@ -15,17 +14,13 @@ require 'erb'
 require 'erubi'
 require 'benchmark/ips'
 require 'cgi'
-require 'tilt'
 require 'phlex'
 
 App = ->(title:) {
   html5 {
     body {
-      emit(Header, title: title) {
-        button "1"
-        button "2"
-      }
-      emit(Content, title: title)
+      render(Header, title: title)
+      render(Content, title: title)
     }
   }
 }
@@ -33,7 +28,8 @@ App = ->(title:) {
 Header = ->(title:) {
   header {
     h2(title, id: 'title')
-    emit_yield
+    button "1"
+    button "2"
   }
 }
 
@@ -43,7 +39,7 @@ Content = ->(title:) {
     p "Hello, world!"
     div {
       a(href: 'http://google.com/?a=1&b=2&c=3 4') { h3 "foo bar" }
-      p "lorem ipsum "
+      p "lorem ipsum"
     }
   }
 }
@@ -53,28 +49,28 @@ HTML_APP_ERB = <<~HTML
 <html>
   <body>
     <%= render_erb_header(title: 'title from context') %>
-    <%= render_erb_content %>
+    <%= render_erb_content(title: 'title from context') %>
   </body>
 </html>
 HTML
 
-HTML_HEADER = <<~HTML
+HTML_HEADER_ERB = <<~HTML
 <header>
-  <h2 id="title"><%= CGI.escapeHTML(title) %></h2>
+  <h2 id="title"><%= ERB::Escape.html_escape(title) %></h2>
   <button>1</button>
   <button>2</button>
 </header>
 HTML
 
-HTML_CONTENT = <<~HTML
+HTML_CONTENT_ERB = <<~HTML
 <article>
-  <h3>title from context</h3>
+  <h3><%= ERB::Escape.html_escape(title) %></h3>
   <p>Hello, world!</p>
   <div>
     <a href="<%= 'http://google.com/?a=1&b=2&c=3%204' %>">
       <h3>foo bar</h3>
     </a>
-    <p>lorem ipsum </p>
+    <p>lorem ipsum</p>
   </div>
 </article>
 HTML
@@ -84,14 +80,14 @@ HTML_APP_ERUBI = <<~HTML
 <html>
   <body>
     <%= render_erubi_header(title: 'title from context') %>
-    <%= render_erubi_content %>
+    <%= render_erubi_content(title: 'title from context') %>
   </body>
 </html>
 HTML
 
 HTML_HEADER_ERUBI = <<~HTML
 <header>
-  <h2 id="title"><%= CGI.escapeHTML(title) %></h2>
+  <h2 id="title"><%= ERB::Escape.html_escape(title) %></h2>
   <button>1</button>
   <button>2</button>
 </header>
@@ -99,13 +95,13 @@ HTML
 
 HTML_CONTENT_ERUBI = <<~HTML
 <article>
-  <h3>title from context</h3>
+  <h3><%= ERB::Escape.html_escape(title) %></h3>
   <p>Hello, world!</p>
   <div>
     <a href="<%= 'http://google.com/?a=1&b=2&c=3%204' %>">
       <h3>foo bar</h3>
     </a>
-    <p>lorem ipsum </p>
+    <p>lorem ipsum</p>
   </div>
 </article>
 HTML
@@ -128,6 +124,19 @@ end
 class PhlexApp < Phlex::HTML
   def initialize(title:)
     @title = title
+  end
+
+  def view_template
+    doctype
+    html {
+      body {
+        render PhlexHeader.new(title: @title) {
+          button { "1" }
+          button { "2" }
+        }
+        render PhlexContent.new(title: @title)
+      }
+    }
   end
 end
 
@@ -174,39 +183,54 @@ class Renderer
     PhlexApp.new(title: 'title from context').call
   end
 
-  def render_erb_app
-    @erb_app ||= Tilt::ERBTemplate.new { HTML_APP_ERB }
-    @erb_app.render(self)
-  end
+  # def render_erb_app
+  #   @erb_app ||= Tilt::ERBTemplate.new { HTML_APP_ERB }
+  #   @erb_app.render(self)
+  # end
 
-  def render_erb_header(locals)
-    @erb_header ||= Tilt::ERBTemplate.new { HTML_HEADER }
-    @erb_header.render(self, locals)
-  end
+  # def render_erb_header(locals)
+  #   @erb_header ||= Tilt::ERBTemplate.new { HTML_HEADER }
+  #   @erb_header.render(self, locals)
+  # end
 
-  def render_erb_content
-    @erb_content ||= Tilt::ERBTemplate.new { HTML_CONTENT }
-    @erb_content.render(self)
-  end
+  # def render_erb_content
+  #   @erb_content ||= Tilt::ERBTemplate.new { HTML_CONTENT }
+  #   @erb_content.render(self)
+  # end
 
   ERUBI_OPTS = {
     chain_appends: true,
     freeze_template_literals: false,
     bufval: "+''",
-    escape: true,
+    # escape: true,
   }
   class_eval(c = <<~RUBY)
     # frozen_string_literal: true
     def render_erubi_app
-      #{Erubi::Engine.new(HTML_APP_ERUBI, ERUBI_OPTS).src}
+      #{Erubi::Engine.new(HTML_APP_ERUBI, ERUBI_OPTS).src.tap {puts '*' * 40; puts it}}
     end
 
     def render_erubi_header(title:)
-      #{Erubi::Engine.new(HTML_HEADER_ERUBI, ERUBI_OPTS).src}
+      #{Erubi::Engine.new(HTML_HEADER_ERUBI, ERUBI_OPTS).src.tap {puts '*' * 40; puts it}}
     end
 
-    def render_erubi_content
-      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src}
+    def render_erubi_content(title:)
+      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src.tap {puts '*' * 40; puts it}}
+    end
+  RUBY
+
+  class_eval(c = <<~RUBY)
+    # frozen_string_literal: true
+    def render_erb_app
+      #{ERB.new(HTML_APP_ERB).src}
+    end
+
+    def render_erb_header(title:)
+      #{ERB.new(HTML_HEADER_ERB).src}
+    end
+
+    def render_erb_content(title:)
+      #{ERB.new(HTML_CONTENT_ERB).src}
     end
   RUBY
 end
@@ -221,7 +245,7 @@ puts '* Phlex:'
 puts r.render_phlex_app
 puts
 
-puts '* TILT+ERB:'
+puts '* ERB:'
 puts r.render_erb_app.gsub(/\n\s+/, '')
 
 puts '* ERUBI (raw):'
@@ -232,7 +256,7 @@ Benchmark.ips do |x|
 
   x.report("p2") { r.render_p2_app }
   x.report("phlex") { r.render_phlex_app }
-  x.report("tilt+erb") { r.render_erb_app }
+  x.report("erb") { r.render_erb_app }
   x.report("erubi") { r.render_erubi_app }
 
   x.compare!(order: :baseline)
