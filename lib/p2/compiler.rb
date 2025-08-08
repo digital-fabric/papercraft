@@ -226,7 +226,7 @@ module P2
         source_fn: orig_proc.source_location.first,
         compiled_fn: compiled_fn
       }
-      @source_map_line_ofs = 1
+      @source_map_line_ofs = 2
       self
     end
 
@@ -240,7 +240,7 @@ module P2
       source_code = @buffer
       @buffer = +''
       if wrap
-        emit("(#{@source_map.inspect}).then { |src_map| ->(__buffer__")
+        emit("# frozen_string_literal: true\n(#{@source_map.inspect}).then { |src_map| ->(__buffer__")
 
         params = orig_ast.parameters
         params = params&.parameters
