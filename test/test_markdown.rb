@@ -6,7 +6,7 @@ require 'p2'
 
 class MarkdownTest < Minitest::Test
   def test_basic_markdown
-    templ = ->(md) { body { emit_markdown(md) } }
+    templ = ->(md) { body { markdown(md) } }
     assert_equal "<body><h1 id=\"hi\">hi</h1>\n</body>",
       templ.render('# hi')
 
@@ -15,11 +15,11 @@ class MarkdownTest < Minitest::Test
   end
 
   def test_markdown_opts
-    templ = ->(md) { emit_markdown(md, auto_ids: false) }
+    templ = ->(md) { markdown(md, auto_ids: false) }
     assert_equal "<h1>hi</h1>\n",
       templ.render('# hi')
 
-    templ = ->(md) { emit_markdown(md) }
+    templ = ->(md) { markdown(md) }
     P2.default_kramdown_options[:auto_ids] = false
     assert_equal "<h1>hi</h1>\n",
       templ.render('# hi')

@@ -86,7 +86,7 @@ P2 features:
 - [Higher-Order Templates](#higher-order-templates)
 - [Layout Template Composition](#layout-template-composition)
 - [Emitting Raw HTML](#emitting-raw-html)
-- [Emitting a String with HTML Encoding](#emitting-a-string-with-html-encoding)
+- [Emitting a String with HTML Escaping](#emitting-a-string-with-html-escaping)
 - [Emitting Markdown](#emitting-markdown)
 - [Deferred Evaluation](#deferred-evaluation)
 - [API Reference](#api-reference)
@@ -298,14 +298,14 @@ page.render('Hello from composed templates', [
 ```
 
 In addition to using templates defined as constants, you can also use
-non-constant templates by invoking the `#emit` method:
+non-constant templates by invoking the `#render` method:
 
 ```ruby
 greeting = -> { span "Hello, world" }
 
 -> {
   div {
-    emit greeting
+    render greeting
   }
 }
 ```
@@ -345,7 +345,7 @@ templates or injecting template parameters.
 Here is a higher-order template that takes a template as parameter:
 
 ```ruby
-div_wrap = -> { |inner| div { emit inner } }
+div_wrap = -> { |inner| div { render inner } }
 greeter = -> { h1 'hi' }
 wrapped_greeter = div_wrap.apply(greeter)
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
@@ -382,7 +382,7 @@ default_layout = -> { |**params|
 article_layout = default_layout.apply { |title:, body:|
   article {
     h1 title
-    emit_markdown body
+    markdown body
   }
 }
 
@@ -394,16 +394,16 @@ article_layout.render(
 
 ## Emitting Raw HTML
 
-Raw HTML can be emitted using `#emit`:
+Raw HTML can be emitted using `#raw`:
 
 ```ruby
-wrapped = -> { |html| div { emit html } }
+wrapped = -> { |html| div { raw html } }
 wrapped.render("<h1>hi</h1>") #=> "<div><h1>hi</h1></div>"
 ```
 
-## Emitting a String with HTML Encoding
+## Emitting a String with HTML Escaping
 
-To emit a string with proper HTML encoding, without wrapping it in an HTML
+To emit a string with proper HTML escaping, without wrapping it in an HTML
 element, use `#text`:
 
 ```ruby
@@ -414,19 +414,19 @@ element, use `#text`:
 
 Markdown is rendered using the
 [Kramdown](https://kramdown.gettalong.org/index.html) gem. To emit Markdown, use
-`#emit_markdown`:
+`#markdown`:
 
 ```ruby
-template = -> { |md| div { emit_markdown md } }
+template = -> { |md| div { markdown md } }
 template.render("Here's some *Markdown*") #=> "<div><p>Here's some <em>Markdown</em><p>\n</div>"
 ```
 
 [Kramdown
 options](https://kramdown.gettalong.org/options.html#available-options) can be
-specified by adding them to the `#emit_markdown` call:
+specified by adding them to the `#markdown` call:
 
 ```ruby
-template = -> { |md| div { emit_markdown md, auto_ids: false } }
+template = -> { |md| div { markdown md, auto_ids: false } }
 template.render("# title") #=> "<div><h1>title</h1></div>"
 ```
 
@@ -478,7 +478,7 @@ integrated into the page, and adds them to the page's `<head>` element:
 default_layout = -> { |**args|
   @dependencies = DependencyMananger.new
   head {
-    defer { emit @dependencies.head_markup }
+    defer { render @dependencies.head_markup }
   }
   body { emit_yield **args }
 }
@@ -498,11 +498,11 @@ heading = proc { |text|
 }
 
 page = default_layout.apply {
-  emit heading, "What's your favorite cheese?"
+  render heading, "What's your favorite cheese?"
 
-  emit button, 'Beaufort', 'eat_beaufort()'
-  emit button, 'Mont d''or', 'eat_montdor()'
-  emit button, 'Époisses', 'eat_epoisses()'
+  render button, 'Beaufort', 'eat_beaufort()'
+  render button, 'Mont d''or', 'eat_montdor()'
+  render button, 'Époisses', 'eat_epoisses()'
 }
 ```
 

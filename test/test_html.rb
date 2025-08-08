@@ -293,45 +293,26 @@ end
 
 
 class EmitTest < Minitest::Test
-  def test_that_emit_accepts_block
-    # p2 emits the value returned from the block
-    block = proc { emit 'foobar' }
+  def test_that_render_accepts_block
+    block = proc { raw 'foobar' }
 
     assert_equal(
       'foobar',
-      -> { emit block }.render
+      -> { render block }.render
     )
   end
 
-  def test_that_emit_accepts_p2
-    r = -> { p 'foobar' }
-
-    assert_equal(
-      '<div><p>foobar</p></div>',
-      -> { div { emit r} }.render
-    )
-  end
-
-  def test_that_emit_accepts_string
+  def test_that_raw_accepts_string
     assert_equal(
       '<div>foobar</div>',
-      -> { div { emit 'foobar' } }.render
+      -> { div { raw 'foobar' } }.render
     )
   end
 
-  def test_that_emit_doesnt_escape_string
+  def test_that_raw_doesnt_escape_string
     assert_equal(
       '<div>foo&bar</div>',
-      -> { div { emit 'foo&bar' } }.render
-    )
-  end
-
-  def test_that_e_is_alias_to_emit
-    r = -> { p 'foobar' }
-
-    assert_equal(
-      '<div><p>foobar</p></div>',
-      -> { div { e r} }.render
+      -> { div { raw 'foo&bar' } }.render
     )
   end
 
@@ -433,39 +414,5 @@ class DeferTest < Minitest::Test
 
     assert_equal "<html><head><title>Awesome user form</title></head><body><form><h3>Syntax error!</h3><p>Welcome to the awesome user form</p></form></body></html>",
       html
-  end
-
-  def test_nested_defer
-    layout = ->(foo, bar) {
-      h1 'foo'
-      defer { emit foo }
-      h1 'bar'
-      defer { emit bar }
-
-      @foo = 1
-      @bar = 2
-      @baz = 3
-    }
-    layout.render('abc', 'def')
-
-    # foo = -> {
-    #   p 'foo'
-    #   p @foo
-    #   defer { p @baz }
-    #   p 'nomorefoo'
-    # }
-
-    # bar = -> {
-    #   p 'bar'
-    #   p @bar
-    #   p 'nomorebar'
-    # }
-
-    # bar.render
-
-    # assert_equal(
-    #   "<h1>foo</h1><p>foo</p><p>1</p><p>3</p><p>nomorefoo</p><h1>bar</h1><p>bar</p><p>2</p><p>nomorebar</p>",
-    #   layout.render(foo, bar)
-    # )
   end
 end

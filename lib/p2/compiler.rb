@@ -48,7 +48,7 @@ module P2
     end
   end
 
-  class EmitNode
+  class RenderNode
     attr_reader :call_node, :location, :block
 
     include Prism::DSL
@@ -107,7 +107,7 @@ module P2
     end
 
     def accept(visitor)
-      visitor.visit_emit_node(self)
+      visitor.visit_render_node(self)
     end
   end
 
@@ -121,6 +121,19 @@ module P2
 
     def accept(visitor)
       visitor.visit_text_node(self)
+    end
+  end
+
+  class RawNode
+    attr_reader :call_node, :location
+
+    def initialize(call_node, _compiler)
+      @call_node = call_node
+      @location = call_node.location
+    end
+
+    def accept(visitor)
+      visitor.visit_raw_node(self)
     end
   end
 
@@ -172,13 +185,15 @@ module P2
         )
       when :raise
         super(node)
-      when :emit, :e
-        EmitNode.new(node, self)
+      when :render
+        RenderNode.new(node, self)
+      when :raw
+        RawNode.new(node, self)
       when :text
         TextNode.new(node, self)
       when :defer
         DeferNode.new(node, self)
-      when :html5, :emit_markdown, :markdown
+      when :html5, :markdown
         CustomTagNode.new(node, self)
       else
         TagNode.new(node, self)
@@ -320,13 +335,11 @@ module P2
       emit(');')
     end
 
-    def visit_emit_node(node)
+    def visit_render_node(node)
       args = node.call_node.arguments.arguments
       first_arg = args.first
       if args.length == 1
-        if is_static_node?(first_arg)
-          emit_html(node.location, format_literal(first_arg))
-        elsif first_arg.is_a?(Prism::LambdaNode)
+        if first_arg.is_a?(Prism::LambdaNode)
           visit(first_arg.body)
         else
           emit_html(node.location, "#\{P2.render_emit_call(#{format_code(first_arg)})}")
@@ -348,6 +361,22 @@ module P2
           emit_html(node.location, ERB::Escape.html_escape(format_literal(first_arg)))
         else
           emit_html(node.location, "#\{ERB::Escape.html_escape(#{format_code(first_arg)}.to_s)}")
+        end
+      else
+        raise "Don't know how to compile #{node}"
+      end
+    end
+
+    def visit_raw_node(node)
+      return if !node.call_node.arguments
+
+      args = node.call_node.arguments.arguments
+      first_arg = args.first
+      if args.length == 1
+        if is_static_node?(first_arg)
+          emit_html(node.location, format_literal(first_arg))
+        else
+          emit_html(node.location, "#\{#{format_code(first_arg)}.to_s}")
         end
       else
         raise "Don't know how to compile #{node}"
@@ -382,7 +411,7 @@ module P2
         emit_html(node.location, '<!DOCTYPE html><html>')
         visit(node.block.body) if node.block
         emit_html(node.block.closing_loc, '</html>')
-      when :emit_markdown, :markdown
+      when :markdown
         args = node.call_node.arguments
         return if !args
 
@@ -404,7 +433,7 @@ module P2
 
     private
 
-    def format_code(node, klass = TemplateCompiler)
+    def format_code(node, klass = self.class)
       klass.new(minimize_whitespace: true).to_source(node)
     end
 

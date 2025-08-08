@@ -25,7 +25,7 @@ class ParametersTest < Minitest::Test
     assert_equal '<h2>42</h2><h3>[43, 44]</h3>',
       h.render(42, 43, 44)
 
-    h = proc { |foo = true| emit foo ? 'yes' : 'no' }
+    h = proc { |foo = true| raw foo ? 'yes' : 'no' }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(false)
   end
@@ -43,7 +43,7 @@ class ParametersTest < Minitest::Test
     assert_equal '<h2>42</h2><h3>43</h3>',
       h.render(foo: 42, bar: 43)
 
-    h = proc { |foo: true| emit foo ? 'yes' : 'no' }
+    h = proc { |foo: true| raw foo ? 'yes' : 'no' }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(foo: false)
   end
@@ -66,26 +66,26 @@ class ParametersTest < Minitest::Test
 end
 
 class EmitComponentTest < Minitest::Test
-  def test_emit_with_proc_params
-    r = proc { |p| body { emit p } }
+  def test_render_with_proc_params
+    r = proc { |p| body { render p } }
     assert_equal '<body><h1>hi</h1></body>', r.render(proc { h1 'hi' })
     assert_equal '<body><foo></foo></body>', r.render(proc { foo })
   end
 
-  def test_emit_with_params
-    r = proc { |foo| body { emit foo, bar: 2 } }
+  def test_render_with_params
+    r = proc { |foo| body { render foo, bar: 2 } }
     assert_raises(ArgumentError) {
       r.render(proc { |baz:| h1 baz })
     }
     assert_equal '<body><h1>2</h1></body>', r.render(proc { |bar:| h1 bar })
   end
 
-  def test_emit_with_block
+  def test_render_with_block
     hdr = proc { |foo:|
       header { h1 foo; emit_yield }
     }
     template = proc {
-      emit(hdr, foo: 'bar') {
+      render(hdr, foo: 'bar') {
         button 'hi'
       }
     }
@@ -117,7 +117,7 @@ end
 
 class ApplyTest < Minitest::Test
   def test_apply_with_parameters
-    a = proc { |foo| body { emit foo } }
+    a = proc { |foo| body { render foo } }
     b = a.apply(proc { p 'hi' })
 
     assert_kind_of Proc, b
@@ -233,10 +233,10 @@ class TagsTest < Minitest::Test
     assert_equal('<em>foo</em>', html)
   end
 
-  def test_emit_markdown
+  def test_markdown
     t = -> {
       div {
-        emit_markdown "# Foo\n\nLorem ipsum"
+        markdown "# Foo\n\nLorem ipsum"
       }
     }
     html = t.render
