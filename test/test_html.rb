@@ -292,7 +292,7 @@ class TagMethodTest < Minitest::Test
 end
 
 
-class EmitTest < Minitest::Test
+class SubTemplateTest < Minitest::Test
   def test_that_render_accepts_block
     block = proc { raw 'foobar' }
 
@@ -333,6 +333,24 @@ class EmitTest < Minitest::Test
       '<body><div id="content"><p>foo</p></div></body>',
       outer.render(&inner)
     )
+  end
+
+  def test_yield_in_each_block
+    ulist = ->(list) {
+      ul {
+        list.each { |item|
+          li { yield item }
+        }
+      }
+    }
+
+    item_card = ->(item) {
+      card {
+        span item
+      }
+    }
+
+    assert_equal '<ul><li><card><span>foo</span></card></li><li><card><span>bar</span></card></li></ul>', ulist.render(%w{foo bar}, &item_card)
   end
 end
 

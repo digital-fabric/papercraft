@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.required_ruby_version = '>= 3.4'
 
-  s.add_runtime_dependency      'sirop',                '~>0.8.2'
+  s.add_runtime_dependency      'sirop',                '~>0.8.3'
   s.add_runtime_dependency      'kramdown',             '~>2.5.1'
   s.add_runtime_dependency      'rouge',                '~>4.5.1'
   s.add_runtime_dependency      'kramdown-parser-gfm',  '~>1.1.0'
