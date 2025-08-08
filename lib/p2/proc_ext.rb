@@ -12,6 +12,8 @@ class ::Proc
     @is_compiled
   end
 
+  # marks the proc as compiled, i.e. can render directly and takes a string
+  # buffer as first argument
   def compiled!
     @is_compiled = true
     self
@@ -22,7 +24,7 @@ class ::Proc
   end
   
   def compile
-    P2.compile(self).compiled!
+    P2::TemplateCompiler.compile(self).compiled!
   rescue Sirop::Error
     uncompiled_renderer
   end

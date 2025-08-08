@@ -13,7 +13,6 @@ class ParametersTest < Minitest::Test
   end
 
   def test_ordinal_parameters
-    # h = -> { h1 foo }
     h = proc { |foo = 'baz'| h1 foo }
 
     assert_equal '<h1>baz</h1>', h.render
@@ -22,10 +21,9 @@ class ParametersTest < Minitest::Test
     h = proc { |foo = 'default', *rest| h2 foo; h3 rest.inspect }
     assert_equal '<h2>default</h2><h3>[]</h3>', h.render
     assert_equal '<h2>23</h2><h3>[]</h3>', h.render(23)
-    assert_equal '<h2>42</h2><h3>[43, 44]</h3>',
-      h.render(42, 43, 44)
+    assert_equal '<h2>42</h2><h3>[43, 44]</h3>', h.render(42, 43, 44)
 
-    h = proc { |foo = true| raw foo ? 'yes' : 'no' }
+    h = ->(foo = true) { raw(foo ? 'yes' : 'no') }
     assert_equal 'yes', h.render
     assert_equal 'no', h.render(false)
   end
@@ -68,16 +66,32 @@ end
 class EmitComponentTest < Minitest::Test
   def test_render_with_proc_params
     r = proc { |p| body { render p } }
-    assert_equal '<body><h1>hi</h1></body>', r.render(proc { h1 'hi' })
-    assert_equal '<body><foo></foo></body>', r.render(proc { foo })
+    assert_equal '<body><h1>hi</h1></body>', r.render(
+      proc { h1 'hi' }
+    )
+    assert_equal '<body><foo></foo></body>', r.render(
+      proc { foo }
+    )
   end
 
   def test_render_with_params
-    r = proc { |foo| body { render foo, bar: 2 } }
-    assert_raises(ArgumentError) {
-      r.render(proc { |baz:| h1 baz })
+    r = proc { |foo|
+      body {
+        render foo, bar: 2
+      }
     }
-    assert_equal '<body><h1>2</h1></body>', r.render(proc { |bar:| h1 bar })
+    assert_raises(ArgumentError) {
+      r.render(
+        proc { |baz:|
+          h1 baz
+        }
+      )
+    }
+    assert_equal '<body><h1>2</h1></body>', r.render(
+      proc { |bar:|
+        h1 bar
+      }
+    )
   end
 
   def test_render_with_block

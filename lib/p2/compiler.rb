@@ -222,6 +222,10 @@ module P2
 
     def self.compile(proc, wrap: true)
       source_map, code = compile_to_code(proc, wrap:)
+      if ENV['DEBUG'] == '1'
+        puts '*' * 40
+        puts code
+      end
       eval(code, proc.binding, source_map[:compiled_fn])
     end
 
@@ -311,9 +315,9 @@ module P2
         else
           convert_to_s = !is_string_type_node?(node.inner_text)
           if convert_to_s
-            emit_html(node.location, "#\{ERB::Escape.html_escape((#{format_code(node.inner_text)}).to_s)}")
+            emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)}).to_s)"))
           else
-            emit_html(node.location, "#\{ERB::Escape.html_escape(#{format_code(node.inner_text)})}")
+            emit_html(node.location, interpolated("ERB::Escape.html_escape(#{format_code(node.inner_text)})"))
           end
         end
       end
@@ -338,17 +342,19 @@ module P2
     def visit_render_node(node)
       args = node.call_node.arguments.arguments
       first_arg = args.first
+      
+      block_embed = node.block && "&(->(__buffer__) #{format_code(node.block)}.compiled!)"
+      block_embed = ", #{block_embed}" if block_embed && node.call_node.arguments
+
+      flush_html_parts!
+      adjust_whitespace(node.location)
+      
       if args.length == 1
-        if first_arg.is_a?(Prism::LambdaNode)
-          visit(first_arg.body)
-        else
-          emit_html(node.location, "#\{P2.render_emit_call(#{format_code(first_arg)})}")
-        end
+        emit("; #{format_code(first_arg)}.compiled_proc.(__buffer__#{block_embed})")
       else
-        block_embed = node.block ? "&(->(__buffer__) #{format_code(node.block)}.compiled!)" : nil
-        block_embed = ", #{block_embed}" if block_embed && node.call_node.arguments
-        emit_html(node.location, "#\{P2.render_emit_call(#{format_code(node.call_node.arguments)}#{block_embed})}")
-      end
+        args_code = format_code_comma_separated_nodes(args[1..])
+        emit("; #{format_code(first_arg)}.compiled_proc.(__buffer__, #{args_code}#{block_embed})")
+      end      
     end
 
     def visit_text_node(node)
@@ -360,7 +366,7 @@ module P2
         if is_static_node?(first_arg)
           emit_html(node.location, ERB::Escape.html_escape(format_literal(first_arg)))
         else
-          emit_html(node.location, "#\{ERB::Escape.html_escape(#{format_code(first_arg)}.to_s)}")
+          emit_html(node.location, interpolated("ERB::Escape.html_escape(#{format_code(first_arg)}.to_s)"))
         end
       else
         raise "Don't know how to compile #{node}"
@@ -376,7 +382,7 @@ module P2
         if is_static_node?(first_arg)
           emit_html(node.location, format_literal(first_arg))
         else
-          emit_html(node.location, "#\{#{format_code(first_arg)}.to_s}")
+          emit_html(node.location, interpolated("(#{format_code(first_arg)}).to_s"))
         end
       else
         raise "Don't know how to compile #{node}"
@@ -415,7 +421,7 @@ module P2
         args = node.call_node.arguments
         return if !args
 
-        emit_html(node.location, "#\{P2.markdown(#{format_code(args)})}")
+        emit_html(node.location, interpolated("P2.markdown(#{format_code(args)})"))
       end
     end
 
@@ -433,8 +439,18 @@ module P2
 
     private
 
+    def interpolated(str)
+      "#\{#{str}}"
+    end
+
     def format_code(node, klass = self.class)
       klass.new(minimize_whitespace: true).to_source(node)
+    end
+
+    def format_code_comma_separated_nodes(list)
+      compiler = self.class.new(minimize_whitespace: true)
+      compiler.visit_comma_separated_nodes(list)
+      compiler.buffer
     end
 
     VOID_TAGS = %w(area base br col embed hr img input link meta param source track wbr)
@@ -517,7 +533,7 @@ module P2
           !is_static_node?(it.key) || !is_static_node?(it.value)
       end
 
-      return "#\{P2.format_html_attrs(#{format_code(node)})}" if dynamic_attributes
+      return interpolated("P2.format_html_attrs(#{format_code(node)})") if dynamic_attributes
 
       parts = elements.map do
         key = it.key
@@ -551,11 +567,20 @@ module P2
       return if @pending_html_parts.empty?
 
       adjust_whitespace(@html_loc_start)
-      if semicolon_prefix && @buffer =~ /[^\s]\s*$/m
-        emit '; '
-      end
 
-      str = @pending_html_parts.join
+      code = +''
+      part = +''
+
+      @pending_html_parts.each do
+        if (m = it.match(/^#\{(.+)\}$/m))
+          emit_buffer_push(code, part, quotes: true) if !part.empty?
+          emit_buffer_push(code, m[1])
+        else
+          part << it
+        end
+      end
+      emit_buffer_push(code, part, quotes: true) if !part.empty?
+
       @pending_html_parts.clear
 
       @last_loc = @html_loc_end
@@ -565,7 +590,15 @@ module P2
       @html_loc_start = nil
       @html_loc_end = nil
 
-      emit "__buffer__ << \"#{str}\""
+      emit code
+    end
+
+    def emit_buffer_push(buf, part, quotes: false)
+      return if part.empty?
+
+      q = quotes ? '"' : ''
+      buf << "; __buffer__ << #{q}#{part}#{q}"
+      part.clear
     end
 
     def emit_postlude

@@ -33,17 +33,6 @@ module P2
     end
   end
 
-  def render_emit_call(o, *a, **b, &block)
-    case o
-    when nil
-      # do nothing
-    when ::Proc
-      o.render(*a, **b, &block)
-    else
-      o.to_s
-    end
-  end
-
   def translate_backtrace(e, source_map)
     re = compute_source_map_re(source_map)
     source_fn = source_map[:source_fn]
