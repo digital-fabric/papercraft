@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'cgi'
 require 'sirop'
 require 'erb/escape'
 
@@ -8,13 +7,15 @@ require_relative './compiler/nodes'
 require_relative './compiler/tag_translator'
 
 module P2
-  class VerbatimSourcifier < Sirop::Sourcifier
-    def visit_tag_node(node)
-      visit(node.call_node)
-    end
-  end
-
-  class TemplateCompiler < Sirop::Sourcifier
+  # A Compiler converts a template into an optimized form that generates HTML
+  # efficiently.
+  class Compiler < Sirop::Sourcifier
+    # Compiles the given proc, returning the generated source map and the
+    # generated optimized source code.
+    #
+    # @param proc [Proc] template
+    # @param wrap [bool] whether to wrap the generated code with a literal Proc definition
+    # @return [Array] array containing the source map and generated code
     def self.compile_to_code(proc, wrap: true)
       ast = Sirop.to_ast(proc)
 
@@ -27,6 +28,17 @@ module P2
       [compiler.source_map, compiler.buffer]
     end
 
+    # Compiles the given template into an optimized Proc that generates HTML.
+    #
+    #     template = -> {
+    #       h1 'Hello, world!'
+    #     }
+    #     compiled = P2::Compiler.compile(template)
+    #     compiled.render #=> '<h1>Hello, world!'
+    #
+    # @param proc [Proc] template
+    # @param wrap [bool] whether to wrap the generated code with a literal Proc definition
+    # @return [Proc] compiled proc
     def self.compile(proc, wrap: true)
       source_map, code = compile_to_code(proc, wrap:)
       if ENV['DEBUG'] == '1'
@@ -38,6 +50,7 @@ module P2
 
     attr_reader :source_map
 
+    # Initializes a compiler.
     def initialize(**)
       super(**)
       @pending_html_parts = []
@@ -46,6 +59,11 @@ module P2
       @yield_used = nil
     end
 
+    # Initializes a source map.
+    #
+    # @param orig_proc [Proc] template proc
+    # @param orig_ast [Prism::Node] template AST
+    # @return [self]
     def with_source_map(orig_proc, orig_ast)
       compiled_fn = "::(#{orig_proc.source_location.join(':')})"
       @source_map = {
@@ -56,6 +74,12 @@ module P2
       self
     end
 
+    # Formats the source code for a compiled template proc.
+    #
+    # @param ast [Prism::Node] translated AST
+    # @param orig_ast [Prism::Node] original template AST
+    # @param wrap [bool] whether to wrap the generated code with a literal Proc definition
+    # @return [String] compiled template source code
     def format_compiled_template(ast, orig_ast, wrap:, binding:)
       # generate source code
       @binding = binding
@@ -78,11 +102,11 @@ module P2
         if @yield_used
           emit(', &__block__')
         end
-        
+
         emit(") do\n")
       end
       @buffer << source_code
-      emit_postlude
+      emit_defer_postlude if @defer_mode
       if wrap
         emit('; __buffer__')
         adjust_whitespace(orig_ast.closing_loc)
@@ -92,11 +116,10 @@ module P2
       @buffer
     end
 
-    def emit_code(loc, semicolon: false, chomp: false, flush_html: true)
-      flush_html_parts! if flush_html
-      super(loc, semicolon:, chomp: )
-    end
-
+    # Visits a tag node.
+    #
+    # @param node [P2::TagNode] node
+    # @return [void]
     def visit_tag_node(node)
       tag = node.tag
       if tag.is_a?(Symbol) && tag =~ /^[A-Z]/
@@ -131,6 +154,10 @@ module P2
       emit_html(node.location, format_html_tag_close(tag))
     end
 
+    # Visits a const tag node.
+    #
+    # @param node [P2::ConstTagNode] node
+    # @return [void]
     def visit_const_tag_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
@@ -146,24 +173,32 @@ module P2
       emit(');')
     end
 
+    # Visits a render node.
+    #
+    # @param node [P2::RenderNode] node
+    # @return [void]
     def visit_render_node(node)
       args = node.call_node.arguments.arguments
       first_arg = args.first
-      
+
       block_embed = node.block && "&(->(__buffer__) #{format_code(node.block)}.compiled!)"
       block_embed = ", #{block_embed}" if block_embed && node.call_node.arguments
 
       flush_html_parts!
       adjust_whitespace(node.location)
-      
+
       if args.length == 1
         emit("; #{format_code(first_arg)}.compiled_proc.(__buffer__#{block_embed})")
       else
         args_code = format_code_comma_separated_nodes(args[1..])
         emit("; #{format_code(first_arg)}.compiled_proc.(__buffer__, #{args_code}#{block_embed})")
-      end      
+      end
     end
 
+    # Visits a text node.
+    #
+    # @param node [P2::TextNode] node
+    # @return [void]
     def visit_text_node(node)
       return if !node.call_node.arguments
 
@@ -180,6 +215,10 @@ module P2
       end
     end
 
+    # Visits a raw node.
+    #
+    # @param node [P2::RawNode] node
+    # @return [void]
     def visit_raw_node(node)
       return if !node.call_node.arguments
 
@@ -196,6 +235,10 @@ module P2
       end
     end
 
+    # Visits a defer node.
+    #
+    # @param node [P2::DeferNode] node
+    # @return [void]
     def visit_defer_node(node)
       block = node.block
       return if !block
@@ -216,10 +259,14 @@ module P2
       emit("}")
     end
 
+    # Visits a builtin node.
+    #
+    # @param node [P2::BuiltinNode] node
+    # @return [void]
     def visit_builtin_node(node)
       case node.tag
       when :tag
-        args = node.call_node.arguments&.arguments        
+        args = node.call_node.arguments&.arguments
       when :html5
         emit_html(node.location, '<!DOCTYPE html><html>')
         visit(node.block.body) if node.block
@@ -232,6 +279,10 @@ module P2
       end
     end
 
+    # Visits a yield node.
+    #
+    # @param node [P2::YieldNode] node
+    # @return [void]
     def visit_yield_node(node)
       adjust_whitespace(node.location)
       flush_html_parts!
@@ -246,14 +297,34 @@ module P2
 
     private
 
+    # Overrides the Sourcifier behaviour to flush any buffered HTML parts.
+    def emit_code(loc, semicolon: false, chomp: false, flush_html: true)
+      flush_html_parts! if flush_html
+      super(loc, semicolon:, chomp: )
+    end
+
+    # Returns the given str inside interpolation syntax (#{...}).
+    #
+    # @param str [String] input string
+    # @return [String] output string
     def interpolated(str)
       "#\{#{str}}"
     end
 
-    def format_code(node, klass = self.class)
-      klass.new(minimize_whitespace: true).to_source(node)
+    # Formats the given AST with minimal whitespace. Used for formatting
+    # arbitrary expressions.
+    #
+    # @param node [Prism::Node] AST
+    # @return [String] generated source code
+    def format_code(node)
+      Compiler.new(minimize_whitespace: true).to_source(node)
     end
 
+    # Formats a comma separated list of AST nodes. Used for formatting partial
+    # argument lists.
+    #
+    # @param list [Array<Prism::Node>] node list
+    # @return [String] generated source code
     def format_code_comma_separated_nodes(list)
       compiler = self.class.new(minimize_whitespace: true)
       compiler.visit_comma_separated_nodes(list)
@@ -262,10 +333,19 @@ module P2
 
     VOID_TAGS = %w(area base br col embed hr img input link meta param source track wbr)
 
+    # Returns true if given HTML element is void (needs no closing tag).
+    #
+    # @param tag [String, Symbol] HTML tag
+    # @return [bool] void or not
     def is_void_element?(tag)
       VOID_TAGS.include?(tag.to_s)
     end
 
+    # Formats an open tag with optional attributes.
+    #
+    # @param tag [String, Symbol] HTML tag
+    # @param attributes [Hash, nil] attributes
+    # @return [String] HTML
     def format_html_tag_open(tag, attributes)
       tag = convert_tag(tag)
       if attributes && attributes&.elements.size > 0
@@ -275,29 +355,42 @@ module P2
       end
     end
 
+    # Formats a close tag.
+    #
+    # @param tag [String, Symbol] HTML tag
+    # @return [String] HTML
     def format_html_tag_close(tag)
       tag = convert_tag(tag)
       "</#{tag}>"
     end
 
+    # Converts a tag's underscores to dashes. If tag is dynamic, emits code to
+    # convert underscores to dashes at runtime.
+    #
+    # @param tag [any] tag
+    # @return [String] convert tag or code
     def convert_tag(tag)
       case tag
       when Prism::SymbolNode, Prism::StringNode
-        P2.format_tag(tag.unescaped)
+        P2.underscores_to_dashes(tag.unescaped)
       when Prism::Node
-        "#\{P2.format_tag(#{format_code(tag)})}"
+        interpolated("P2.underscores_to_dashes(#{format_code(tag)})")
       else
-        P2.format_tag(tag)
+        P2.underscores_to_dashes(tag)
       end
     end
 
+    # Formats a literal value for the given node.
+    #
+    # @param node [Prism::Node] AST node
+    # @return [String] literal representation
     def format_literal(node)
       case node
       when Prism::SymbolNode, Prism::StringNode
         node.unescaped
       when Prism::IntegerNode, Prism::FloatNode
         node.value.to_s
-      when Prism::InterpolatedStringNode  
+      when Prism::InterpolatedStringNode
         format_code(node)[1..-2]
       when Prism::TrueNode
         'true'
@@ -306,7 +399,7 @@ module P2
       when Prism::NilNode
         ''
       else
-        "#\{#{format_code(node)}}"
+        interpolated(format_code(node))
       end
     end
 
@@ -320,6 +413,10 @@ module P2
       Prism::TrueNode
     ]
 
+    # Returns true if given node is static, i.e. is a literal value.
+    #
+    # @param node [Prism::Node] AST node
+    # @return [bool] static or not
     def is_static_node?(node)
       STATIC_NODE_TYPES.include?(node.class)
     end
@@ -329,10 +426,18 @@ module P2
       Prism::InterpolatedStringNode
     ]
 
+    # Returns true if given node a string or interpolated string.
+    #
+    # @param node [Prism::Node] AST node
+    # @return [bool] string node or not
     def is_string_type_node?(node)
       STRING_TYPE_NODE_TYPES.include?(node.class)
     end
 
+    # Formats HTML attributes from the given node.
+    #
+    # @param node [Prism::Node] AST node
+    # @return [String] HTML
     def format_html_attributes(node)
       elements = node.elements
       dynamic_attributes = elements.any? do
@@ -340,7 +445,7 @@ module P2
           !is_static_node?(it.key) || !is_static_node?(it.value)
       end
 
-      return interpolated("P2.format_html_attrs(#{format_code(node)})") if dynamic_attributes
+      return interpolated("P2.format_tag_attrs(#{format_code(node)})") if dynamic_attributes
 
       parts = elements.map do
         key = it.key
@@ -351,12 +456,12 @@ module P2
         when Prism::FalseNode, Prism::NilNode
           nil
         else
-          k = format_literal(key) 
+          k = format_literal(key)
           if is_static_node?(value)
             value = format_literal(value)
-            "#{P2.format_html_attr_key(k)}=\\\"#{value}\\\""
+            "#{P2.underscores_to_dashes(k)}=\\\"#{value}\\\""
           else
-            "#{P2.format_html_attr_key(k)}=\\\"#\{#{format_code(value)}}\\\""
+            "#{P2.underscores_to_dashes(k)}=\\\"#\{#{format_code(value)}}\\\""
           end
         end
       end
@@ -364,12 +469,20 @@ module P2
       parts.compact.join(' ')
     end
 
+    # Emits HTML into the pending HTML buffer.
+    #
+    # @param loc [Prism::Location] location
+    # @param str [String] HTML
+    # @return [void]
     def emit_html(loc, str)
       @html_loc_start ||= loc
       @html_loc_end = loc
       @pending_html_parts << str
     end
 
+    # Flushes pending HTML parts to the source code buffer.
+    #
+    # @return [void]
     def flush_html_parts!(semicolon_prefix: true)
       return if @pending_html_parts.empty?
 
@@ -380,13 +493,13 @@ module P2
 
       @pending_html_parts.each do
         if (m = it.match(/^#\{(.+)\}$/m))
-          emit_buffer_push(code, part, quotes: true) if !part.empty?
-          emit_buffer_push(code, m[1])
+          emit_html_buffer_push(code, part, quotes: true) if !part.empty?
+          emit_html_buffer_push(code, m[1])
         else
           part << it
         end
       end
-      emit_buffer_push(code, part, quotes: true) if !part.empty?
+      emit_html_buffer_push(code, part, quotes: true) if !part.empty?
 
       @pending_html_parts.clear
 
@@ -400,7 +513,13 @@ module P2
       emit code
     end
 
-    def emit_buffer_push(buf, part, quotes: false)
+    # Emits HTML buffer push code to the given source code buffer.
+    #
+    # @param buf [String] source code buffer
+    # @param part [String] HTML part
+    # @param quotes [bool] whether to wrap emitted HTML in double quotes
+    # @return [void]
+    def emit_html_buffer_push(buf, part, quotes: false)
       return if part.empty?
 
       q = quotes ? '"' : ''
@@ -408,9 +527,10 @@ module P2
       part.clear
     end
 
-    def emit_postlude
-      return if !@defer_mode
-
+    # Emits postlude code for templates with deferred parts.
+    #
+    # @return [void]
+    def emit_defer_postlude
       emit("; __buffer__ = __orig_buffer__; __parts__.each { it.is_a?(Proc) ? it.() : (__buffer__ << it) }")
     end
   end

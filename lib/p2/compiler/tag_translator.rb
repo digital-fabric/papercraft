@@ -4,6 +4,9 @@ require 'prism'
 require_relative './nodes'
 
 module P2
+  # Translates a normal proc AST into an AST containing custom nodes used for
+  # generating HTML. This translation is the first step in compiling templates
+  # into procs that generate HTML.
   class TagTranslator < Prism::MutationCompiler
     include Prism::DSL
 

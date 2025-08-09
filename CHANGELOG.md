@@ -1,7 +1,7 @@
 # 2.1 2025-08-08
 
 - Optimize output code: directly invoke component templates instead of calling
-  `P2.render_emit_call`. P2 is now 
+  `P2.render_emit_call`. P2 is now
 - Optimize output code: use separate pushes to buffer instead of interpolated
   strings.
 - Streamline API: `emit proc` => `render`, `emit str` => `raw`, `emit_markdown`

@@ -27,7 +27,7 @@
       }
       ```
 
-      In fact, 
+      In fact,
 
 
 
@@ -59,12 +59,12 @@
 
             - No local var assignments
             - No return statements
-          
+
       - [ ] Reimplement source map generation such that it can include entries
             pointing to different files
 
             ```ruby
-            
+
             ```
 
 - [ ] Extensions expressed as procs:

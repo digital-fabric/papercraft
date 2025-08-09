@@ -19,13 +19,13 @@ class CompilerTest < Minitest::Test
 
       if ENV['DEBUG'] == '1'
         p node
-        _source_map, compiled_code = P2::TemplateCompiler.compile_to_code(proc)
+        _source_map, compiled_code = P2::Compiler.compile_to_code(proc)
 
         puts '=' * 40
         puts compiled_code
       end
 
-      assert_equal html, proc.render      
+      assert_equal html, proc.render
     end
   end
 end

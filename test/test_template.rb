@@ -154,7 +154,7 @@ class ApplyTest < Minitest::Test
       foo(a);
       body {
         yield b
-      } 
+      }
     }
     b = a.apply(a: 'bar', b: 'baz') { |x, **| p x }
 
@@ -255,7 +255,7 @@ class TagsTest < Minitest::Test
     }
     html = t.render
     assert_equal("<div><h1 id=\"foo\">Foo</h1>\n\n<p>Lorem ipsum</p>\n</div>", html)
-  end  
+  end
 
   def test_markdown
     t = -> {

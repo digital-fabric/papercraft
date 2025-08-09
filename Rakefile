@@ -8,7 +8,7 @@ end
 task :release do
   require_relative './lib/p2/version'
   version = P2::VERSION
-  
+
   puts 'Building p2...'
   `gem build p2.gemspec`
 

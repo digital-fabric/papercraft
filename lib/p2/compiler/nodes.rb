@@ -1,12 +1,15 @@
+# frozen_string_literal: true
+
 module P2
+  # Represents a tag call
   class TagNode
     attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block
 
-    def initialize(call_node, transformer)
+    def initialize(call_node, translator)
       @call_node = call_node
       @location = call_node.location
       @tag = call_node.name
-      prepare_block(transformer)
+      prepare_block(translator)
 
       args = call_node.arguments&.arguments
       return if !args
@@ -29,10 +32,10 @@ module P2
       visitor.visit_tag_node(self)
     end
 
-    def prepare_block(transformer)
+    def prepare_block(translator)
       @block = call_node.block
       if @block.is_a?(Prism::BlockNode)
-        @block = transformer.visit(@block)
+        @block = translator.visit(@block)
         offset = @location.start_offset
         length = @block.opening_loc.start_offset - offset
         @tag_location = @location.copy(start_offset: offset, length: length)
@@ -42,49 +45,19 @@ module P2
     end
   end
 
+  # Represents a render call
   class RenderNode
     attr_reader :call_node, :location, :block
 
     include Prism::DSL
 
-    def initialize(call_node, transformer)
+    def initialize(call_node, translator)
       @call_node = call_node
       @location = call_node.location
-      @transformer = transformer
-      @block = call_node.block && transformer.visit(call_node.block)
+      @translator = translator
+      @block = call_node.block && translator.visit(call_node.block)
 
       lambda = call_node.arguments && call_node.arguments.arguments[0]
-      return unless lambda.is_a?(Prism::LambdaNode)
-
-      location = lambda.location
-      parameters = lambda.parameters
-      parameters_location = parameters&.location || location
-      params = parameters&.parameters
-      lambda = lambda_node(
-        location: location,
-        parameters: block_parameters_node(
-          location: parameters_location,
-          parameters: parameters_node(
-            location: parameters_location,
-            requireds: [
-              required_parameter_node(
-                location: ad_hoc_string_location('__buffer__'),
-                name: :__buffer__
-              ),
-              *params&.requireds
-            ],
-            optionals: transform_array(params&.optionals),
-            rest: transform(params&.rest),
-            posts: transform_array(params&.posts),
-            keywords: transform_array(params&.keywords),
-            keyword_rest: transform(params&.keyword_rest),
-            block: transform(params&.block)
-          )
-        ),
-        body: transformer.visit(lambda.body)
-      )
-      call_node.arguments.arguments[0] = lambda
-      # pp lambda_body: call_node.arguments.arguments[0]
     end
 
     def ad_hoc_string_location(str)
@@ -93,11 +66,11 @@ module P2
     end
 
     def transform(node)
-      node && @transformer.visit(node)
+      node && @translator.visit(node)
     end
 
     def transform_array(array)
-      array ? array.map { @transformer.visit(it) } : []
+      array ? array.map { @translator.visit(it) } : []
     end
 
     def accept(visitor)
@@ -105,10 +78,11 @@ module P2
     end
   end
 
+  # Represents a text call
   class TextNode
     attr_reader :call_node, :location
 
-    def initialize(call_node, _compiler)
+    def initialize(call_node, _translator)
       @call_node = call_node
       @location = call_node.location
     end
@@ -118,10 +92,11 @@ module P2
     end
   end
 
+  # Represents a raw call
   class RawNode
     attr_reader :call_node, :location
 
-    def initialize(call_node, _compiler)
+    def initialize(call_node, _translator)
       @call_node = call_node
       @location = call_node.location
     end
@@ -131,13 +106,14 @@ module P2
     end
   end
 
+  # Represents a defer call
   class DeferNode
     attr_reader :call_node, :location, :block
 
-    def initialize(call_node, compiler)
+    def initialize(call_node, translator)
       @call_node = call_node
       @location = call_node.location
-      @block = call_node.block && compiler.visit(call_node.block)
+      @block = call_node.block && translator.visit(call_node.block)
     end
 
     def accept(visitor)
@@ -145,14 +121,15 @@ module P2
     end
   end
 
+  # Represents a builtin call
   class BuiltinNode
     attr_reader :tag, :call_node, :location, :block
 
-    def initialize(call_node, compiler)
+    def initialize(call_node, translator)
       @call_node = call_node
       @tag = call_node.name
       @location = call_node.location
-      @block = call_node.block && compiler.visit(call_node.block)
+      @block = call_node.block && translator.visit(call_node.block)
     end
 
     def accept(visitor)

@@ -3,40 +3,51 @@
 require_relative 'p2/compiler'
 require_relative 'p2/proc_ext'
 
-# P2 is a composable templating library
+# P2 is a functional templating library. In P2, templates are expressed as plain
+# Ruby procs.
 module P2
   # Exception class used to signal templating-related errors
   class Error < RuntimeError; end
 
   extend self
 
-  def format_tag(tag)
+  # Formats the given string, converting underscores to dashes.
+  #
+  # @param tag [String, Symbol] input string
+  # @return [String] output string
+  def underscores_to_dashes(tag)
     tag.to_s.gsub('_', '-')
   end
 
-  def format_html_attr_key(tag)
-    tag.to_s.tr('_', '-')
-  end
-  
-  def format_html_attrs(attrs)
+  # Formats the given hash as tag attributes.
+  #
+  # @param attrs [Hash] input hash
+  # @return [String] formatted attributes
+  def format_tag_attrs(attrs)
     attrs.each_with_object(+'') do |(k, v), html|
       case v
       when nil, false
       when true
         html << ' ' if !html.empty?
-        html << format_html_attr_key(k)
+        html << underscores_to_dashes(k)
       else
         html << ' ' if !html.empty?
         v = v.join(' ') if v.is_a?(Array)
-        html << "#{format_html_attr_key(k)}=\"#{v}\""
+        html << "#{underscores_to_dashes(k)}=\"#{v}\""
       end
     end
   end
 
-  def translate_backtrace(e, source_map)
+  # Translates an exceptions backtrace using a source map.
+  #
+  # @param exception [Exception] raised exception
+  # @param source_map [Hash] source map
+  #
+  # @return [Exception] raised exception
+  def translate_backtrace(exception, source_map)
     re = compute_source_map_re(source_map)
     source_fn = source_map[:source_fn]
-    backtrace = e.backtrace.map {
+    backtrace = exception.backtrace.map {
       if (m = it.match(re))
         line = m[2].to_i
         source_line = source_map[line] || "?(#{line})"
@@ -45,9 +56,14 @@ module P2
         it
       end
     }
-    e.set_backtrace(backtrace)
+    exception.set_backtrace(backtrace)
+    exception
   end
 
+  # Computes a Regexp for matching hits in a backtrace.
+  #
+  # @param source_map [Hash] source map
+  # @return [Regexp] computed regexp
   def compute_source_map_re(source_map)
     escaped = source_map[:compiled_fn].gsub(/[\(\)]/) { "\\#{it[0]}" }
     /^(#{escaped}\:(\d+))/
@@ -64,7 +80,7 @@ module P2
     require 'kramdown'
     require 'rouge'
     require 'kramdown-parser-gfm'
-    
+
     opts = default_kramdown_options.merge(opts)
     Kramdown::Document.new(markdown, **opts).to_html
   end
@@ -84,7 +100,7 @@ module P2
   # Sets the default Kramdown options used for rendering Markdown.
   #
   # @param opts [Hash] Kramdown options
-  # @return [void]
+  # @return [Hash] Kramdown options
   def default_kramdown_options=(opts)
     @default_kramdown_options = opts
   end
