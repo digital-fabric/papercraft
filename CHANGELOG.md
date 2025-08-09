@@ -1,3 +1,8 @@
+# 2.2 2025-08-09
+
+- Update docs
+- Refactor code
+
 # 2.1 2025-08-08
 
 - Optimize output code: directly invoke component templates instead of calling

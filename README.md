@@ -24,21 +24,34 @@
 
 ## What is P2?
 
-P2 is a templating engine for dynamically producing HTML. P2 templates are
-expressed as Ruby procs, leading to easier debugging, better protection against
-HTML injection attacks, and better code reuse.
+```ruby
+require 'p2'
+
+page = ->(**props) {
+  html {
+    head { title 'My Title' }
+    body { emit_yield **props }
+  }
+}
+page.render {
+  p 'foo'
+}
+#=> "<html><head><title>Title</title></head><body><p>foo</p></body></html>"
+```
+
+
+P2 is a templating engine for dynamically producing HTML in Ruby apps. P2
+templates are expressed as Ruby procs, leading to easier debugging, better
+protection against HTML injection attacks, and better code reuse.
 
 P2 templates can be composed in a variety of ways, facilitating the usage of
 layout templates, and enabling a component-oriented approach to building complex
 web interfaces.
 
-In P2, dynamic data is passed explicitly to the template as block arguments,
-making the data flow easy to follow and understand. P2 also lets developers
-create derivative templates using full or partial parameter application.
-
-P2 includes built-in support for rendering Markdown (using
-[Kramdown](https://github.com/gettalong/kramdown/)). P2 also automatically
-escapes all text emitted in templates.
+In P2, dynamic data is passed explicitly to the template as block/lambda
+arguments, making the data flow easy to follow and understand. P2 also lets
+developers create derivative templates using full or partial parameter
+application.
 
 ```ruby
 require 'p2'
@@ -50,9 +63,9 @@ page = ->(**props) {
   }
 }
 page.render {
-  p 'foo'
+  p(class: 'big') 'foo'
 }
-#=> "<html><head><title>Title</title></head><body><p>foo</p></body></html>"
+#=> "<html><head><title>Title</title></head><body><p class="big">foo</p></body></html>"
 
 hello_page = page.apply ->(name:, **) {
   h1 "Hello, #{name}!"
@@ -64,16 +77,15 @@ hello.render(name: 'world')
 P2 features:
 
 - Express HTML using plain Ruby procs.
-- Automatic compilation for super-fast execution (up to 2X faster than ERB templates).
 - Deferred rendering using `defer`.
 - Template composition (for uses such as layouts).
-- Automatic conversion of backtraces for exceptions occurring while rendering,
-  in order to point to the correct spot in the original template code.
-
+- Markdown rendering using [Kramdown](https://github.com/gettalong/kramdown/).
+- Automatic compilation for super-fast execution (about as
+  [fast](https://github.com/digital-fabric/p2/blob/master/examples/perf.rb) as
+  compiled ERB/ERubi).
 
 ## Table of Content
 
-- [Installing P2](#installing-p2)
 - [Basic Usage](#basic-usage)
 - [Adding Tags](#adding-tags)
 - [Tag and Attribute Formatting](#tag-and-attribute-formatting)
@@ -90,22 +102,6 @@ P2 features:
 - [Emitting Markdown](#emitting-markdown)
 - [Deferred Evaluation](#deferred-evaluation)
 - [API Reference](#api-reference)
-
-## Installing P2
-
-**Note**: P2 requires Ruby version 3.4 or newer.
-
-Using bundler:
-
-```ruby
-gem 'p2'
-```
-
-Or manually:
-
-```bash
-$ gem install p2
-```
 
 ## Basic Usage
 
@@ -125,7 +121,7 @@ require 'p2'
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
 
-## Adding Tags
+## Expressing HTML Using Ruby
 
 Tags are added using unqualified method calls, and can be nested using blocks:
 
@@ -475,24 +471,25 @@ class that can collect JS and CSS dependencies from the different templates
 integrated into the page, and adds them to the page's `<head>` element:
 
 ```ruby
+deps = DependencyMananger.new
+
 default_layout = -> { |**args|
-  @dependencies = DependencyMananger.new
   head {
-    defer { render @dependencies.head_markup }
+    defer { render deps.head_markup }
   }
   body { emit_yield **args }
 }
 
 button = proc { |text, onclick|
-  @dependencies.js '/static/js/button.js'
-  @dependencies.css '/static/css/button.css'
+  deps.js '/static/js/button.js'
+  deps.css '/static/css/button.css'
 
   button text, onclick: onclick
 }
 
 heading = proc { |text|
-  @dependencies.js '/static/js/heading.js'
-  @dependencies.css '/static/css/heading.css'
+  deps.js '/static/js/heading.js'
+  deps.css '/static/css/heading.css'
 
   h1 text
 }
@@ -521,10 +518,3 @@ HTML:
 - `style(css, **attributes)` - emits an inline `<style>` element
 - `versioned_file_href(href, root_path, root_url)` - calculates a versioned href
   for the given file
-
-[HTML docs](https://www.rubydoc.info/gems/p2/P2/HTML)
-
-## API Reference
-
-The API reference for this library can be found
-[here](https://www.rubydoc.info/gems/p2).
