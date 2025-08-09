@@ -1,10 +1,4 @@
-## Performance improvements
-
-See https://github.com/digital-fabric/p2/pull/1#issuecomment-3165405341
-
-- [v] Add `# frozen_string_literal: true` at the top of eval
-- [v] coalesce static strings only. emit interpolated strings separately
-- [v] Replace emit calls with direct invocation
+## API
 
 - [ ] Allow more compact API for composing templates:
 
@@ -47,6 +41,32 @@ See https://github.com/digital-fabric/p2/pull/1#issuecomment-3165405341
       ) #=> <article data-columns="3" data-index-number="12314"></article>
       ```
 
+- [ ] Support for inlining (needed for doing extension procs - see below)
+
+      - [ ] Detect procs that can be inlined by interrogating the original
+            proc's binding:
+
+            ```ruby
+            # for local variable:
+            o.binding.local_variable_defined?(:foo)
+            o.binding.local_variable_get(:foo)
+
+            # for const
+            o.binding.eval('Foo')
+            ```
+
+      - [ ] Detect whether proc can be inlined:
+
+            - No local var assignments
+            - No return statements
+          
+      - [ ] Reimplement source map generation such that it can include entries
+            pointing to different files
+
+            ```ruby
+            
+            ```
+
 - [ ] Extensions expressed as procs:
 
       ```ruby
@@ -65,3 +85,4 @@ See https://github.com/digital-fabric/p2/pull/1#issuecomment-3165405341
         }
       )
       ```
+
