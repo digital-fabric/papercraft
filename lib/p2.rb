@@ -44,29 +44,28 @@ module P2
   # @param source_map [Hash] source map
   #
   # @return [Exception] raised exception
-  def translate_backtrace(exception, source_map)
-    re = compute_source_map_re(source_map)
-    source_fn = source_map[:source_fn]
-    backtrace = exception.backtrace.map {
-      if (m = it.match(re))
-        line = m[2].to_i
-        source_line = source_map[line] || "?(#{line})"
-        it.sub(m[1], "#{source_fn}:#{source_line}")
-      else
-        it
-      end
-    }
+  def translate_backtrace(exception)
+    cache = {}
+    backtrace = exception.backtrace.map { |e| compute_backtrace_entry(e, cache) }
     exception.set_backtrace(backtrace)
     exception
   end
 
-  # Computes a Regexp for matching hits in a backtrace.
-  #
-  # @param source_map [Hash] source map
-  # @return [Regexp] computed regexp
-  def compute_source_map_re(source_map)
-    escaped = source_map[:compiled_fn].gsub(/[\(\)]/) { "\\#{it[0]}" }
-    /^(#{escaped}\:(\d+))/
+  # Computes a backtrace entry with caching.
+  # 
+  # @param entry [String] backtrace entry
+  # @param cache [Hash] cache store mapping compiled filename to source_map
+  def compute_backtrace_entry(entry, cache)
+    m = entry.match(/^((\:\:\(.+\:.+\))\:(\d+))/)
+    return entry if !m
+
+    fn = m[2]
+    line = m[3].to_i
+    source_map = cache[fn] ||= Compiler.source_map_store[fn]
+    return entry if !source_map
+
+    source_line = source_map[line] || "?(#{line})"
+    entry.sub(m[1], "#{source_map[:source_fn]}:#{source_line}")
   end
 
   # Renders Markdown into HTML. The `opts` argument will be merged with the

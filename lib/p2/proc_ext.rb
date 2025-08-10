@@ -49,6 +49,9 @@ class ::Proc
   # @return [String] HTML string
   def render(*a, **b, &c)
     compiled_proc.(+'', *a, **b, &c)
+  rescue Exception => e
+    P2.translate_backtrace(e)
+    raise e
   end
 
   # Renders the proc into the given buffer

@@ -48,6 +48,15 @@ module P2
       eval(code, proc.binding, source_map[:compiled_fn])
     end
 
+    def self.source_map_store
+      @source__map_store ||= {}
+    end
+
+    def self.store_source_map(source_map)
+      fn = source_map[:compiled_fn]
+      source_map_store[fn] = source_map
+    end
+
     attr_reader :source_map
 
     # Initializes a compiler.
@@ -90,7 +99,7 @@ module P2
       source_code = @buffer
       @buffer = +''
       if wrap
-        emit("# frozen_string_literal: true\n(#{@source_map.inspect}).then { |src_map| ->(__buffer__")
+        emit("# frozen_string_literal: true\n->(__buffer__")
 
         params = orig_ast.parameters
         params = params&.parameters
@@ -103,16 +112,19 @@ module P2
           emit(', &__block__')
         end
 
-        emit(") do\n")
+        emit(") {\n")
       end
       @buffer << source_code
       emit_defer_postlude if @defer_mode
       if wrap
         emit('; __buffer__')
         adjust_whitespace(orig_ast.closing_loc)
-        emit(";") if @buffer !~ /\n\s*$/m
-        emit("rescue Exception => e; P2.translate_backtrace(e, src_map); raise e; end }")
+        emit('}')
+        # emit(";") if @buffer !~ /\n\s*$/m
+        # emit("rescue Exception => e; P2.translate_backtrace(e, src_map); raise e; end }")
       end
+      update_source_map
+      Compiler.store_source_map(@source_map)
       @buffer
     end
 

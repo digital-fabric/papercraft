@@ -1,36 +1,5 @@
 ## API
 
-- [ ] Allow more compact API for composing templates:
-
-      ```ruby
-      App = -> {
-        html {
-          body {
-            # instead of render Header, title: 'foo'
-            Header(title: 'foo')
-            Content()
-          }
-        }
-      }
-
-      Header = ->(title:) {
-        header {
-          h1 title
-          button 'click me'
-        }
-      }
-
-      Content = -> {
-        div(class: 'content') {
-          p 'Lorem ipsum'
-        }
-      }
-      ```
-
-      In fact,
-
-
-
 - [ ] Fluent interface with ids and classes and other utilities:
 
       ```ruby
