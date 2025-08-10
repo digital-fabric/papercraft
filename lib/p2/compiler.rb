@@ -143,7 +143,6 @@ module P2
         if is_static_node?(node.inner_text)
           emit_html(node.location, ERB::Escape.html_escape(format_literal(node.inner_text)))
         else
-          convert_to_s = !is_string_type_node?(node.inner_text)
           to_s = is_string_type_node?(node.inner_text) ? '' : '.to_s'
 
           emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)})#{to_s})"))
