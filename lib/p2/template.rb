@@ -7,5 +7,6 @@ module P2
     attr_reader :proc
     def initialize(proc) = @proc = proc
     def render(*, **, &) = @proc.render(*, **, &)
+    def apply(*, **, &) = Template.new(@proc.apply(*, **, &))
   end
 end

@@ -350,5 +350,11 @@ class TemplateWrapperTest < Minitest::Test
 
     assert_equal "<p>2a</p>", t.render(42)
     assert_equal "<p>2a</p>", t.proc.render(42)
+
+    t2 = t.apply(43)
+    
+    assert_kind_of P2::Template, t2
+    assert_equal "<p>2b</p>", t2.render
+    assert_equal "<p>2b</p>", t2.proc.render
   end
 end
