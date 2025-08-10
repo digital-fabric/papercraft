@@ -1,3 +1,9 @@
+# 2.3 2025-08-10
+
+- Fix whitespace issue in visit_yield_node
+- Reimplement and optimize exception backtrace translation
+- Minor improvement to code generation
+
 # 2.2 2025-08-09
 
 - Update docs
