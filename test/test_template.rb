@@ -343,3 +343,12 @@ class ExceptionBacktraceTest < Minitest::Test
     assert_equal "#{__FILE__}:#{t1_line + 3}", bt[0].match(/^(.+\:\d+)/)[1]
   end
 end
+
+class TemplateWrapperTest < Minitest::Test
+  def test_exception_backtrace
+    t = P2::Template.new(->(x) { p x.to_s(16) })
+
+    assert_equal "<p>2a</p>", t.render(42)
+    assert_equal "<p>2a</p>", t.proc.render(42)
+  end
+end
