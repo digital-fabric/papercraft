@@ -1,3 +1,7 @@
+# 2.4 2025-08-10
+
+- Add P2::Template wrapper class
+
 # 2.3 2025-08-10
 
 - Fix whitespace issue in visit_yield_node
