@@ -136,7 +136,7 @@ module P2
       when Prism::BlockArgumentNode
         flush_html_parts!
         adjust_whitespace(node.block)
-        emit("; #{format_code(node.block.expression)}.render_to_buffer(__buffer__)")
+        emit("; #{format_code(node.block.expression)}.compiled_proc.(__buffer__)")
       end
 
       if node.inner_text
@@ -144,11 +144,9 @@ module P2
           emit_html(node.location, ERB::Escape.html_escape(format_literal(node.inner_text)))
         else
           convert_to_s = !is_string_type_node?(node.inner_text)
-          if convert_to_s
-            emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)}).to_s)"))
-          else
-            emit_html(node.location, interpolated("ERB::Escape.html_escape(#{format_code(node.inner_text)})"))
-          end
+          to_s = is_string_type_node?(node.inner_text) ? '' : '.to_s'
+
+          emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)})#{to_s})"))
         end
       end
       emit_html(node.location, format_html_tag_close(tag))
@@ -165,7 +163,7 @@ module P2
         emit(node.receiver.location)
         emit('::')
       end
-      emit("; #{node.name}.render_to_buffer(__buffer__")
+      emit("; #{node.name}.compiled_proc.(__buffer__")
       if node.arguments
         emit(', ')
         visit(node.arguments)
@@ -287,7 +285,7 @@ module P2
       adjust_whitespace(node.location)
       flush_html_parts!
       @yield_used = true
-      emit("; (__block__ ? __block__.render_to_buffer(__buffer__")
+      emit("; (__block__ ? __block__.compiled_proc.(__buffer__")
       if node.arguments
         emit(', ')
         visit(node.arguments)
