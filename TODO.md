@@ -42,7 +42,7 @@
       P2.extension(
         html: -> {
           emit('<!DOCTYPE html>')
-          tag(:html) { yield }
+          tag(:html) { emit_yield }
         },
         markdown: ->(md) {
           emit P2.markdown(md)

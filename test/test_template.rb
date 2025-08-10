@@ -325,4 +325,21 @@ class ExceptionBacktraceTest < Minitest::Test
     bt = e.backtrace
     assert_equal "#{__FILE__}:#{t1_line + 3}", bt[0].match(/^(.+\:\d+)/)[1]
   end
+
+  def test_exception_backtrace_missing_block
+    t1_line = __LINE__
+    t1 = -> {
+      p 'foo'
+      yield
+    }
+    t2 = -> {
+      p 'bar'
+      render t1
+    }
+
+    e = capture_exception { t2.render }
+    assert_kind_of LocalJumpError, e
+    bt = e.backtrace[0..5]
+    assert_equal "#{__FILE__}:#{t1_line + 3}", bt[0].match(/^(.+\:\d+)/)[1]
+  end
 end

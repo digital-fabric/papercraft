@@ -293,15 +293,15 @@ module P2
     # @param node [P2::YieldNode] node
     # @return [void]
     def visit_yield_node(node)
-      adjust_whitespace(node.location)
       flush_html_parts!
+      adjust_whitespace(node.location)
       @yield_used = true
       emit("; (__block__ ? __block__.compiled_proc.(__buffer__")
       if node.arguments
         emit(', ')
         visit(node.arguments)
       end
-      emit(") : raise(LocalJumpError, 'no block given (yield)'))")
+      emit(") : raise(LocalJumpError, 'no block given (yield/emit_yield)'))")
     end
 
     private
