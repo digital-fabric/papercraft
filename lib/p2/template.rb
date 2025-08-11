@@ -5,8 +5,9 @@ module P2
   # templates and other kinds of procs.
   class Template
     attr_reader :proc
-    def initialize(proc) = @proc = proc
-    def render(*, **, &) = @proc.render(*, **, &)
-    def apply(*, **, &) = Template.new(@proc.apply(*, **, &))
+    def initialize(proc)  = @proc = proc
+    def render(*, **, &)  = @proc.render(*, **, &)
+    def apply(*, **, &)   = Template.new(@proc.apply(*, **, &))
+    def compiled_proc     = @proc.compiled_proc
   end
 end
