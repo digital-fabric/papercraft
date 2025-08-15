@@ -11,6 +11,16 @@ class ::Proc
     P2::Compiler.compile_to_code(self).last
   end
 
+  def source_map
+    loc = source_location
+    fn = compiled? ? loc.first : P2::Compiler.source_location_to_fn(loc)
+    P2::Compiler.source_map_store[fn]
+  end
+
+  def ast
+    Sirop.to_ast(self)
+  end
+
   # Returns true if proc is marked as compiled
   #
   # @return [bool] is the proc marked as compiled
@@ -50,8 +60,7 @@ class ::Proc
   def render(*a, **b, &c)
     compiled_proc.(+'', *a, **b, &c)
   rescue Exception => e
-    P2.translate_backtrace(e)
-    raise e
+    raise P2.translate_backtrace(e)
   end
 
   # Renders the proc into the given buffer
@@ -59,6 +68,8 @@ class ::Proc
   # @return [String] HTML string
   def render_to_buffer(buf, *a, **b, &c)
     compiled_proc.(buf, *a, **b, &c)
+  rescue Exception => e
+    raise P2.translate_backtrace(e)
   end
 
   # Returns a proc that applies the given arguments to the original proc

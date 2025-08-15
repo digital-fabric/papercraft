@@ -39,17 +39,19 @@ module P2
     end
   end
 
-  # Translates an exceptions backtrace using a source map.
+  # Translates entries in exception's backtrace to point to original source code.
   #
-  # @param exception [Exception] raised exception
-  # @param source_map [Hash] source map
-  #
+  # @param err [Exception] raised exception
   # @return [Exception] raised exception
-  def translate_backtrace(exception)
+  def translate_backtrace(err)
     cache = {}
-    backtrace = exception.backtrace.map { |e| compute_backtrace_entry(e, cache) }
-    exception.set_backtrace(backtrace)
-    exception
+    is_argument_error = err.is_a?(ArgumentError) && err.backtrace[0] =~ /^\:\:/
+    backtrace = err.backtrace.map { |e| compute_backtrace_entry(e, cache) }
+
+    return make_argument_error(err, backtrace) if is_argument_error
+  
+    err.set_backtrace(backtrace)
+    err
   end
 
   # Computes a backtrace entry with caching.
@@ -67,6 +69,17 @@ module P2
 
     source_line = source_map[line] || "?(#{line})"
     entry.sub(m[1], "#{source_map[:source_fn]}:#{source_line}")
+  end
+
+  def make_argument_error(err, backtrace)
+    m = err.message.match(/(given (\d+), expected (\d+))/)
+    if m
+      rectified = format('given %d, expected %d', m[2].to_i - 1, m[3].to_i - 1)
+      message = err.message.gsub(m[1], rectified)
+    else
+      message = err.message
+    end
+    ArgumentError.new(message).tap { it.set_backtrace(backtrace) }
   end
 
   # Renders Markdown into HTML. The `opts` argument will be merged with the

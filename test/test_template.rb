@@ -339,14 +339,32 @@ class ExceptionBacktraceTest < Minitest::Test
 
     e = capture_exception { t2.render }
     assert_kind_of LocalJumpError, e
-    bt = e.backtrace[0..5]
-    assert_equal "#{__FILE__}:#{t1_line + 3}", bt[0].match(/^(.+\:\d+)/)[1]
+    f = e.backtrace[0]
+    assert_equal "#{__FILE__}:#{t1_line + 3}", f.match(/^(.+\:\d+)/)[1]
+  end
+
+  def test_exception_argument_error
+    t_line = __LINE__
+    t = ->(foo) {
+      p 'foo'
+    }
+
+    e = capture_exception { t.render }
+    assert_kind_of ArgumentError, e
+    f = e.backtrace[0]
+    assert_equal "#{__FILE__}:#{t_line + 1}", f.match(/^(.+\:\d+)/)[1]
+    
+    m = e.message.match(/given (\d+), expected (\d+)/)
+    assert_equal 0, m[1].to_i
+    assert_equal 1, m[2].to_i
   end
 end
 
 class TemplateWrapperTest < Minitest::Test
-  def test_exception_backtrace
-    t = P2::Template.new(->(x) { p x.to_s(16) })
+  def test_wrapper_exception_backtrace
+    t = P2::Template.new(->(x) {
+      p x.to_s(16)
+    })
 
     assert_equal "<p>2a</p>", t.render(42)
     assert_equal "<p>2a</p>", t.proc.render(42)

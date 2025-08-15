@@ -57,6 +57,10 @@ module P2
       source_map_store[fn] = source_map
     end
 
+    def self.source_location_to_fn(source_location)
+      "::(#{source_location.join(':')})"
+    end
+
     attr_reader :source_map
 
     # Initializes a compiler.
@@ -74,10 +78,10 @@ module P2
     # @param orig_ast [Prism::Node] template AST
     # @return [self]
     def with_source_map(orig_proc, orig_ast)
-      compiled_fn = "::(#{orig_proc.source_location.join(':')})"
+      fn = Compiler.source_location_to_fn(orig_proc.source_location)
       @source_map = {
         source_fn: orig_proc.source_location.first,
-        compiled_fn: compiled_fn
+        compiled_fn: fn
       }
       @source_map_line_ofs = 2
       self
@@ -92,6 +96,7 @@ module P2
     def format_compiled_template(ast, orig_ast, wrap:, binding:)
       # generate source code
       @binding = binding
+      update_source_map
       visit(ast)
       flush_html_parts!(semicolon_prefix: true)
       update_source_map
@@ -99,6 +104,7 @@ module P2
       source_code = @buffer
       @buffer = +''
       if wrap
+        @source_map[2] = loc_start(orig_ast.location).first
         emit("# frozen_string_literal: true\n->(__buffer__")
 
         params = orig_ast.parameters
@@ -138,6 +144,7 @@ module P2
         return visit_const_tag_node(node.call_node)
       end
 
+      adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
       emit_html(node.tag_location, format_html_tag_open(tag, node.attributes))
       return if is_void
@@ -307,6 +314,12 @@ module P2
     private
 
     # Overrides the Sourcifier behaviour to flush any buffered HTML parts.
+    # 
+    # @param loc [Prism::Location] location
+    # @param semicolon [bool] prefix a semicolon before emitted code
+    # @param chomp [bool] chomp the emitted code
+    # @param flush_html [bool] flush pending HTML parts before emitting the code
+    # @return [void]
     def emit_code(loc, semicolon: false, chomp: false, flush_html: true)
       flush_html_parts! if flush_html
       super(loc, semicolon:, chomp: )
