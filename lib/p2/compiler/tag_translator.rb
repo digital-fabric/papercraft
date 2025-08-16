@@ -26,7 +26,6 @@ module P2
       match_emit_yield(node) ||
       match_const_tag(node) ||
       match_block_call(node) ||
-      # match_chained_tag(node) ||
       match_tag(node) ||
       super(node)
     end
