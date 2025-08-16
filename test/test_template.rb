@@ -160,7 +160,13 @@ class BlockCallTest < Minitest::Test
     }
   end
 
-  def test_block
+  def test_block_passing
+    a = ->(&foo) {
+      div(&foo)
+    }
+    html = a.render { h1 'hi' }
+    assert_equal '<div><h1>hi</h1></div>', html
+  end
 end
 
 class ApplyTest < Minitest::Test
