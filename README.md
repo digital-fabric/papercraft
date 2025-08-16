@@ -45,8 +45,8 @@ templates are expressed as Ruby procs, leading to easier debugging, better
 protection against HTML injection attacks, and better code reuse.
 
 P2 templates can be composed in a variety of ways, facilitating the usage of
-layout templates, and enabling a component-oriented approach to building complex
-web interfaces.
+layout templates, and enabling a component-oriented approach to building web
+interfaces of arbitrary complexity.
 
 In P2, dynamic data is passed explicitly to the template as block/lambda
 arguments, making the data flow easy to follow and understand. P2 also lets
@@ -77,12 +77,13 @@ hello.render(name: 'world')
 P2 features:
 
 - Express HTML using plain Ruby procs.
-- Deferred rendering using `defer`.
-- Template composition (for uses such as layouts).
-- Markdown rendering using [Kramdown](https://github.com/gettalong/kramdown/).
 - Automatic compilation for super-fast execution (about as
   [fast](https://github.com/digital-fabric/p2/blob/master/examples/perf.rb) as
   compiled ERB/ERubi).
+- Deferred rendering using `defer`.
+- Template composition (for uses such as layouts).
+- Markdown rendering using [Kramdown](https://github.com/gettalong/kramdown/).
+- Support for extensions.
 
 ## Table of Content
 

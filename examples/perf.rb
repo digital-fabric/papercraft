@@ -170,6 +170,13 @@ class PhlexContent < Phlex::HTML
   end
 end
 
+puts '*' * 40
+p App.compiled_code
+puts
+p Header.compiled_code
+puts
+p Content.compiled_code
+
 class Renderer
   def render_p2_app
     App.render(title: 'title from context')
@@ -237,19 +244,19 @@ end
 
 r = Renderer.new
 
-puts '* P2:'
-puts r.render_p2_app
-puts
+# puts '* P2:'
+# puts r.render_p2_app
+# puts
 
-puts '* Phlex:'
-puts r.render_phlex_app
-puts
+# puts '* Phlex:'
+# puts r.render_phlex_app
+# puts
 
-puts '* ERB:'
-puts r.render_erb_app.gsub(/\n\s+/, '')
+# puts '* ERB:'
+# puts r.render_erb_app.gsub(/\n\s+/, '')
 
-puts '* ERUBI (raw):'
-puts r.render_erubi_app.gsub(/\n\s+/, '')
+# puts '* ERUBI (raw):'
+# puts r.render_erubi_app.gsub(/\n\s+/, '')
 
 Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)

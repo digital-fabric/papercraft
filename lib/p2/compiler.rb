@@ -71,7 +71,7 @@ module P2
       @pending_html_parts = []
       @html_loc_start = nil
       @html_loc_end = nil
-      @yield_used = nil
+      @emit_yield_used = nil
     end
 
     # Initializes a source map.
@@ -116,11 +116,12 @@ module P2
           emit(format_code(params))
         end
 
-        if @yield_used
+        if @emit_yield_used
           emit(', &__block__')
         end
 
         emit(") {\n")
+
       end
       @buffer << source_code
       emit_defer_postlude if @defer_mode
@@ -344,13 +345,15 @@ module P2
     def visit_yield_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
-      @yield_used = true
-      emit("; (__block__ ? __block__.compiled_proc.(__buffer__")
+      guard = @emit_yield_used ?
+        '' : "; raise(LocalJumpError, 'no block given (yield/emit_yield)') if !__block__"
+      @emit_yield_used = true
+      emit("#{guard}; __block__.compiled_proc.(__buffer__")
       if node.arguments
         emit(', ')
         visit(node.arguments)
       end
-      emit(") : raise(LocalJumpError, 'no block given (yield/emit_yield)'))")
+      emit(")")
     end
 
     def visit_block_invocation_node(node)
