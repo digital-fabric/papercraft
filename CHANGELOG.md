@@ -1,3 +1,7 @@
+# 2.6 2025-08-16
+
+- Add support for block invocation.
+
 # 2.5 2025-08-15
 
 - Translate backtrace for exceptions raised in `#render_to_buffer`.
