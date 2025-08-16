@@ -1,8 +1,21 @@
 # frozen_string_literal: true
 
+class Prism::InspectVisitor
+  def visit_tag_node(node)
+    commands << [inspect_node("TagNode", node), indent]
+    # flags = [("newline" if node.newline?), ("static_literal" if node.static_literal?), ].compact
+    # commands << ["├── flags: #{flags.empty? ? "∅" : flags.join(", ")}\n", indent]
+    # commands << ["├── left:\n", indent]
+    # commands << [node.left, "#{indent}│   "]
+    # commands << ["├── right:\n", indent]
+    # commands << [node.right, "#{indent}│   "]
+    # commands << ["└── operator_loc: #{inspect_location(node.operator_loc)}\n", indent]
+  end
+end
+
 module P2
   # Represents a tag call
-  class TagNode
+  class TagNode < Prism::Node
     attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block
 
     def initialize(call_node, translator)
@@ -149,19 +162,34 @@ module P2
       visitor.visit_builtin_node(self)
     end
   end
-end
 
-class BlockInvocationNode
-  attr_reader :call_node, :location, :block
+  class ExtensionTagNode
+    attr_reader :tag, :call_node, :location, :block
 
-  def initialize(call_node, translator)
-    @call_node = call_node
-    @tag = call_node.name
-    @location = call_node.location
-    @block = call_node.block && translator.visit(call_node.block)
+    def initialize(call_node, translator)
+      @call_node = call_node
+      @tag = call_node.name
+      @location = call_node.location
+      @block = call_node.block && translator.visit(call_node.block)
+    end
+
+    def accept(visitor)
+      visitor.visit_extension_tag_node(self)
+    end
   end
 
-  def accept(visitor)
-    visitor.visit_block_invocation_node(self)
+  class BlockInvocationNode
+    attr_reader :call_node, :location, :block
+
+    def initialize(call_node, translator)
+      @call_node = call_node
+      @tag = call_node.name
+      @location = call_node.location
+      @block = call_node.block && translator.visit(call_node.block)
+    end
+
+    def accept(visitor)
+      visitor.visit_block_invocation_node(self)
+    end
   end
 end

@@ -50,7 +50,10 @@ class ::Proc
   # @return [Proc] compiled proc
   def compile
     P2::Compiler.compile(self).compiled!
-  rescue Sirop::Error
+  rescue Sirop::Error => e
+    puts '!' * 40
+    p self
+    p e
     raise P2::Error, "Dynamically defined procs cannot be compiled"
   end
 

@@ -53,6 +53,8 @@ module P2
     end
 
     def self.store_source_map(source_map)
+      return if !source_map
+
       fn = source_map[:compiled_fn]
       source_map_store[fn] = source_map
     end
@@ -292,6 +294,49 @@ module P2
       end
     end
 
+    # Visits a extension tag node.
+    #
+    # @param node [P2::ExtensionTagNode] node
+    # @return [void]
+    def visit_extension_tag_node(node)
+      flush_html_parts!
+      adjust_whitespace(node.location)
+      emit("; P2::Extensions[#{node.tag.inspect}].compiled_proc.(__buffer__")
+      if node.call_node.arguments
+        emit(', ')
+        visit(node.call_node.arguments)
+      end
+      if node.block
+        block_body = format_inline_block(node.block.body)
+        block_params = []
+
+        if node.block.parameters.is_a?(Prism::ItParametersNode)
+          raise P2::Error, "Blocks passed to extensions cannot use it parameter"
+        end
+
+        if (params = node.block.parameters&.parameters)
+          params.requireds.each do
+            block_params << format_code(it) if !it.is_a?(Prism::ItParametersNode)
+          end
+          params.optionals.each do
+            block_params << format_code(it) if !it.is_a?(Prism::ItParametersNode)
+          end
+          block_params << format_code(params.rest) if params.rest
+          params.posts.each do
+            block_params << format_code(it) if !it.is_a?(Prism::ItParametersNode)
+          end
+          params.keywords.each do
+            block_params << format_code(it) if !it.is_a?(Prism::ItParametersNode)
+          end
+          block_params << format_code(params.keyword_rest) if params.keyword_rest
+        end
+        block_params = block_params.empty? ? '' : ", #{block_params.join(', ')}"
+        
+        emit(", &(proc { |__buffer__#{block_params}| #{block_body} }).compiled!")
+      end
+      emit(")")
+    end
+
     # Visits a yield node.
     #
     # @param node [P2::YieldNode] node
@@ -354,6 +399,10 @@ module P2
     # @return [String] generated source code
     def format_code(node)
       Compiler.new(minimize_whitespace: true).to_source(node)
+    end
+
+    def format_inline_block(node)
+      Compiler.new(minimize_whitespace: true).format_compiled_template(node, node, wrap: false, binding: @binding)
     end
 
     # Formats a comma separated list of AST nodes. Used for formatting partial

@@ -416,3 +416,47 @@ class TemplateWrapperTest < Minitest::Test
     assert_equal "<p>2b</p>", t2.proc.render
   end
 end
+
+class ExtensionTest < Minitest::Test
+  EXT = {
+    youtube_player: ->(ref) {
+      iframe(
+        width: 560,
+        height: 315,
+        src: "https://www.youtube-nocookie.com/embed/#{ref}"
+      )
+    },
+    ulist: ->(list) {
+      ul {
+        list.each { li { emit_yield it } }
+      }
+    }
+  }
+
+  def test_extension
+    P2.extension(EXT)
+
+    t = -> {
+      youtube_player('foo')
+    }
+    assert_equal '<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/foo"></iframe>', t.render
+  end
+
+  def test_extension_with_block
+    P2.extension(EXT)
+
+    t = -> {
+      ulist([1, 2, 3]) { |item|
+        p (item * 10)
+      }
+    }
+    assert_equal '<ul><li><p>10</p></li><li><p>20</p></li><li><p>30</p></li></ul>', t.render
+
+    t = -> {
+      ulist([1, 2, 3]) {
+        p (it * 10)
+      }
+    }
+    assert_raises(P2::Error) { t.render }
+  end
+end

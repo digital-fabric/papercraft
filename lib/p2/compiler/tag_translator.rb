@@ -23,6 +23,7 @@ module P2
       return super(node) if dont_translate
 
       match_builtin(node) ||
+      match_extension(node) ||
       match_emit_yield(node) ||
       match_const_tag(node) ||
       match_block_call(node) ||
@@ -49,6 +50,13 @@ module P2
       else
         nil
       end
+    end
+
+    def match_extension(node)
+      return if node.receiver
+      return if !P2::Extensions[node.name]
+    
+      ExtensionTagNode.new(node, self)
     end
 
     def match_emit_yield(node)

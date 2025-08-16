@@ -12,6 +12,18 @@ module P2
 
   extend self
 
+  # Registry of P2 exgtensions
+  Extensions = {}
+
+  # Registers extensions to the P2 syntax.
+  # 
+  # @param spec [Hash] hash mapping symbols to procs
+  # @return [self]
+  def extension(spec)
+    Extensions.merge!(spec)
+    self
+  end
+
   # Formats the given string, converting underscores to dashes.
   #
   # @param tag [String, Symbol] input string
