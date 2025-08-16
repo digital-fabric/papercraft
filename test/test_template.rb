@@ -63,7 +63,7 @@ class ParametersTest < Minitest::Test
   end
 end
 
-class EmitComponentTest < Minitest::Test
+class RenderComponentTest < Minitest::Test
   def test_render_with_proc_params
     r = proc { |p| body { render p } }
     assert_equal '<body><h1>hi</h1></body>', r.render(
@@ -127,6 +127,40 @@ class YieldTest < Minitest::Test
       r.render(foo: 42) { |bar:| p bar }
     )
   end
+end
+
+class BlockCallTest < Minitest::Test
+  def test_block_call
+    a = ->(&foo) {
+      div {
+        foo.()
+      }
+    }
+    html = a.render { h1 'hi' }
+    assert_equal '<div><h1>hi</h1></div>', html
+
+    b = a.apply { p 'ho' }
+    assert_equal '<div><p>ho</p></div>', b.render
+
+    assert_raises(NoMethodError) { a.render }
+  end
+
+  def test_block_call_with_block
+    a = ->(&foo) {
+      div {
+        foo.() {
+          bar 'baz'
+        }
+      }
+    }
+    assert_raises(P2::Error) {
+      a.apply { |&c|
+        span(&c)
+      }
+    }
+  end
+
+  def test_block
 end
 
 class ApplyTest < Minitest::Test
@@ -319,7 +353,7 @@ class ExceptionBacktraceTest < Minitest::Test
       p 'bar'
       render t1
     }
-    
+
     e = capture_exception { t2.render }
     assert_kind_of RuntimeError, e
     bt = e.backtrace
@@ -353,7 +387,7 @@ class ExceptionBacktraceTest < Minitest::Test
     assert_kind_of ArgumentError, e
     f = e.backtrace[0]
     assert_equal "#{__FILE__}:#{t_line + 1}", f.match(/^(.+\:\d+)/)[1]
-    
+
     m = e.message.match(/given (\d+), expected (\d+)/)
     assert_equal 0, m[1].to_i
     assert_equal 1, m[2].to_i
@@ -370,7 +404,7 @@ class TemplateWrapperTest < Minitest::Test
     assert_equal "<p>2a</p>", t.proc.render(42)
 
     t2 = t.apply(43)
-    
+
     assert_kind_of P2::Template, t2
     assert_equal "<p>2b</p>", t2.render
     assert_equal "<p>2b</p>", t2.proc.render

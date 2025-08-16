@@ -78,6 +78,19 @@ module P2
     end
   end
 
+  class ConstTagNode
+    attr_reader :call_node, :location
+
+    def initialize(call_node, translator)
+      @call_node = call_node
+      @location = call_node.location
+    end
+
+    def accept(visitor)
+      visitor.visit_const_tag_node(self)
+    end
+  end
+
   # Represents a text call
   class TextNode
     attr_reader :call_node, :location
@@ -135,5 +148,20 @@ module P2
     def accept(visitor)
       visitor.visit_builtin_node(self)
     end
+  end
+end
+
+class BlockInvocationNode
+  attr_reader :call_node, :location, :block
+
+  def initialize(call_node, translator)
+    @call_node = call_node
+    @tag = call_node.name
+    @location = call_node.location
+    @block = call_node.block && translator.visit(call_node.block)
+  end
+
+  def accept(visitor)
+    visitor.visit_block_invocation_node(self)
   end
 end

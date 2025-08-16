@@ -23,7 +23,7 @@ module P2
       ast = ast.block if ast.is_a?(Prism::CallNode)
 
       compiler = new.with_source_map(proc, ast)
-      transformed_ast = TagTranslator.transform(ast.body)
+      transformed_ast = TagTranslator.transform(ast.body, ast)
       compiler.format_compiled_template(transformed_ast, ast, wrap:, binding: proc.binding)
       [compiler.source_map, compiler.buffer]
     end
@@ -140,9 +140,6 @@ module P2
     # @return [void]
     def visit_tag_node(node)
       tag = node.tag
-      if tag.is_a?(Symbol) && tag =~ /^[A-Z]/
-        return visit_const_tag_node(node.call_node)
-      end
 
       adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
@@ -177,14 +174,14 @@ module P2
     def visit_const_tag_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
-      if node.receiver
-        emit(node.receiver.location)
+      if node.call_node.receiver
+        emit(node.call_node.receiver.location)
         emit('::')
       end
-      emit("; #{node.name}.compiled_proc.(__buffer__")
-      if node.arguments
+      emit("; #{node.call_node.name}.compiled_proc.(__buffer__")
+      if node.call_node.arguments
         emit(', ')
-        visit(node.arguments)
+        visit(node.call_node.arguments)
       end
       emit(');')
     end
@@ -311,10 +308,27 @@ module P2
       emit(") : raise(LocalJumpError, 'no block given (yield/emit_yield)'))")
     end
 
+    def visit_block_invocation_node(node)
+      flush_html_parts!
+      adjust_whitespace(node.location)
+
+      emit("; #{node.call_node.receiver.name}.compiled_proc.(__buffer__")
+      if node.call_node.arguments
+        emit(', ')
+        visit(node.call_node.arguments)
+      end
+      if node.call_node.block
+        emit(", &(->")
+        visit(node.call_node.block)
+        emit(").compiled_proc")
+      end
+      emit(")")
+    end
+
     private
 
     # Overrides the Sourcifier behaviour to flush any buffered HTML parts.
-    # 
+    #
     # @param loc [Prism::Location] location
     # @param semicolon [bool] prefix a semicolon before emitted code
     # @param chomp [bool] chomp the emitted code

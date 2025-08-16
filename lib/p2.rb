@@ -49,13 +49,13 @@ module P2
     backtrace = err.backtrace.map { |e| compute_backtrace_entry(e, cache) }
 
     return make_argument_error(err, backtrace) if is_argument_error
-  
+
     err.set_backtrace(backtrace)
     err
   end
 
   # Computes a backtrace entry with caching.
-  # 
+  #
   # @param entry [String] backtrace entry
   # @param cache [Hash] cache store mapping compiled filename to source_map
   def compute_backtrace_entry(entry, cache)
