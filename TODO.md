@@ -1,8 +1,5 @@
 ## API
 
-- [ ] Add support for `render_children` for yielding if block given, but not
-  raising exception if block not given.
-
 - [ ] Support for inlining (needed for doing extension procs - see below)
 
       - [ ] Detect procs that can be inlined by interrogating the original

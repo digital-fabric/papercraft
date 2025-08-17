@@ -1,3 +1,9 @@
+# 2.8 2025-08-17
+
+- Add render_children builtin
+- Rename emit_yield to render_yield
+- Add `Proc#render_cached` for caching render result
+
 # 2.7 2025-08-17
 
 - Improve source maps and whitespace in compiled code

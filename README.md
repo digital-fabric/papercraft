@@ -81,16 +81,17 @@ P2 features:
   [fast](https://github.com/digital-fabric/p2/blob/master/examples/perf.rb) as
   compiled ERB/ERubi).
 - Deferred rendering using `defer`.
-- Template composition (for uses such as layouts).
+- Simple and easy template composition (for uses such as layouts, or modular
+  templates).
 - Markdown rendering using [Kramdown](https://github.com/gettalong/kramdown/).
 - Support for extensions.
+- Simple caching API for caching the rendering result.
 
 ## Table of Content
 
-- [Basic Usage](#basic-usage)
-- [Adding Tags](#adding-tags)
-- [Tag and Attribute Formatting](#tag-and-attribute-formatting)
-- [Escaping Content](#escaping-content)
+- [Getting Started](#getting-started)
+- [Basic Markup](#markup)
+- [Builtin Methods](#builtin-methods)
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
 - [Template Blocks](#template-blocks)
@@ -104,7 +105,7 @@ P2 features:
 - [Deferred Evaluation](#deferred-evaluation)
 - [API Reference](#api-reference)
 
-## Basic Usage
+## Getting Started
 
 In P2, an HTML template is expressed as a proc:
 
@@ -114,7 +115,7 @@ html = -> {
 }
 ```
 
-Rendering a template is done using `#render`:
+Rendering a template is done using `Proc#render`:
 
 ```ruby
 require 'p2'
@@ -122,7 +123,7 @@ require 'p2'
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
 
-## Expressing HTML Using Ruby
+## Markup
 
 Tags are added using unqualified method calls, and can be nested using blocks:
 
@@ -173,7 +174,7 @@ An attribute value given as an array will be joined by space characters:
 -> { div class: [:foo, :bar] }.render #=> "<div class=\"foo bar\"></div>"
 ```
 
-## Tag and Attribute Formatting
+### Tag and Attribute Formatting
 
 P2 does not make any assumption about what tags and attributes you can use. You
 can mix upper and lower case letters, and you can include arbitrary characters
@@ -199,16 +200,137 @@ normally used for tags:
 }.render #=> '<cra_zy__:!tag>foo</cra_zy__:!tag>'
 ```
 
-## Escaping Content
+### Escaping Content
 
 P2 automatically escapes all text content emitted in a template. The specific
-escaping algorithm depends on the template type. For HTML templates, P2 uses
-[escape_utils](https://github.com/brianmario/escape_utils), specifically:
+escaping algorithm depends on the template type. To emit raw HTML, use the
+`#raw` method as [described below](#builtin-methods).
 
-- HTML: `escape_utils.escape_html`
+## Builtin Methods
 
-In order to emit raw HTML, you can use the `#emit` method as [described
-below](#emitting-raw-html).
+In addition to normal tags, P2 provides the following method calls for templates:
+
+### `#text` - emit escaped text
+
+`#text` is used for emitting text that will be escaped. This method can be used
+to emit text not directly inside an enclosing tag:
+
+```ruby
+-> {
+  p {
+    text 'The time is: '
+    span(Time.now, id: 'clock')
+  }
+}.render #=> <p>The time is: <span id="clock">XX:XX:XX</span></p>
+```
+
+### `#raw` - emit raw HTML
+
+`#raw` is used for emitting raw HTML, i.e. without escaping. You can use this to
+emit an HTML snippet:
+
+```ruby
+TITLE_HTML = '<h1>hi</h1>'
+-> {
+  div {
+    raw TITLE_HTML
+  }
+}.render #=> <div><h1>hi</h1></div>
+```
+
+### `#render_yield` - emit given block
+
+`#render_yield` is used to emit a given block. If no block is given, a
+`LocalJumpError` exception is raised:
+
+```ruby
+Card = ->(**props) {
+  card { render_yield(**props) }
+}
+
+Card.render(foo: 'bar') { |foo|
+  h1 foo
+} #=> <card><h1>bar</h1></card>
+```
+
+`render_yield` can be called with or without arguments, which are passed to the
+given block.
+
+### `#render_children` - emit given block
+
+`#render_children` is used to emit a given block, but does not raise an
+exception if no block is given.
+
+### `#defer` - emit deferred HTML
+
+`#defer` is used to emit HTML in a deferred fashion - the deferred part will be
+evaluated only after processing the entire template:
+
+```ruby
+Layout = -> {
+  head {
+    defer {
+      title @title
+    }
+  }
+  body {
+    render_yield
+  }
+}
+
+Layout.render {
+  @title = 'Foobar'
+  h1 'hi'
+} #=> <head><title>Foobar</title></head><body><h1>hi</h1></body>
+```
+
+### `#render` - render the given template inline
+
+`#render` is used to emit the given template. This can be used to compose
+templates:
+
+```ruby
+partial = -> { p 'foo' }
+-> {
+  div {
+    render partial
+  }
+}.render #=> <div><p>foo</p></div>
+```
+
+Any argument following the given template is passed to the template for
+rendering:
+
+```ruby
+large_button = ->(title) { button(title, class: 'large') }
+
+-> {
+  render large_button, 'foo'
+}.render #=> <button class="large">foo</button>
+```
+
+### `#html5` - emit an HTML5 document type declaration and html tag
+
+```ruby
+-> {
+  html5 {
+    p 'hi'
+  }
+} #=> <!DOCTYPE html><html><p>hi</p></html>
+```
+
+### `#markdown` emit markdown content
+
+`#markdown` is used for rendering markdown content. The call converts the given
+markdown to HTML and emits it into the rendered HTML:
+
+```ruby
+-> {
+  div {
+    markdown 'This is *markdown*'
+  }
+}.render #=> <p>This is <em>markdown</em></p>
+```
 
 ## Template Parameters
 
@@ -217,14 +339,14 @@ parameters are specified as block parameters, and are passed to the template on
 rendering:
 
 ```ruby
-greeting = -> { |name| h1 "Hello, #{name}!" }
+greeting = ->(name) { h1 "Hello, #{name}!" }
 greeting.render('world') #=> "<h1>Hello, world!</h1>"
 ```
 
 Templates can also accept named parameters:
 
 ```ruby
-greeting = -> { |name:| h1 "Hello, #{name}!" }
+greeting = ->(name:) { h1 "Hello, #{name}!" }
 greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 ```
 
@@ -234,7 +356,7 @@ Since P2 templates are just a bunch of Ruby, you can easily embed your view
 logic right in the template:
 
 ```ruby
--> { |user = nil|
+->(user = nil) {
   if user
     span "Hello, #{user.name}!"
   else
@@ -281,7 +403,7 @@ ItemList = ->(items) {
   }
 }
 
-page = -> { |title, items|
+page = ->(title, items) {
   html5 {
     head { Title(title) }
     body { ItemList(items) }
