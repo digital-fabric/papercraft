@@ -18,10 +18,10 @@ require 'json'
 # templates, then composing them into a whole page.
 # 
 # This example also demonstrates the use of extensions to abstract away chunks
-# of markup ("partials") dedicated to lower-level markup, such as an import map,
+# of markup ('partials') dedicated to lower-level markup, such as an import map,
 # or a select input element with options.
 #
-# The code for the markup is organised under a module. All so-called "partials"
+# The code for the markup is organised under a module. All so-called 'partials'
 # are defined as constants and are easily distinguishable from normal tags, or
 # extensions by their case.
 # 
@@ -50,29 +50,29 @@ P2.extension(
 module Dashboard
   IMPORT_MAP_JSON = {
     'imports' => {
-      "vendor/d3"           =>  "https://cdn.jsdelivr.net/npm/d3@7/+esm",
-      "lib/alerts"          =>  "/app/js/lib/alerts.js",
-      "lib/barchart"        =>  "/app/js/lib/barchart.js",
-      "lib/browser_history" =>  "/app/js/lib/browser_history.js",
-      "lib/cache"           =>  "/app/js/lib/cache.js",
-      "lib/calendar"        =>  "/app/js/lib/calendar.js",
-      "lib/circuit"         =>  "/app/js/lib/circuit.js",
-      "lib/html"            =>  "/app/js/lib/html.js",
-      "lib/keyboard"        =>  "/app/js/lib/keyboard.js",
-      "lib/loading"         =>  "/app/js/lib/loading.js",
-      "lib/modal"           =>  "/app/js/lib/modal.js",
-      "lib/piechart"        =>  "/app/js/lib/piechart.js",
-      "lib/privilege"       =>  "/app/js/lib/privilege.js",
-      "lib/realiteq"        =>  "/app/js/lib/realiteq.js",
-      "lib/realiteq_states" =>  "/app/js/lib/realiteq_states.js",
-      "lib/state"           =>  "/app/js/lib/state.js",
-      "lib/stats"           =>  "/app/js/lib/stats.js",
-      "lib/template"        =>  "/app/js/lib/template.js",
-      "lib/tooltip"         =>  "/app/js/lib/tooltip.js",
-      "lib/tree"            =>  "/app/js/lib/tree.js",
-      "lib/ui"              =>  "/app/js/lib/ui.js",
-      "lib/utils"           =>  "/app/js/lib/utils.js",
-      "lib/weather"         =>  "/app/js/lib/weather.js"
+      'vendor/d3'           =>  'https://cdn.jsdelivr.net/npm/d3@7/+esm',
+      'lib/alerts'          =>  '/app/js/lib/alerts.js',
+      'lib/barchart'        =>  '/app/js/lib/barchart.js',
+      'lib/browser_history' =>  '/app/js/lib/browser_history.js',
+      'lib/cache'           =>  '/app/js/lib/cache.js',
+      'lib/calendar'        =>  '/app/js/lib/calendar.js',
+      'lib/circuit'         =>  '/app/js/lib/circuit.js',
+      'lib/html'            =>  '/app/js/lib/html.js',
+      'lib/keyboard'        =>  '/app/js/lib/keyboard.js',
+      'lib/loading'         =>  '/app/js/lib/loading.js',
+      'lib/modal'           =>  '/app/js/lib/modal.js',
+      'lib/piechart'        =>  '/app/js/lib/piechart.js',
+      'lib/privilege'       =>  '/app/js/lib/privilege.js',
+      'lib/realiteq'        =>  '/app/js/lib/realiteq.js',
+      'lib/realiteq_states' =>  '/app/js/lib/realiteq_states.js',
+      'lib/state'           =>  '/app/js/lib/state.js',
+      'lib/stats'           =>  '/app/js/lib/stats.js',
+      'lib/template'        =>  '/app/js/lib/template.js',
+      'lib/tooltip'         =>  '/app/js/lib/tooltip.js',
+      'lib/tree'            =>  '/app/js/lib/tree.js',
+      'lib/ui'              =>  '/app/js/lib/ui.js',
+      'lib/utils'           =>  '/app/js/lib/utils.js',
+      'lib/weather'         =>  '/app/js/lib/weather.js'
     }
   }
 
@@ -106,7 +106,7 @@ module Dashboard
         import_map(IMPORT_MAP_JSON)
         # script(type: 'importmap') { raw Dashboard::IMPORT_MAP_JSON }
         script_module <<~JS
-          import * as ui from "ui";
+          import * as ui from 'ui';
           await ui.setup();
         JS
       }
@@ -151,7 +151,7 @@ module Dashboard
         ChartContainer()
         footer {
           p {
-            text "Powered by "
+            text 'Powered by '
             a('Acme', href: 'https://acme.com/', target: '_blank')
           }
         }
@@ -184,21 +184,21 @@ module Dashboard
   BrowserControls = -> {
     controls {
       tabs {
-        input(type: "radio", id: "tab-schema", name: "secondary-tabs", checked: true)
-        label(for: "tab-schema") {
-          i(class: "bx bx-sm bx-bolt-circle")
+        input(type: 'radio', id: 'tab-schema', name: 'secondary-tabs', checked: true)
+        label(for: 'tab-schema') {
+          i(class: 'bx bx-sm bx-bolt-circle')
           span 'Schema'
         }
-        input(type: "radio", id: "tab-browser", name: "secondary-tabs")
-        label(for: "tab-browser") {
-          i(class: "bx bx-sm bx-search")
+        input(type: 'radio', id: 'tab-browser', name: 'secondary-tabs')
+        label(for: 'tab-browser') {
+          i(class: 'bx bx-sm bx-search')
           span 'Search'
         }
       }
       group {
-        i(class: "bx bx-sm bx-sort-down", title: "Sub circuit order")
+        i(class: 'bx bx-sm bx-sort-down', title: 'Sub circuit order')
         select_with_options(
-          id: "sc-sub-circuit-sort", title: "Sub circuit order",
+          id: 'sc-sub-circuit-sort', title: 'Sub circuit order',
           options: {
             'power'       => 'Power',
             'tagname'     => 'Tagname',
@@ -273,10 +273,10 @@ module Dashboard
       h2 'Loading...'
     }
     template(id: 'template-help') { TemplateHelp() }
-    template(id: "template-alerts-viewer") { TemplateAlertsViewer() }
-    template(id: "template-privilege-elevation-form") { TemplatePrivilegeElevation() }
-    template(id: "template-search") { TemplateSearch() }
-    template(id: "template-schema") { TemplateSchema() }
+    template(id: 'template-alerts-viewer') { TemplateAlertsViewer() }
+    template(id: 'template-privilege-elevation-form') { TemplatePrivilegeElevation() }
+    template(id: 'template-search') { TemplateSearch() }
+    template(id: 'template-schema') { TemplateSchema() }
   }
 
   TemplateHelp = -> {
@@ -307,22 +307,22 @@ module Dashboard
   TemplatePrivilegeElevation = -> {
     privilege_elevation_form {
       form {
-        img(src: "/resources/ui/topbar-logo")
+        img(src: '/resources/ui/topbar-logo')
 
-        p(id: "instructions")
-        div(id: "otp") {
+        p(id: 'instructions')
+        div(id: 'otp') {
           form_group {
-            label('CODE', for: "code")
+            label('CODE', for: 'code')
             input(
-              type: "text", name: "code", id: "code", pattern: "[0-9]*",
-              inputmode: "numeric", required: true, minlength: "6", maxlength: "6"
+              type: 'text', name: 'code', id: 'code', pattern: '[0-9]*',
+              inputmode: 'numeric', required: true, minlength: '6', maxlength: '6'
             )
           }
         }
         msg_error
         controls {
-          button('CANCEL', id: "cancel", type: "button")
-          button('CONTINUE', id: "continue", type: "submit", class: "default")
+          button('CANCEL', id: 'cancel', type: 'button')
+          button('CONTINUE', id: 'continue', type: 'submit', class: 'default')
         }
       }
     }
@@ -332,9 +332,9 @@ module Dashboard
     search_box {
       topbar {
         input(
-          id: "circuit-search", name: "circuit-search", value: "",
-          autocomplete: "off", placeholder: "search...", type: "text",
-          role: "combobox", spellcheck: "false"
+          id: 'circuit-search', name: 'circuit-search', value: '',
+          autocomplete: 'off', placeholder: 'search...', type: 'text',
+          role: 'combobox', spellcheck: 'false'
         )
       }
       results
@@ -344,15 +344,15 @@ module Dashboard
   TemplateSchemaValuesSummary = -> {
     values_summary {
       span {
-        span(data_circuitref: "p")
+        span(data_circuitref: 'p')
       }
       span {
         text 'PF: '
-        span(data_circuitref: "pf")
+        span(data_circuitref: 'pf')
       }
       span {
         text 'Frequency: '
-        span(data_circuitref: "freq")
+        span(data_circuitref: 'freq')
       }
     }
   }
@@ -360,14 +360,14 @@ module Dashboard
   TemplateSchemaValuesDetail = -> {
     values_detail {
       span
-      span('U',   class:"column-header bold")
-      span('I',   class:"column-header bold")
-      span('P',   class:"column-header bold")
-      span('Q',   class:"column-header bold")
-      span('PF',  class:"column-header bold")
+      span('U',   class:'column-header bold')
+      span('I',   class:'column-header bold')
+      span('P',   class:'column-header bold')
+      span('Q',   class:'column-header bold')
+      span('PF',  class:'column-header bold')
 
       (1..3).each {
-        span("L#{it}",  class:"bold")
+        span("L#{it}",  class:'bold')
         span(data_circuitref: "l#{it}-v")
         span(data_circuitref: "l#{it}-c")
         span(data_circuitref: "l#{it}-p")
@@ -402,14 +402,14 @@ end
 html = Dashboard::Page.render
 puts html
 puts
-puts "Size: #{html.bytesize}"
+puts format('Size: %.2gKB', html.bytesize.to_f / 1024)
 puts
 puts Dashboard::Page.compiled_code
 puts
 
 Benchmark.ips do |x|
-  x.report("page") { Dashboard::Page.render }
-  x.report("cached") { Dashboard::Page.render_cached }
+  x.report('page') { Dashboard::Page.render }
+  x.report('cached') { Dashboard::Page.render_cached }
 
   x.compare!(order: :baseline)
 end

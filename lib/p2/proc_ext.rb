@@ -92,9 +92,9 @@ class ::Proc
   end
 
   # Caches and returns 
-  def render_cached(*args, **kargs)
+  def render_cached(*args, **kargs, &block)
     @render_cache ||= {}
-    key = args.empty? && kargs.empty? ? nil : [args, kargs]
-    @render_cache[key] ||= render(*args, **kargs)
+    key = args.empty? && kargs.empty? && !block ? nil : [args, kargs, block&.source_location]
+    @render_cache[key] ||= render(*args, **kargs, &block)
   end
 end

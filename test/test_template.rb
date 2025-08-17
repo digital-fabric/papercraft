@@ -524,4 +524,32 @@ class RenderCachedTest < Minitest::Test
     assert_equal '<p>42</p><p>43</p>', t.render_cached(foo: 42, bar: 43)
     assert_equal 2, counter
   end
+
+  def test_render_cached_with_block
+    counter = 0
+    t = ->(foo:, bar:) {
+      counter += 1
+      div { render_yield(foo:) }
+    }
+
+    r = ->(**props) {
+      t.render_cached(**props) { |foo:| p foo }
+    }
+
+    r2 = ->(**props) {
+      t.render_cached(**props) { |foo:| q foo }
+    }
+
+    assert_equal '<div><p>bar</p></div>', r.(foo: 'bar', bar: 'baz')
+    assert_equal 1, counter
+
+    assert_equal '<div><p>bar</p></div>', r.(foo: 'bar', bar: 'baz')
+    assert_equal 1, counter
+
+    assert_equal '<div><q>bar</q></div>', r2.(foo: 'bar', bar: 'baz')
+    assert_equal 2, counter
+
+    assert_equal '<div><q>baz</q></div>', r2.(foo: 'baz', bar: 'baz')
+    assert_equal 3, counter
+  end
 end
