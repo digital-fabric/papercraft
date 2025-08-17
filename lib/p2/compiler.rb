@@ -81,12 +81,23 @@ module P2
     # @return [self]
     def with_source_map(orig_proc, orig_ast)
       fn = Compiler.source_location_to_fn(orig_proc.source_location)
+      @orig_proc = orig_proc
+      @orig_proc_fn = orig_proc.source_location.first
       @source_map = {
         source_fn: orig_proc.source_location.first,
         compiled_fn: fn
       }
       @source_map_line_ofs = 2
       self
+    end
+
+    def update_source_map(str = nil)
+      return if !@source_map
+
+      buffer_cur_line = @buffer.count("\n") + 1
+      orig_source_cur_line = @last_loc_start ? @last_loc_start.first : '?'
+      @source_map[buffer_cur_line + @source_map_line_ofs] ||=
+        "#{@orig_proc_fn}:#{orig_source_cur_line}"
     end
 
     # Formats the source code for a compiled template proc.
@@ -106,7 +117,7 @@ module P2
       source_code = @buffer
       @buffer = +''
       if wrap
-        @source_map[2] = loc_start(orig_ast.location).first
+        @source_map[2] = "#{@orig_proc_fn}:#{loc_start(orig_ast.location).first}"
         emit("# frozen_string_literal: true\n->(__buffer__")
 
         params = orig_ast.parameters
@@ -129,8 +140,6 @@ module P2
         emit('; __buffer__')
         adjust_whitespace(orig_ast.closing_loc)
         emit('}')
-        # emit(";") if @buffer !~ /\n\s*$/m
-        # emit("rescue Exception => e; P2.translate_backtrace(e, src_map); raise e; end }")
       end
       update_source_map
       Compiler.store_source_map(@source_map)
@@ -565,7 +574,7 @@ module P2
     def emit_html(loc, str)
       @html_loc_start ||= loc
       @html_loc_end = loc
-      @pending_html_parts << str
+      @pending_html_parts << [loc, str]
     end
 
     # Flushes pending HTML parts to the source code buffer.
@@ -576,18 +585,23 @@ module P2
 
       adjust_whitespace(@html_loc_start)
 
-      code = +''
-      part = +''
+      concatenated = +''
 
-      @pending_html_parts.each do
-        if (m = it.match(/^#\{(.+)\}$/m))
-          emit_html_buffer_push(code, part, quotes: true) if !part.empty?
-          emit_html_buffer_push(code, m[1])
+      last_loc = @html_loc_start
+      @pending_html_parts.each do |(loc, part)|
+        if (m = part.match(/^#\{(.+)\}$/m))
+          emit_html_buffer_push(concatenated, quotes: true) if !concatenated.empty?
+          adjust_whitespace(loc)
+          emit_html_buffer_push(m[1])
         else
-          part << it
+          concatenated << part
         end
+        last_loc = loc
       end
-      emit_html_buffer_push(code, part, quotes: true) if !part.empty?
+      if !concatenated.empty?
+        adjust_whitespace(last_loc)
+        emit_html_buffer_push(concatenated, quotes: true)
+      end
 
       @pending_html_parts.clear
 
@@ -597,8 +611,6 @@ module P2
 
       @html_loc_start = nil
       @html_loc_end = nil
-
-      emit code
     end
 
     # Emits HTML buffer push code to the given source code buffer.
@@ -607,11 +619,11 @@ module P2
     # @param part [String] HTML part
     # @param quotes [bool] whether to wrap emitted HTML in double quotes
     # @return [void]
-    def emit_html_buffer_push(buf, part, quotes: false)
+    def emit_html_buffer_push(part, quotes: false)
       return if part.empty?
 
       q = quotes ? '"' : ''
-      buf << "; __buffer__ << #{q}#{part}#{q}"
+      emit("; __buffer__ << #{q}#{part}#{q}")
       part.clear
     end
 

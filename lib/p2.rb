@@ -79,8 +79,8 @@ module P2
     source_map = cache[fn] ||= Compiler.source_map_store[fn]
     return entry if !source_map
 
-    source_line = source_map[line] || "?(#{line})"
-    entry.sub(m[1], "#{source_map[:source_fn]}:#{source_line}")
+    ref = source_map[line] || "?(#{line})"
+    entry.sub(m[1], ref)
   end
 
   def make_argument_error(err, backtrace)
