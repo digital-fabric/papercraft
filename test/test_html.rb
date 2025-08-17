@@ -316,8 +316,8 @@ class SubTemplateTest < Minitest::Test
     )
   end
 
-  def test_yield
-    r = -> { body { yield } }
+  def test_render_yield
+    r = -> { body { render_yield } }
     assert_raises { r.render(foo: 'bar') }
 
     assert_equal(
@@ -326,8 +326,8 @@ class SubTemplateTest < Minitest::Test
     )
   end
 
-  def test_yield_with_sub_template
-    outer = -> { body { div(id: 'content') { yield } } }
+  def test_render_yield_with_sub_template
+    outer = -> { body { div(id: 'content') { render_yield } } }
     inner = -> { p 'foo' }
     assert_equal(
       '<body><div id="content"><p>foo</p></div></body>',
@@ -335,11 +335,11 @@ class SubTemplateTest < Minitest::Test
     )
   end
 
-  def test_yield_in_each_block
+  def test_render_yield_in_each_block
     ulist = ->(list) {
       ul {
         list.each { |item|
-          li { yield item }
+          li { render_yield item }
         }
       }
     }
@@ -390,7 +390,7 @@ class DeferTest < Minitest::Test
             title @title
           }
         }
-        body { yield }
+        body { render_yield }
       }
     }
 
@@ -409,7 +409,7 @@ class DeferTest < Minitest::Test
         head {
           defer { title @title }
         }
-        body { yield }
+        body { render_yield }
       }
     }
     form = -> {
@@ -417,7 +417,7 @@ class DeferTest < Minitest::Test
         defer {
           h3 @error_message if @error_message
         }
-        yield
+        render_yield
       }
     }
 

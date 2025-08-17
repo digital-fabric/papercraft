@@ -24,7 +24,6 @@ module P2
 
       match_builtin(node) ||
       match_extension(node) ||
-      match_render_yield(node) ||
       match_const_tag(node) ||
       match_block_call(node) ||
       match_tag(node) ||
@@ -35,6 +34,10 @@ module P2
       return if node.receiver
 
       case node.name
+      when :render_yield
+        RenderYieldNode.new(node, self)
+      when :render_children
+        RenderChildrenNode.new(node, self)
       when :raise
         visit_call_node(node, dont_translate: true)
       when :render
@@ -57,16 +60,6 @@ module P2
       return if !P2::Extensions[node.name]
     
       ExtensionTagNode.new(node, self)
-    end
-
-    def match_render_yield(node)
-      return if node.receiver
-      return if node.name != :render_yield
-
-      yield_node(
-        location: node.location,
-        arguments: node.arguments
-      )
     end
 
     def match_const_tag(node)

@@ -193,3 +193,31 @@ module P2
     end
   end
 end
+
+class RenderYieldNode
+  attr_reader :call_node, :location
+
+  def initialize(call_node, translator)
+    @call_node = call_node
+    @tag = call_node.name
+    @location = call_node.location
+  end
+
+  def accept(visitor)
+    visitor.visit_render_yield_node(self)
+  end
+end
+
+class RenderChildrenNode
+  attr_reader :call_node, :location
+
+  def initialize(call_node, translator)
+    @call_node = call_node
+    @tag = call_node.name
+    @location = call_node.location
+  end
+
+  def accept(visitor)
+    visitor.visit_render_children_node(self)
+  end
+end

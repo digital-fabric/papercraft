@@ -69,9 +69,6 @@ module P2
     def initialize(**)
       super(**)
       @pending_html_parts = []
-      @html_loc_start = nil
-      @html_loc_end = nil
-      @render_yield_used = nil
     end
 
     # Initializes a source map.
@@ -127,7 +124,7 @@ module P2
           emit(format_code(params))
         end
 
-        if @render_yield_used
+        if @render_yield_used || @render_children_used
           emit(', &__block__')
         end
 
@@ -347,20 +344,36 @@ module P2
       emit(")")
     end
 
-    # Visits a yield node.
+    # Visits a render_yield node.
     #
-    # @param node [Prism::YieldNode] node
+    # @param node [P2::RenderYieldNode] node
     # @return [void]
-    def visit_yield_node(node)
+    def visit_render_yield_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
       guard = @render_yield_used ?
         '' : "; raise(LocalJumpError, 'no block given (render_yield)') if !__block__"
       @render_yield_used = true
       emit("#{guard}; __block__.compiled_proc.(__buffer__")
-      if node.arguments
+      if node.call_node.arguments
         emit(', ')
-        visit(node.arguments)
+        visit(node.call_node.arguments)
+      end
+      emit(")")
+    end
+
+    # Visits a render_children node.
+    #
+    # @param node [P2::RenderChildrenNode] node
+    # @return [void]
+    def visit_render_children_node(node)
+      flush_html_parts!
+      adjust_whitespace(node.location)
+      @render_children_used = true
+      emit("; __block__&.compiled_proc&.(__buffer__")
+      if node.call_node.arguments
+        emit(', ')
+        visit(node.call_node.arguments)
       end
       emit(")")
     end

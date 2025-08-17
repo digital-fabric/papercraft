@@ -107,8 +107,8 @@ class RenderComponentTest < Minitest::Test
   end
 end
 
-class YieldTest < Minitest::Test
-  def test_yield
+class RenderYieldTest < Minitest::Test
+  def test_render_yield
     r = proc { body { render_yield } }
     assert_raises(ArgumentError) { r.render(foo: 'bar') }
 
@@ -118,9 +118,30 @@ class YieldTest < Minitest::Test
     )
   end
 
-  def test_yield_with_params
+  def test_render_yield_with_params
     r = proc { |foo:| body { render_yield(bar: foo * 10) } }
     assert_raises(LocalJumpError) { r.render(foo: 1) }
+    assert_raises(ArgumentError) { r.render { |bar:| p bar } }
+    assert_equal(
+      '<body><p>420</p></body>',
+      r.render(foo: 42) { |bar:| p bar }
+    )
+  end
+end
+
+class RenderChildrenTest < Minitest::Test
+  def test_render_children
+    r = proc { body { render_children } }
+    
+    assert_raises(ArgumentError) { r.render(foo: 'bar') }
+    assert_equal '<body></body>', r.render
+    assert_equal '<body><p>foo</p><hr></body>', r.render { p 'foo'; hr; }
+  end
+
+  def test_render_children_with_params
+    r = proc { |foo:| body { render_children(bar: foo * 10) } }
+    
+    assert_equal '<body></body>', r.render(foo: 1)
     assert_raises(ArgumentError) { r.render { |bar:| p bar } }
     assert_equal(
       '<body><p>420</p></body>',
