@@ -10,8 +10,8 @@
   <a href="http://rubygems.org/gems/p2">
     <img src="https://badge.fury.io/rb/p2.svg" alt="Ruby gem">
   </a>
-  <a href="https://github.com/digital-fabric/p2/actions?query=workflow%3ATests">
-    <img src="https://github.com/digital-fabric/p2/workflows/Tests/badge.svg" alt="Tests">
+  <a href="https://github.com/digital-fabric/p2/actions/workflows/test.yml">
+    <img src="https://github.com/digital-fabric/p2/actions/workflows/test.yml/badge.svg" alt="Tests">
   </a>
   <a href="https://github.com/digital-fabric/p2/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
