@@ -90,7 +90,7 @@ P2 features:
 ## Table of Content
 
 - [Getting Started](#getting-started)
-- [Basic Markup](#markup)
+- [Basic Markup](#basic-markup)
 - [Builtin Methods](#builtin-methods)
 - [Template Parameters](#template-parameters)
 - [Template Logic](#template-logic)
@@ -99,11 +99,9 @@ P2 features:
 - [Parameter and Block Application](#parameter-and-block-application)
 - [Higher-Order Templates](#higher-order-templates)
 - [Layout Template Composition](#layout-template-composition)
-- [Emitting Raw HTML](#emitting-raw-html)
-- [Emitting a String with HTML Escaping](#emitting-a-string-with-html-escaping)
 - [Emitting Markdown](#emitting-markdown)
 - [Deferred Evaluation](#deferred-evaluation)
-- [API Reference](#api-reference)
+- [Cached Rendering](#cached-rendering)
 
 ## Getting Started
 
@@ -123,7 +121,7 @@ require 'p2'
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
 
-## Markup
+## Basic Markup
 
 Tags are added using unqualified method calls, and can be nested using blocks:
 
@@ -511,24 +509,6 @@ article_layout.render(
 )
 ```
 
-## Emitting Raw HTML
-
-Raw HTML can be emitted using `#raw`:
-
-```ruby
-wrapped = -> { |html| div { raw html } }
-wrapped.render("<h1>hi</h1>") #=> "<div><h1>hi</h1></div>"
-```
-
-## Emitting a String with HTML Escaping
-
-To emit a string with proper HTML escaping, without wrapping it in an HTML
-element, use `#text`:
-
-```ruby
--> { text 'hi&lo' }.render #=> "hi&amp;lo"
-```
-
 ## Emitting Markdown
 
 Markdown is rendered using the
@@ -626,18 +606,17 @@ page = default_layout.apply {
 }
 ```
 
-## HTML Utility methods
+## Cached Rendering
 
-HTML templates include a few HTML-specific methods to facilitate writing modern
-HTML:
+P2 provides a simple API for caching the result of a rendering. The cache stores
+renderings of a template respective to the given arguments. To automatically
+retrieve the cached rendered HTML, or generate it for the first time, use
+`Proc#render_cached`:
 
-- `html5 { ... }` - emits an HTML 5 DOCTYPE (`<!DOCTYPE html>`)
-- `import_map(root_path, root_url)` - emits an import map including all files
-  matching `<root_path>/*.js`, based on the given `root_url`
-- `js_module(js)` - emits a `<script type="module">` element
-- `link_stylesheet(href, **attributes)` - emits a `<link rel="stylesheet" ...>`
-  element
-- `script(js, **attributes)` - emits an inline `<script>` element
-- `style(css, **attributes)` - emits an inline `<style>` element
-- `versioned_file_href(href, root_path, root_url)` - calculates a versioned href
-  for the given file
+```ruby
+template = ->(title) { div { h1 title } }
+template.render_cached('foo') #=> <div><h1>foo</h1></div>
+template.render_cached('foo') #=> <div><h1>foo</h1></div> (from cache)
+template.render_cached('bar') #=> <div><h1>bar</h1></div>
+template.render_cached('bar') #=> <div><h1>bar</h1></div> (from cache)
+```
