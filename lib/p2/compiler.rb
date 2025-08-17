@@ -153,7 +153,7 @@ module P2
     def visit_tag_node(node)
       tag = node.tag
 
-      adjust_whitespace(node.location)
+      # adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
       emit_html(node.tag_location, format_html_tag_open(tag, node.attributes))
       return if is_void
@@ -573,7 +573,7 @@ module P2
     # @return [void]
     def emit_html(loc, str)
       @html_loc_start ||= loc
-      @html_loc_end = loc
+      @html_loc_end ||= loc
       @pending_html_parts << [loc, str]
     end
 
@@ -583,31 +583,27 @@ module P2
     def flush_html_parts!(semicolon_prefix: true)
       return if @pending_html_parts.empty?
 
-      adjust_whitespace(@html_loc_start)
-
+      adjust_whitespace(@html_loc_start, advance_to_end: false)
       concatenated = +''
 
       last_loc = @html_loc_start
       @pending_html_parts.each do |(loc, part)|
         if (m = part.match(/^#\{(.+)\}$/m))
           emit_html_buffer_push(concatenated, quotes: true) if !concatenated.empty?
-          adjust_whitespace(loc)
+          adjust_whitespace(loc, advance_to_end: false)
           emit_html_buffer_push(m[1])
         else
           concatenated << part
         end
         last_loc = loc
       end
-      if !concatenated.empty?
-        adjust_whitespace(last_loc)
-        emit_html_buffer_push(concatenated, quotes: true)
-      end
+      emit_html_buffer_push(concatenated, quotes: true) if !concatenated.empty?
 
       @pending_html_parts.clear
 
-      @last_loc = @html_loc_end
-      @last_loc_start = loc_start(@html_loc_end)
-      @last_loc_end = loc_end(@html_loc_end)
+      @last_loc = last_loc
+      @last_loc_start = loc_start(@last_loc)
+      @last_loc_end = @last_loc_start
 
       @html_loc_start = nil
       @html_loc_end = nil
