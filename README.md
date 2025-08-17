@@ -39,7 +39,6 @@ page.render {
 #=> "<html><head><title>Title</title></head><body><p>foo</p></body></html>"
 ```
 
-
 P2 is a templating engine for dynamically producing HTML in Ruby apps. P2
 templates are expressed as Ruby procs, leading to easier debugging, better
 protection against HTML injection attacks, and better code reuse.
