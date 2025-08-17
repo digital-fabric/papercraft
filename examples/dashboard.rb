@@ -4,10 +4,13 @@ require 'bundler/inline'
 
 gemfile do
   gem 'p2', path: '.'
-  gem 'sirop', path: '../sirop'
   gem 'benchmark-ips', '>= 2.14.0'
   gem 'json'
 end
+
+require 'p2'
+require 'benchmark/ips'
+require 'json'
 
 # The following is an example of a dashboard-type SPA app, extracted from an
 # actual working app. This example demonstrates the usage of template

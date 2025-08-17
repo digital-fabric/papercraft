@@ -103,6 +103,9 @@ P2 features:
 - [Deferred Evaluation](#deferred-evaluation)
 - [Cached Rendering](#cached-rendering)
 
+A typical example for a dashboard-type app markup can be found here:
+https://github.com/digital-fabric/p2/blob/master/examples/dashboard.rb
+
 ## Getting Started
 
 In P2, an HTML template is expressed as a proc:
