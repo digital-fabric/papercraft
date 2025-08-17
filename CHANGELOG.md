@@ -1,3 +1,9 @@
+# 2.7 2025-08-17
+
+- Improve source maps and whitespace in compiled code
+- Minor improvements to emit_yield generated code
+- Add support for extensions
+
 # 2.6 2025-08-16
 
 - Add support for block invocation.
