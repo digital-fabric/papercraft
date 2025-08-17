@@ -24,7 +24,7 @@ module P2
 
       match_builtin(node) ||
       match_extension(node) ||
-      match_emit_yield(node) ||
+      match_render_yield(node) ||
       match_const_tag(node) ||
       match_block_call(node) ||
       match_tag(node) ||
@@ -59,9 +59,9 @@ module P2
       ExtensionTagNode.new(node, self)
     end
 
-    def match_emit_yield(node)
+    def match_render_yield(node)
       return if node.receiver
-      return if node.name != :emit_yield
+      return if node.name != :render_yield
 
       yield_node(
         location: node.location,

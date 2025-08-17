@@ -16,7 +16,7 @@ App = ->(**props) {
 Header = ->(title:) {
   header {
     h2(title, id: 'title')
-    emit_yield
+    render_yield
   }
 }
 

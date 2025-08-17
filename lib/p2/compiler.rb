@@ -71,7 +71,7 @@ module P2
       @pending_html_parts = []
       @html_loc_start = nil
       @html_loc_end = nil
-      @emit_yield_used = nil
+      @render_yield_used = nil
     end
 
     # Initializes a source map.
@@ -127,7 +127,7 @@ module P2
           emit(format_code(params))
         end
 
-        if @emit_yield_used
+        if @render_yield_used
           emit(', &__block__')
         end
 
@@ -349,14 +349,14 @@ module P2
 
     # Visits a yield node.
     #
-    # @param node [P2::YieldNode] node
+    # @param node [Prism::YieldNode] node
     # @return [void]
     def visit_yield_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
-      guard = @emit_yield_used ?
-        '' : "; raise(LocalJumpError, 'no block given (yield/emit_yield)') if !__block__"
-      @emit_yield_used = true
+      guard = @render_yield_used ?
+        '' : "; raise(LocalJumpError, 'no block given (render_yield)') if !__block__"
+      @render_yield_used = true
       emit("#{guard}; __block__.compiled_proc.(__buffer__")
       if node.arguments
         emit(', ')

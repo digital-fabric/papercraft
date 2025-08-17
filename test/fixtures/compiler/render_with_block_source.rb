@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-pr = ->(id) { foo(id: id) { emit_yield } }
+pr = ->(id) { foo(id: id) { render_yield } }
 
 ->() {
   render(pr, 'x42') {

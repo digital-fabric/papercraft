@@ -96,7 +96,7 @@ class RenderComponentTest < Minitest::Test
 
   def test_render_with_block
     hdr = proc { |foo:|
-      header { h1 foo; emit_yield }
+      header { h1 foo; render_yield }
     }
     template = proc {
       render(hdr, foo: 'bar') {
@@ -109,7 +109,7 @@ end
 
 class YieldTest < Minitest::Test
   def test_yield
-    r = proc { body { yield } }
+    r = proc { body { render_yield } }
     assert_raises(ArgumentError) { r.render(foo: 'bar') }
 
     assert_equal(
@@ -119,7 +119,7 @@ class YieldTest < Minitest::Test
   end
 
   def test_yield_with_params
-    r = proc { |foo:| body { yield(bar: foo * 10) } }
+    r = proc { |foo:| body { render_yield(bar: foo * 10) } }
     assert_raises(LocalJumpError) { r.render(foo: 1) }
     assert_raises(ArgumentError) { r.render { |bar:| p bar } }
     assert_equal(
@@ -183,7 +183,7 @@ class ApplyTest < Minitest::Test
   end
 
   def test_apply_with_block
-    a = proc { |foo| body { yield(foo) } }
+    a = proc { |foo| body { render_yield(foo) } }
     b = a.apply(&->(foo) { p foo })
     assert_equal '<body><p>hi</p></body>', b.render('hi')
     assert_equal (a.render('foo') { |foo| p foo }), b.render('foo')
@@ -193,7 +193,7 @@ class ApplyTest < Minitest::Test
     a = proc { |a:, b:|
       foo(a);
       body {
-        yield b
+        render_yield b
       }
     }
     b = a.apply(a: 'bar', b: 'baz') { |x, **| p x }
@@ -212,8 +212,8 @@ class ApplyTest < Minitest::Test
   end
 
   def test_apply_with_block_with_yield
-    a = proc { body { yield } }
-    b = a.apply { article { yield } }
+    a = proc { body { render_yield } }
+    b = a.apply { article { render_yield } }
 
     c = b.render { h1 'foo' }
     assert_equal '<body><article><h1>foo</h1></article></body>', c
@@ -370,7 +370,7 @@ class ExceptionBacktraceTest < Minitest::Test
     t1_line = __LINE__
     t1 = -> {
       p 'foo'
-      yield
+      render_yield
     }
     t2 = -> {
       p 'bar'
@@ -428,7 +428,7 @@ class ExtensionTest < Minitest::Test
     },
     ulist: ->(list) {
       ul {
-        list.each { li { emit_yield it } }
+        list.each { li { render_yield it } }
       }
     }
   }

@@ -30,7 +30,7 @@ require 'p2'
 page = ->(**props) {
   html {
     head { title 'My Title' }
-    body { emit_yield **props }
+    body { render_yield **props }
   }
 }
 page.render {
@@ -245,12 +245,12 @@ logic right in the template:
 
 ## Template Blocks
 
-Templates can also accept and render blocks by using `emit_yield`:
+Templates can also accept and render blocks by using `render_yield`:
 
 ```ruby
 page = -> {
   html {
-    body { emit_yield }
+    body { render_yield }
   }
 }
 
@@ -323,7 +323,7 @@ hello_world = hello.apply('world')
 hello_world.render #=> "<h1>Hello, world!</h1>"
 
 # block application
-div_wrap = -> { div { emit_yield } }
+div_wrap = -> { div { render_yield } }
 wrapped_h1 = div_wrap.apply { h1 'hi' }
 wrapped_h1.render #=> "<div><h1>hi</h1></div>"
 
@@ -351,7 +351,7 @@ wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 The inner template can also be passed as a block, as shown above:
 
 ```ruby
-div_wrap = -> { div { emit_yield } }
+div_wrap = -> { div { render_yield } }
 wrapped_greeter = div_wrap.apply { h1 'hi' }
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 ```
@@ -371,7 +371,7 @@ default_layout = -> { |**params|
       title: params[:title]
     }
     body {
-      emit_yield(**params)
+      render_yield(**params)
     }
   }
 }
@@ -478,7 +478,7 @@ default_layout = -> { |**args|
   head {
     defer { render deps.head_markup }
   }
-  body { emit_yield **args }
+  body { render_yield **args }
 }
 
 button = proc { |text, onclick|
