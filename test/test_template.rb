@@ -460,3 +460,47 @@ class ExtensionTest < Minitest::Test
     assert_raises(P2::Error) { t.render }
   end
 end
+
+class RenderCachedTest < Minitest::Test
+  def test_render_cached
+    counter = 0
+    t = ->(*args) {
+      counter += 1
+      p args.join
+    }
+
+    assert_equal '<p>foo</p>', t.render_cached(:foo)
+    assert_equal 1, counter
+    assert_equal '<p>foo</p>', t.render_cached(:foo)
+    assert_equal 1, counter
+
+    assert_equal '<p>bar</p>', t.render_cached(:bar)
+    assert_equal 2, counter
+    assert_equal '<p>bar</p>', t.render_cached(:bar)
+    assert_equal 2, counter
+
+    assert_equal '<p>foobar</p>', t.render_cached(:foo, :bar)
+    assert_equal 3, counter
+    assert_equal '<p>foobar</p>', t.render_cached(:foo, :bar)
+    assert_equal 3, counter
+  end
+
+  def test_render_cached_kargs
+    counter = 0
+    t = ->(foo:, bar:) {
+      counter += 1
+      p foo
+      p bar
+    }
+
+    assert_equal '<p>1</p><p>2</p>', t.render_cached(foo: 1, bar: 2)
+    assert_equal 1, counter
+    assert_equal '<p>1</p><p>2</p>', t.render_cached(foo: 1, bar: 2)
+    assert_equal 1, counter
+
+    assert_equal '<p>42</p><p>43</p>', t.render_cached(foo: 42, bar: 43)
+    assert_equal 2, counter
+    assert_equal '<p>42</p><p>43</p>', t.render_cached(foo: 42, bar: 43)
+    assert_equal 2, counter
+  end
+end

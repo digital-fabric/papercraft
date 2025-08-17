@@ -406,6 +406,7 @@ puts
 
 Benchmark.ips do |x|
   x.report("page") { Dashboard::Page.render }
+  x.report("cached") { Dashboard::Page.render_cached }
 
   x.compare!(order: :baseline)
 end

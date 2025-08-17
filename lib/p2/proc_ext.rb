@@ -90,4 +90,11 @@ class ::Proc
       compiled.(__buffer__, *a, *x, **b, **y, &c_proc)
     }.compiled!
   end
+
+  # Caches and returns 
+  def render_cached(*args, **kargs)
+    @render_cache ||= {}
+    key = args.empty? && kargs.empty? ? nil : [args, kargs]
+    @render_cache[key] ||= render(*args, **kargs)
+  end
 end

@@ -2,6 +2,12 @@
 
 - [ ] Add support for `render_children` for yielding if block given, but not
   raising exception if block not given.
+- [ ] Rename `emit_yield` to `render_yield`
+- [ ] Add caching mechanism:
+      
+      ```ruby
+      template.render_cached(*args, **kargs) #=> caches by the arguments
+      ```
 
 - [ ] Support for inlining (needed for doing extension procs - see below)
 
