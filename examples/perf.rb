@@ -251,15 +251,15 @@ class Renderer
   class_eval(c = <<~RUBY)
     # frozen_string_literal: true
     def render_erubi_app
-      #{Erubi::Engine.new(HTML_APP_ERUBI, ERUBI_OPTS).src.tap {puts '*' * 40; puts it}}
+      #{Erubi::Engine.new(HTML_APP_ERUBI, ERUBI_OPTS).src}
     end
 
     def render_erubi_header(title:)
-      #{Erubi::Engine.new(HTML_HEADER_ERUBI, ERUBI_OPTS).src.tap {puts '*' * 40; puts it}}
+      #{Erubi::Engine.new(HTML_HEADER_ERUBI, ERUBI_OPTS).src}
     end
 
     def render_erubi_content(title:)
-      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src.tap {puts '*' * 40; puts it}}
+      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src}
     end
   RUBY
 
