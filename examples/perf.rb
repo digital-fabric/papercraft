@@ -4,6 +4,7 @@ require 'bundler/inline'
 
 gemfile do
   gem 'p2', path: '.'
+  gem 'papercraft'
   gem 'benchmark-ips', '>= 2.14.0'
   gem 'erubi'
   gem 'phlex'
@@ -34,6 +35,34 @@ Header = ->(title:) {
 }
 
 Content = ->(title:) {
+  article {
+    h3 title
+    p "Hello, world!"
+    div {
+      a(href: 'http://google.com/?a=1&b=2&c=3 4') { h3 "foo bar" }
+      p "lorem ipsum"
+    }
+  }
+}
+
+PapercraftApp = Papercraft.html { |title:|
+  html5 {
+    body {
+      emit(PapercraftHeader, title: title)
+      emit(PapercraftContent, title: title)
+    }
+  }
+}
+
+PapercraftHeader = Papercraft.html { |title:|
+  header {
+    h2(title, id: 'title')
+    button "1"
+    button "2"
+  }
+}
+
+PapercraftContent = Papercraft.html { |title:|
   article {
     h3 title
     p "Hello, world!"
@@ -130,10 +159,7 @@ class PhlexApp < Phlex::HTML
     doctype
     html {
       body {
-        render PhlexHeader.new(title: @title) {
-          button { "1" }
-          button { "2" }
-        }
+        render PhlexHeader.new(title: @title)
         render PhlexContent.new(title: @title)
       }
     }
@@ -148,7 +174,8 @@ class PhlexHeader < Phlex::HTML
   def view_template
     header {
       h2(id: 'title') { @title }
-      yield
+      button { "1" }
+      button { "2" }
     }
   end
 end
@@ -170,16 +197,26 @@ class PhlexContent < Phlex::HTML
   end
 end
 
-puts '*' * 40
-p App.compiled_code
-puts
-p Header.compiled_code
-puts
-p Content.compiled_code
+# require 'phlex/compiler'
+
+# Phlex::Compiler.compile(PhlexApp)
+# Phlex::Compiler.compile(PhlexHeader)
+# Phlex::Compiler.compile(PhlexContent)
+
+# puts '*' * 40
+# p App.compiled_code
+# puts
+# p Header.compiled_code
+# puts
+# p Content.compiled_code
 
 class Renderer
   def render_p2_app
     App.render(title: 'title from context')
+  end
+
+  def render_papercraft_app
+    PapercraftApp.render(title: 'title from context')
   end
 
   def render_phlex_app
@@ -248,9 +285,13 @@ r = Renderer.new
 # puts r.render_p2_app
 # puts
 
-# puts '* Phlex:'
-# puts r.render_phlex_app
+# puts '* Papercraft:'
+# puts r.render_papercraft_app
 # puts
+
+puts '* Phlex:'
+puts r.render_phlex_app
+puts
 
 # puts '* ERB:'
 # puts r.render_erb_app.gsub(/\n\s+/, '')
@@ -262,6 +303,7 @@ Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
 
   x.report("p2") { r.render_p2_app }
+  x.report("papercraft") { r.render_papercraft_app }
   x.report("phlex") { r.render_phlex_app }
   x.report("erb") { r.render_erb_app }
   x.report("erubi") { r.render_erubi_app }

@@ -1,7 +1,7 @@
 # 2.8 2025-08-17
 
-- Add render_children builtin
-- Rename emit_yield to render_yield
+- Add `#render_children` builtin
+- Rename `#emit_yield` to `#render_yield`
 - Add `Proc#render_cached` for caching render result
 
 # 2.7 2025-08-17
@@ -12,13 +12,13 @@
 
 # 2.6 2025-08-16
 
-- Add support for block invocation.
+- Add support for block invocation
 
 # 2.5 2025-08-15
 
-- Translate backtrace for exceptions raised in `#render_to_buffer`.
-- Improve display of backtrace when source map is missing entries.
-- Improve handling of ArgumentError raised on calling the template.
+- Translate backtrace for exceptions raised in `#render_to_buffer`
+- Improve display of backtrace when source map is missing entries
+- Improve handling of ArgumentError raised on calling the template
 - Add `Template#apply`, `Template#compiled_proc` methods
 
 # 2.4 2025-08-10
