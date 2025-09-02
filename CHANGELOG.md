@@ -1,3 +1,10 @@
+# 2.9 2025-09-02
+
+- Tweak generated code to incorporate @byroot's
+  [recommendations](https://www.reddit.com/r/ruby/comments/1mtj7bx/comment/n9ckbvt/):
+  - Remove call to to_s coercion before calling html_escape
+  - Chain calls to `#<<` with emitted HTML parts
+
 # 2.8 2025-08-17
 
 - Add `#render_children` builtin

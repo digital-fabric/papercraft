@@ -1,10 +1,3 @@
-## Performance tweak to generated code
-
-https://www.reddit.com/r/ruby/comments/1mtj7bx/comment/n9ckbvt/
-
-- [ ] Chain `<<` ops instead of issuing separate `<<` op for each string
-- [ ] Remove `to_s` in calls to `ERB::Escape.html_escape`
-
 ## Add missing escaping of attribute values:
 
 https://stackoverflow.com/questions/9187946/escaping-inside-html-tag-attribute-value
