@@ -595,14 +595,15 @@ module P2
       return if @pending_html_parts.empty?
 
       adjust_whitespace(@html_loc_start, advance_to_end: false)
+      emit('; __buffer__')
       concatenated = +''
 
       last_loc = @html_loc_start
       @pending_html_parts.each do |(loc, part)|
         if (m = part.match(/^#\{(.+)\}$/m))
           emit_html_buffer_push(concatenated, quotes: true) if !concatenated.empty?
-          adjust_whitespace(loc, advance_to_end: false)
-          emit_html_buffer_push(m[1])
+          # adjust_whitespace(loc, advance_to_end: false)
+          emit_html_buffer_push(m[1], loc:)
         else
           concatenated << part
         end
@@ -626,11 +627,18 @@ module P2
     # @param part [String] HTML part
     # @param quotes [bool] whether to wrap emitted HTML in double quotes
     # @return [void]
-    def emit_html_buffer_push(part, quotes: false)
+    def emit_html_buffer_push(part, quotes: false, loc: nil)
       return if part.empty?
 
       q = quotes ? '"' : ''
-      emit("; __buffer__ << #{q}#{part}#{q}")
+      if loc
+        emit(".<<(")
+        adjust_whitespace(loc, advance_to_end: false)
+        emit("#{q}#{part}#{q}")
+        emit(")")
+      else
+        emit(".<<(#{q}#{part}#{q})")
+      end
       part.clear
     end
 
