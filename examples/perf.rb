@@ -197,19 +197,6 @@ class PhlexContent < Phlex::HTML
   end
 end
 
-# require 'phlex/compiler'
-
-# Phlex::Compiler.compile(PhlexApp)
-# Phlex::Compiler.compile(PhlexHeader)
-# Phlex::Compiler.compile(PhlexContent)
-
-# puts '*' * 40
-# p App.compiled_code
-# puts
-# p Header.compiled_code
-# puts
-# p Content.compiled_code
-
 class Renderer
   def render_p2_app
     App.render(title: 'title from context')
@@ -259,7 +246,7 @@ class Renderer
     end
 
     def render_erubi_content(title:)
-      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src}
+      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src.tap { puts '* ERUBI:'; puts it }}
     end
   RUBY
 
@@ -274,7 +261,7 @@ class Renderer
     end
 
     def render_erb_content(title:)
-      #{ERB.new(HTML_CONTENT_ERB).src}
+      #{ERB.new(HTML_CONTENT_ERB).src.tap { puts '* ERB:'; puts it }}
     end
   RUBY
 end
@@ -302,10 +289,10 @@ puts
 Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
 
+  x.report("erb") { r.render_erb_app }
   x.report("p2") { r.render_p2_app }
   x.report("papercraft") { r.render_papercraft_app }
   x.report("phlex") { r.render_phlex_app }
-  x.report("erb") { r.render_erb_app }
   x.report("erubi") { r.render_erubi_app }
 
   x.compare!(order: :baseline)

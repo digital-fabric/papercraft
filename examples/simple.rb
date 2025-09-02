@@ -9,10 +9,10 @@ t = ->(title:) {
   }
 }
 
-t.render()
-
 p t.ast
 puts
 puts t.compiled_code
 puts
 p t.source_map
+puts
+puts t.render(title: 'Hello, world!')
