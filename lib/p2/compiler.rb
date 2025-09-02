@@ -168,9 +168,7 @@ module P2
         if is_static_node?(node.inner_text)
           emit_html(node.location, ERB::Escape.html_escape(format_literal(node.inner_text)))
         else
-          to_s = is_string_type_node?(node.inner_text) ? '' : '.to_s'
-
-          emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)})#{to_s})"))
+          emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)}))"))
         end
       end
       emit_html(node.location, format_html_tag_close(tag))
@@ -230,7 +228,7 @@ module P2
         if is_static_node?(first_arg)
           emit_html(node.location, ERB::Escape.html_escape(format_literal(first_arg)))
         else
-          emit_html(node.location, interpolated("ERB::Escape.html_escape(#{format_code(first_arg)}.to_s)"))
+          emit_html(node.location, interpolated("ERB::Escape.html_escape(#{format_code(first_arg)})"))
         end
       else
         raise "Don't know how to compile #{node}"

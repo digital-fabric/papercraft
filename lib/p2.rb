@@ -101,10 +101,11 @@ module P2
   # @param opts [Hash] Kramdown option overrides
   # @return [String] HTML
   def markdown(markdown, **opts)
-    # require relevant deps on use
-    require 'kramdown'
-    require 'rouge'
-    require 'kramdown-parser-gfm'
+    @markdown_deps_loaded ||= true.tap do
+      require 'kramdown'
+      require 'rouge'
+      require 'kramdown-parser-gfm'
+    end
 
     opts = default_kramdown_options.merge(opts)
     Kramdown::Document.new(markdown, **opts).to_html
