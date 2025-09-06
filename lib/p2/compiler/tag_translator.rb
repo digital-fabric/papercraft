@@ -58,7 +58,7 @@ module P2
     def match_extension(node)
       return if node.receiver
       return if !P2::Extensions[node.name]
-    
+
       ExtensionTagNode.new(node, self)
     end
 

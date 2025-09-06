@@ -16,7 +16,7 @@ module P2
   Extensions = {}
 
   # Registers extensions to the P2 syntax.
-  # 
+  #
   # @param spec [Hash] hash mapping symbols to procs
   # @return [self]
   def extension(spec)

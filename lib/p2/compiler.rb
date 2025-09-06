@@ -336,7 +336,7 @@ module P2
           block_params << format_code(params.keyword_rest) if params.keyword_rest
         end
         block_params = block_params.empty? ? '' : ", #{block_params.join(', ')}"
-        
+
         emit(", &(proc { |__buffer__#{block_params}| #{block_body} }).compiled!")
       end
       emit(")")

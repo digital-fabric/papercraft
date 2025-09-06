@@ -132,7 +132,7 @@ end
 class RenderChildrenTest < Minitest::Test
   def test_render_children
     r = proc { body { render_children } }
-    
+
     assert_raises(ArgumentError) { r.render(foo: 'bar') }
     assert_equal '<body></body>', r.render
     assert_equal '<body><p>foo</p><hr></body>', r.render { p 'foo'; hr; }
@@ -140,7 +140,7 @@ class RenderChildrenTest < Minitest::Test
 
   def test_render_children_with_params
     r = proc { |foo:| body { render_children(bar: foo * 10) } }
-    
+
     assert_equal '<body></body>', r.render(foo: 1)
     assert_raises(ArgumentError) { r.render { |bar:| p bar } }
     assert_equal(
@@ -551,5 +551,17 @@ class RenderCachedTest < Minitest::Test
 
     assert_equal '<div><q>baz</q></div>', r2.(foo: 'baz', bar: 'baz')
     assert_equal 3, counter
+  end
+end
+
+class EvaldProcTest < Minitest::Test
+  def test_eval_proc_error
+    t = eval('-> { hr }')
+    assert_raises(P2::Error) { t.render }
+  end
+
+  def test_irb_proc_error
+    t = eval('-> { hr }', binding, '(irb)')
+    assert_raises(P2::Error) { t.render }
   end
 end

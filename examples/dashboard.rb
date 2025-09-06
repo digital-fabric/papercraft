@@ -16,7 +16,7 @@ require 'json'
 # actual working app. This example demonstrates the usage of template
 # composition, which allows putting separate parts of the markup in separate
 # templates, then composing them into a whole page.
-# 
+#
 # This example also demonstrates the use of extensions to abstract away chunks
 # of markup ('partials') dedicated to lower-level markup, such as an import map,
 # or a select input element with options.
@@ -24,7 +24,7 @@ require 'json'
 # The code for the markup is organised under a module. All so-called 'partials'
 # are defined as constants and are easily distinguishable from normal tags, or
 # extensions by their case.
-# 
+#
 # It's all just procs, easily composed, a simple API, minimal boilerplate, and
 # fast: on a decent development machine, the entire page is rendered in about
 # 30µs, or about 30,000 times per second.

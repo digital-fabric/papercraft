@@ -5,8 +5,8 @@ require 'benchmark/ips'
 
 def erubi(title:)
   _buf = +'';;
-  _buf << 
-    '<article><h3>' << 
+  _buf <<
+    '<article><h3>' <<
     ( ERB::Escape.html_escape(title) ).to_s <<
     '</h3><p>Hello, world!</p><div><a href="' <<
     ( 'http://google.com/?a=1&b=2&c=3%204' ).to_s <<
