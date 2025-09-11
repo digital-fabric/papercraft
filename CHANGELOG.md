@@ -1,3 +1,7 @@
+# 2.11 2025-09-11
+
+- Add mode param to `P2::Template` wrapper class
+
 # 2.10 2025-09-11
 
 - Add support for rendering XML, implement `Proc#render_xml`
