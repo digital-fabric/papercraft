@@ -4,10 +4,25 @@ module P2
   # Template wrapper class. This class can be used to distinguish between P2
   # templates and other kinds of procs.
   class Template
-    attr_reader :proc
-    def initialize(proc)  = @proc = proc
-    def render(*, **, &)  = @proc.render(*, **, &)
-    def apply(*, **, &)   = Template.new(@proc.apply(*, **, &))
-    def compiled_proc     = @proc.compiled_proc
+    attr_reader :proc, :mode
+
+    # @param proc [Proc] template proc
+    # @param mode [Symbol] mode (:html, :xml)
+    def initialize(proc, mode: :html)
+      @proc = proc
+      @mode = mode
+    end
+
+    def render(*, **, &)
+      (mode == :xml) ? @proc.render_xml(*, **, &) : @proc.render(*, **, &)
+    end
+
+    def apply(*, **, &)
+      Template.new(@proc.apply(*, **, &), mode: @mode)
+    end
+    
+    def compiled_proc
+      @proc.compiled_proc(mode: @mode)
+    end
   end
 end

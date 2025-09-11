@@ -436,6 +436,12 @@ class TemplateWrapperTest < Minitest::Test
     assert_equal "<p>2b</p>", t2.render
     assert_equal "<p>2b</p>", t2.proc.render
   end
+
+  def test_wrapper_xml
+    t = P2::Template.new(-> { link 'foo' }, mode: :xml)
+    assert_equal "<link>foo</link>", t.render
+    assert_equal :xml, t.mode
+  end
 end
 
 class ExtensionTest < Minitest::Test
