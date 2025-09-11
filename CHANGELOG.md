@@ -1,3 +1,7 @@
+# 2.12 2025-09-11
+
+- Add support for injecting location attributes into HTML tags (for debug purposes)
+
 # 2.11 2025-09-11
 
 - Add mode param to `P2::Template` wrapper class
