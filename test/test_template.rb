@@ -565,3 +565,12 @@ class EvaldProcTest < Minitest::Test
     assert_raises(P2::Error) { t.render }
   end
 end
+
+class StringEscapingTest < Minitest::Test
+  def test_string_escaping_raw
+    t = -> {
+      raw 'abc "def" ghi'
+    }
+    assert_equal 'abc "def" ghi', t.render
+  end
+end

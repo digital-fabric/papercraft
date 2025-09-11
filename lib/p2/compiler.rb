@@ -495,7 +495,9 @@ module P2
     def format_literal(node)
       case node
       when Prism::SymbolNode, Prism::StringNode
-        node.unescaped
+        # since the value is copied verbatim into a quoted string, we need to
+        # add a backslash before any double quote.
+        node.unescaped.gsub('"', '\"')
       when Prism::IntegerNode, Prism::FloatNode
         node.value.to_s
       when Prism::InterpolatedStringNode
@@ -601,6 +603,7 @@ module P2
       last_loc = @html_loc_start
       @pending_html_parts.each do |(loc, part)|
         if (m = part.match(/^#\{(.+)\}$/m))
+          # interpolated part
           emit_html_buffer_push(concatenated, quotes: true) if !concatenated.empty?
           # adjust_whitespace(loc, advance_to_end: false)
           emit_html_buffer_push(m[1], loc:)
