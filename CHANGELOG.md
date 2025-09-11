@@ -1,3 +1,9 @@
+# 2.10 2025-09-11
+
+- Add support for rendering XML, implement `Proc#render_xml`
+- Fix handling of literal strings with double quotes
+- Improve error handling for `P2::Error` exceptions
+
 # 2.9 2025-09-02
 
 - Tweak generated code to incorporate @byroot's
