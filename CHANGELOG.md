@@ -1,3 +1,7 @@
+# 2.13 2025-09-11
+
+- Pass level to HTML debug attribute injection proc
+
 # 2.12 2025-09-11
 
 - Add support for injecting location attributes into HTML tags (for debug purposes)
