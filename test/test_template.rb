@@ -618,7 +618,7 @@ class AttributeInjectionTest < Minitest::Test
       p 'foo'
     }
 
-    P2::Compiler.html_atts_injector = ->(fn, line, col) {
+    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
       { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
@@ -626,7 +626,7 @@ class AttributeInjectionTest < Minitest::Test
 
     assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\">foo</p>", html
   ensure
-    P2::Compiler.html_atts_injector = nil
+    P2::Compiler.html_debug_attribute_injector = nil
   end
 
   def test_attribute_injection_static_atts
@@ -635,7 +635,7 @@ class AttributeInjectionTest < Minitest::Test
       p 'foo', class: 'bar', baz: true, ynot: nil
     }
 
-    P2::Compiler.html_atts_injector = ->(fn, line, col) {
+    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
       { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
@@ -643,7 +643,7 @@ class AttributeInjectionTest < Minitest::Test
 
     assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\" class=\"bar\" baz>foo</p>", html
   ensure
-    P2::Compiler.html_atts_injector = nil
+    P2::Compiler.html_debug_attribute_injector = nil
   end
 
   def test_attribute_injection_dynamic_atts
@@ -653,13 +653,38 @@ class AttributeInjectionTest < Minitest::Test
       p 'foo', class: 'bar', **atts
     }
 
-    P2::Compiler.html_atts_injector = ->(fn, line, col) {
+    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
       { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
     html = t.render
     assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 3}:7\" class=\"bar\" baz>foo</p>", html
   ensure
-    P2::Compiler.html_atts_injector = nil
+    P2::Compiler.html_debug_attribute_injector = nil
   end
+
+  def test_attribute_injection_nested
+    line = __LINE__
+    t = -> {
+      div {
+        h1 {
+          span 'foo'
+        }
+      }
+    }
+
+    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
+      { 'data-p2-level' => level, 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    }
+
+    html = t.render
+
+    expected = "<div data-p2-level=\"1\" data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\">" + 
+               "<h1 data-p2-level=\"2\" data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 3}:9\">" + 
+               "<span data-p2-level=\"3\" data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 4}:11\">foo</span></h1></div>"
+    assert_equal expected, html
+  ensure
+    P2::Compiler.html_debug_attribute_injector = nil
+  end
+
 end

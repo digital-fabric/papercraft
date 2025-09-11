@@ -10,10 +10,10 @@ module P2
   # A Compiler converts a template into an optimized form that generates HTML
   # efficiently.
   class Compiler < Sirop::Sourcifier
-    @@html_atts_injector = nil
+    @@html_debug_attribute_injector = nil
 
-    def self.html_atts_injector=(proc)
-      @@html_atts_injector = proc
+    def self.html_debug_attribute_injector=(proc)
+      @@html_debug_attribute_injector = proc
     end
 
     # Compiles the given proc, returning the generated source map and the
@@ -78,6 +78,7 @@ module P2
       super(**)
       @mode = mode
       @pending_html_parts = []
+      @level = 0
     end
 
     # Initializes a source map.
@@ -157,6 +158,7 @@ module P2
     # @param node [P2::TagNode] node
     # @return [void]
     def visit_tag_node(node)
+      @level += 1
       tag = node.tag
 
       # adjust_whitespace(node.location)
@@ -181,6 +183,8 @@ module P2
         end
       end
       emit_html(node.location, format_html_tag_close(tag))
+    ensure
+      @level -= 1
     end
 
     # Visits a const tag node.
@@ -468,7 +472,7 @@ module P2
     # @return [String] HTML
     def format_html_tag_open(loc, tag, attributes)
       tag = convert_tag(tag)
-      if attributes && attributes&.elements.size > 0 || @@html_atts_injector
+      if attributes && attributes&.elements.size > 0 || @@html_debug_attribute_injector
         "<#{tag} #{format_html_attributes(loc, attributes)}>"
       else
         "<#{tag}>"
@@ -599,10 +603,10 @@ module P2
     # @param loc [Prism::Location] tag location
     # @return [Hash] injected attributes hash
     def compute_injected_attributes(loc)
-      return {} if (@mode == :xml) || !@@html_atts_injector
+      return {} if (@mode == :xml) || !@@html_debug_attribute_injector
 
       loc = loc_start(loc)
-      @@html_atts_injector&.(@fn, loc[0], loc[1] + 1)
+      @@html_debug_attribute_injector&.(@level, @fn, loc[0], loc[1] + 1)
     end
 
     # Computes injected attributes for the given tag location.
@@ -626,7 +630,7 @@ module P2
         format_literal(key)
       when Prism::FalseNode, Prism::NilNode
         nil
-      when String
+      when String, Integer, Float, Symbol
         "#{P2.underscores_to_dashes(key)}=\\\"#{value}\\\""
       else
         key = format_literal(key)
