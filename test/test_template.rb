@@ -298,6 +298,15 @@ class TagsTest < Minitest::Test
     }
     html = t.render
     assert_equal('<h1 id="42">foo</h1><h2 id="43"><span>bar</span></h2>', html)
+
+    t = -> {
+      h1 'foo', 'id_foo': '43'
+      tag(:h2, 'x-y' => '44') {
+        span 'bar'
+      }
+    }
+    html = t.render
+    assert_equal('<h1 id-foo="43">foo</h1><h2 x-y="44"><span>bar</span></h2>', html)
   end
 
   def test_dynamic_tag
@@ -574,9 +583,83 @@ end
 
 class StringEscapingTest < Minitest::Test
   def test_string_escaping_raw
+    s = 'abc "def" ghi'
     t = -> {
       raw 'abc "def" ghi'
     }
     assert_equal 'abc "def" ghi', t.render
+
+    t = -> {
+      raw s
+    }
+    assert_equal 'abc "def" ghi', t.render
+
+    t = -> {
+      text 'abc "def" ghi'
+    }
+    assert_equal 'abc &quot;def&quot; ghi', t.render
+
+    t = -> {
+      p 'abc "def" ghi'
+    }
+    assert_equal '<p>abc &quot;def&quot; ghi</p>', t.render
+
+    t = -> {
+      p s
+    }
+    assert_equal '<p>abc &quot;def&quot; ghi</p>', t.render
+  end
+end
+
+class AttributeInjectionTest < Minitest::Test
+  def test_attribute_injection_no_atts
+    line = __LINE__
+    t = -> {
+      p 'foo'
+    }
+
+    P2::Compiler.html_atts_injector = ->(fn, line, col) {
+      { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    }
+
+    html = t.render
+
+    assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\">foo</p>", html
+  ensure
+    P2::Compiler.html_atts_injector = nil
+  end
+
+  def test_attribute_injection_static_atts
+    line = __LINE__
+    t = -> {
+      p 'foo', class: 'bar', baz: true, ynot: nil
+    }
+
+    P2::Compiler.html_atts_injector = ->(fn, line, col) {
+      { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    }
+
+    html = t.render
+
+    assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\" class=\"bar\" baz>foo</p>", html
+  ensure
+    P2::Compiler.html_atts_injector = nil
+  end
+
+  def test_attribute_injection_dynamic_atts
+    line = __LINE__
+    atts = { baz: true, ynot: nil }
+    t = -> {
+      p 'foo', class: 'bar', **atts
+    }
+
+    P2::Compiler.html_atts_injector = ->(fn, line, col) {
+      { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    }
+
+    html = t.render
+    assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 3}:7\" class=\"bar\" baz>foo</p>", html
+  ensure
+    P2::Compiler.html_atts_injector = nil
   end
 end

@@ -10,6 +10,12 @@ module P2
   # A Compiler converts a template into an optimized form that generates HTML
   # efficiently.
   class Compiler < Sirop::Sourcifier
+    @@html_atts_injector = nil
+
+    def self.html_atts_injector=(proc)
+      @@html_atts_injector = proc
+    end
+
     # Compiles the given proc, returning the generated source map and the
     # generated optimized source code.
     #
@@ -80,12 +86,12 @@ module P2
     # @param orig_ast [Prism::Node] template AST
     # @return [self]
     def with_source_map(orig_proc, orig_ast)
-      fn = Compiler.source_location_to_fn(orig_proc.source_location)
+      @fn = orig_proc.source_location.first
       @orig_proc = orig_proc
       @orig_proc_fn = orig_proc.source_location.first
       @source_map = {
         source_fn: orig_proc.source_location.first,
-        compiled_fn: fn
+        compiled_fn: Compiler.source_location_to_fn(orig_proc.source_location)
       }
       @source_map_line_ofs = 2
       self
@@ -155,7 +161,7 @@ module P2
 
       # adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
-      emit_html(node.tag_location, format_html_tag_open(tag, node.attributes))
+      emit_html(node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes))
       return if is_void
 
       case node.block
@@ -456,13 +462,14 @@ module P2
 
     # Formats an open tag with optional attributes.
     #
+    # @param loc [Prism::Location] tag location
     # @param tag [String, Symbol] HTML tag
     # @param attributes [Hash, nil] attributes
     # @return [String] HTML
-    def format_html_tag_open(tag, attributes)
+    def format_html_tag_open(loc, tag, attributes)
       tag = convert_tag(tag)
-      if attributes && attributes&.elements.size > 0
-        "<#{tag} #{format_html_attributes(attributes)}>"
+      if attributes && attributes&.elements.size > 0 || @@html_atts_injector
+        "<#{tag} #{format_html_attributes(loc, attributes)}>"
       else
         "<#{tag}>"
       end
@@ -551,37 +558,85 @@ module P2
 
     # Formats HTML attributes from the given node.
     #
-    # @param node [Prism::Node] AST node
+    # @param loc [Prism::Location] tag location
+    # @param node [Prism::Node] attributes node
     # @return [String] HTML
-    def format_html_attributes(node)
-      elements = node.elements
-      dynamic_attributes = elements.any? do
-        it.is_a?(Prism::AssocSplatNode) ||
-          !is_static_node?(it.key) || !is_static_node?(it.value)
+    def format_html_attributes(loc, node)
+      elements = node&.elements || []
+      if elements.any? { is_dynamic_attribute?(it) }
+        return format_html_dynamic_attributes(loc, node)
       end
 
-      return interpolated("P2.format_tag_attrs(#{format_code(node)})") if dynamic_attributes
+      injected_atts = format_injected_attributes(loc)
+      parts = elements.map { format_attribute(it.key, it.value) }
+      (injected_atts + parts).compact.join(' ')
+    end
 
-      parts = elements.map do
-        key = it.key
-        value = it.value
-        case value
-        when Prism::TrueNode
-          format_literal(key)
-        when Prism::FalseNode, Prism::NilNode
-          nil
+    # Formats dynamic HTML attributes from the given node.
+    #
+    # @param loc [Prism::Location] tag location
+    # @param node [Prism::Node] attributes node
+    # @return [String] HTML
+    def format_html_dynamic_attributes(loc, node)
+      injected_atts = compute_injected_attributes(loc)
+      if injected_atts.empty?
+        return interpolated("P2.format_tag_attrs(#{format_code(node)})")
+      else
+        return interpolated("P2.format_tag_attrs(#{injected_atts.inspect}.merge(#{format_code(node)}))")
+      end
+    end
+
+    # Returns true if the given node is a dynamic node.
+    # 
+    # @param node [Prism::Node] attributes node
+    # @return [bool] is node dynamic
+    def is_dynamic_attribute?(node)
+      node.is_a?(Prism::AssocSplatNode) || !is_static_node?(node.key) || !is_static_node?(node.value)
+    end
+
+    # Computes injected attributes for the given tag location.
+    # 
+    # @param loc [Prism::Location] tag location
+    # @return [Hash] injected attributes hash
+    def compute_injected_attributes(loc)
+      return {} if (@mode == :xml) || !@@html_atts_injector
+
+      loc = loc_start(loc)
+      @@html_atts_injector&.(@fn, loc[0], loc[1] + 1)
+    end
+
+    # Computes injected attributes for the given tag location.
+    # 
+    # @param loc [Prism::Location] tag location
+    # @return [Array<String>] array of attribute strings
+    def format_injected_attributes(loc)
+      atts = compute_injected_attributes(loc)
+      atts.map { |k, v| format_attribute(k, v) }
+    end
+
+    # Formats a tag attribute with the given key and value. A nil, or false
+    # value will return nil.
+    #
+    # @param key [any] attribute key
+    # @param value [any] attribute value
+    # @return [String, nil] formatted attribute
+    def format_attribute(key, value)
+      case value
+      when Prism::TrueNode
+        format_literal(key)
+      when Prism::FalseNode, Prism::NilNode
+        nil
+      when String
+        "#{P2.underscores_to_dashes(key)}=\\\"#{value}\\\""
+      else
+        key = format_literal(key)
+        if is_static_node?(value)
+          value = format_literal(value)
+          "#{P2.underscores_to_dashes(key)}=\\\"#{value}\\\""
         else
-          k = format_literal(key)
-          if is_static_node?(value)
-            value = format_literal(value)
-            "#{P2.underscores_to_dashes(k)}=\\\"#{value}\\\""
-          else
-            "#{P2.underscores_to_dashes(k)}=\\\"#\{#{format_code(value)}}\\\""
-          end
+          "#{P2.underscores_to_dashes(key)}=\\\"#\{#{format_code(value)}}\\\""
         end
       end
-
-      parts.compact.join(' ')
     end
 
     # Emits HTML into the pending HTML buffer.
