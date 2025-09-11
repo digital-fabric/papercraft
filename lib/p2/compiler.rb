@@ -14,15 +14,16 @@ module P2
     # generated optimized source code.
     #
     # @param proc [Proc] template
+    # @param mode [Symbol] compilation mode (:html, :xml)
     # @param wrap [bool] whether to wrap the generated code with a literal Proc definition
     # @return [Array] array containing the source map and generated code
-    def self.compile_to_code(proc, wrap: true)
+    def self.compile_to_code(proc, mode: :html, wrap: true)
       ast = Sirop.to_ast(proc)
 
       # adjust ast root if proc is defined with proc {} / lambda {} syntax
       ast = ast.block if ast.is_a?(Prism::CallNode)
 
-      compiler = new.with_source_map(proc, ast)
+      compiler = new(mode:).with_source_map(proc, ast)
       transformed_ast = TagTranslator.transform(ast.body, ast)
       compiler.format_compiled_template(transformed_ast, ast, wrap:, binding: proc.binding)
       [compiler.source_map, compiler.buffer]
@@ -37,10 +38,11 @@ module P2
     #     compiled.render #=> '<h1>Hello, world!'
     #
     # @param proc [Proc] template
+    # @param mode [Symbol] compilation mode (:html, :xml)
     # @param wrap [bool] whether to wrap the generated code with a literal Proc definition
     # @return [Proc] compiled proc
-    def self.compile(proc, wrap: true)
-      source_map, code = compile_to_code(proc, wrap:)
+    def self.compile(proc, mode: :html, wrap: true)
+      source_map, code = compile_to_code(proc, mode:, wrap:)
       if ENV['DEBUG'] == '1'
         puts '*' * 40
         puts code
@@ -66,8 +68,9 @@ module P2
     attr_reader :source_map
 
     # Initializes a compiler.
-    def initialize(**)
+    def initialize(mode:, **)
       super(**)
+      @mode = mode
       @pending_html_parts = []
     end
 
@@ -421,11 +424,11 @@ module P2
     # @param node [Prism::Node] AST
     # @return [String] generated source code
     def format_code(node)
-      Compiler.new(minimize_whitespace: true).to_source(node)
+      Compiler.new(mode: @mode, minimize_whitespace: true).to_source(node)
     end
 
     def format_inline_block(node)
-      Compiler.new(minimize_whitespace: true).format_compiled_template(node, node, wrap: false, binding: @binding)
+      Compiler.new(mode: @mode, minimize_whitespace: true).format_compiled_template(node, node, wrap: false, binding: @binding)
     end
 
     # Formats a comma separated list of AST nodes. Used for formatting partial
@@ -434,7 +437,7 @@ module P2
     # @param list [Array<Prism::Node>] node list
     # @return [String] generated source code
     def format_code_comma_separated_nodes(list)
-      compiler = self.class.new(minimize_whitespace: true)
+      compiler = Compiler.new(mode: @mode, minimize_whitespace: true)
       compiler.visit_comma_separated_nodes(list)
       compiler.buffer
     end
@@ -446,6 +449,8 @@ module P2
     # @param tag [String, Symbol] HTML tag
     # @return [bool] void or not
     def is_void_element?(tag)
+      return false if @mode == :xml
+
       VOID_TAGS.include?(tag.to_s)
     end
 

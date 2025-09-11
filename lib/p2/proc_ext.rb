@@ -46,16 +46,18 @@ class ::Proc
   # Returns the compiled proc for the given proc. If marked as compiled, returns
   # self.
   #
+  # @param mode [Symbol] compilation mode (:html, :xml)
   # @return [Proc] compiled proc or self
-  def compiled_proc
-    @compiled_proc ||= @is_compiled ? self : compile
+  def compiled_proc(mode: :html)
+    @compiled_proc ||= @is_compiled ? self : compile(mode:)
   end
 
   # Compiles the proc into the compiled form.
   #
+  # @param mode [Symbol] compilation mode (:html, :xml)
   # @return [Proc] compiled proc
-  def compile
-    P2::Compiler.compile(self).compiled!
+  def compile(mode: :html)
+    P2::Compiler.compile(self, mode:).compiled!
   rescue Sirop::Error
     raise P2::Error, "Dynamically defined procs cannot be compiled"
   end
@@ -65,6 +67,15 @@ class ::Proc
   # @return [String] HTML string
   def render(*a, **b, &c)
     compiled_proc.(+'', *a, **b, &c)
+  rescue Exception => e
+    e.is_a?(P2::Error) ? raise : raise(P2.translate_backtrace(e))
+  end
+
+  # Renders the proc to XML with the given arguments.
+  #
+  # @return [String] XML string
+  def render_xml(*a, **b, &c)
+    compiled_proc(mode: :xml).(+'', *a, **b, &c)
   rescue Exception => e
     e.is_a?(P2::Error) ? raise : raise(P2.translate_backtrace(e))
   end
