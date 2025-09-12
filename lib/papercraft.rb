@@ -1,109 +1,133 @@
 # frozen_string_literal: true
 
 require_relative 'papercraft/template'
-require_relative 'papercraft/renderer'
-# require_relative 'papercraft/compiler'
+require_relative 'papercraft/compiler'
+require_relative 'papercraft/proc_ext'
 
-# Papercraft is a composable templating library
+# Papercraft is a functional templating library. In Papercraft, templates are expressed as plain
+# Ruby procs.
 module Papercraft
   # Exception class used to signal templating-related errors
   class Error < RuntimeError; end
 
-  class << self
+  extend self
 
-    # Installs one or more extensions. Extensions enhance templating capabilities
-    # by adding namespaced methods to emplates. An extension is implemented as a
-    # Ruby module containing one or more methods. Each method in the extension
-    # module can be used to render a specific HTML element or a set of elements.
-    #
-    # This is a convenience method. For more information on using Papercraft
-    # extensions, see `Papercraft::Renderer::extension`
-    #
-    # @param map [Hash] hash mapping methods to extension modules
-    # @return [void]
-    def extension(map)
-      Renderer.extension(map)
+  # Registry of Papercraft exgtensions
+  Extensions = {}
+
+  # Registers extensions to the Papercraft syntax.
+  #
+  # @param spec [Hash] hash mapping symbols to procs
+  # @return [self]
+  def extension(spec)
+    Extensions.merge!(spec)
+    self
+  end
+
+  # Formats the given string, converting underscores to dashes.
+  #
+  # @param tag [String, Symbol] input string
+  # @return [String] output string
+  def underscores_to_dashes(tag)
+    tag.to_s.gsub('_', '-')
+  end
+
+  # Formats the given hash as tag attributes.
+  #
+  # @param attrs [Hash] input hash
+  # @return [String] formatted attributes
+  def format_tag_attrs(attrs)
+    attrs.each_with_object(+'') do |(k, v), html|
+      case v
+      when nil, false
+      when true
+        html << ' ' if !html.empty?
+        html << underscores_to_dashes(k)
+      else
+        html << ' ' if !html.empty?
+        v = v.join(' ') if v.is_a?(Array)
+        html << "#{underscores_to_dashes(k)}=\"#{v}\""
+      end
     end
+  end
 
-    # Creates a new papercraft template. `Papercraft.html` can take either a proc
-    # argument or a block. In both cases, the proc is converted to a
-    # `Papercraft::Template`.
-    #
-    # Papercraft.html(proc { h1 'hi' }).render #=> "<h1>hi</h1>"
-    # Papercraft.html { h1 'hi' }.render #=> "<h1>hi</h1>"
-    #
-    # @param template [Proc] template block
-    # @return [Papercraft::Template] Papercraft template
-    def html(o = nil, mime_type: nil, &template)
-      return o if o.is_a?(Papercraft::Template)
-      template ||= o
-      Papercraft::Template.new(mode: :html, mime_type: mime_type, &template)
+  # Translates entries in exception's backtrace to point to original source code.
+  #
+  # @param err [Exception] raised exception
+  # @return [Exception] raised exception
+  def translate_backtrace(err)
+    cache = {}
+    is_argument_error = err.is_a?(ArgumentError) && err.backtrace[0] =~ /^\:\:/
+    backtrace = err.backtrace.map { |e| compute_backtrace_entry(e, cache) }
+
+    return make_argument_error(err, backtrace) if is_argument_error
+
+    err.set_backtrace(backtrace)
+    err
+  end
+
+  # Computes a backtrace entry with caching.
+  #
+  # @param entry [String] backtrace entry
+  # @param cache [Hash] cache store mapping compiled filename to source_map
+  def compute_backtrace_entry(entry, cache)
+    m = entry.match(/^((\:\:\(.+\:.+\))\:(\d+))/)
+    return entry if !m
+
+    fn = m[2]
+    line = m[3].to_i
+    source_map = cache[fn] ||= Compiler.source_map_store[fn]
+    return entry if !source_map
+
+    ref = source_map[line] || "?(#{line})"
+    entry.sub(m[1], ref)
+  end
+
+  def make_argument_error(err, backtrace)
+    m = err.message.match(/(given (\d+), expected (\d+))/)
+    if m
+      rectified = format('given %d, expected %d', m[2].to_i - 1, m[3].to_i - 1)
+      message = err.message.gsub(m[1], rectified)
+    else
+      message = err.message
     end
+    ArgumentError.new(message).tap { it.set_backtrace(backtrace) }
+  end
 
-    # Creates a new Papercraft template in XML mode. `Papercraft.xml` can take
-    # either a proc argument or a block. In both cases, the proc is converted to a
-    # `Papercraft::Template`.
-    #
-    # Papercraft.xml(proc { item 'foo' }).render #=> "<item>foo</item>"
-    # Papercraft.xml { item 'foo' }.render #=> "<item>foo</item>"
-    #
-    # @param template [Proc] template block
-    # @return [Papercraft::Template] Papercraft template
-    def xml(o = nil, mime_type: nil, &template)
-      return o if o.is_a?(Papercraft::Template)
-      template ||= o
-      Papercraft::Template.new(mode: :xml, mime_type: mime_type, &template)
-    end
-
-    # Creates a new Papercraft template in JSON mode. `Papercraft.json` can take
-    # either a proc argument or a block. In both cases, the proc is converted to a
-    # `Papercraft::Template`.
-    #
-    # Papercraft.json(proc { item 42 }).render #=> "[42]"
-    # Papercraft.json { foo 'bar' }.render #=> "{\"foo\": \"bar\"}"
-    #
-    # @param template [Proc] template block
-    # @return [Papercraft::Template] Papercraft template
-    def json(o = nil, mime_type: nil, &template)
-      return o if o.is_a?(Papercraft::Template)
-      template ||= o
-      Papercraft::Template.new(mode: :json, mime_type: mime_type, &template)
-    end
-
-    # Renders Markdown into HTML. The `opts` argument will be merged with the
-    # default Kramdown options in order to change the rendering behaviour.
-    #
-    # @param markdown [String] Markdown
-    # @param opts [Hash] Kramdown option overrides
-    # @return [String] HTML
-    def markdown(markdown, **opts)
-      # require relevant deps on use
+  # Renders Markdown into HTML. The `opts` argument will be merged with the
+  # default Kramdown options in order to change the rendering behaviour.
+  #
+  # @param markdown [String] Markdown
+  # @param opts [Hash] Kramdown option overrides
+  # @return [String] HTML
+  def markdown(markdown, **opts)
+    @markdown_deps_loaded ||= true.tap do
       require 'kramdown'
       require 'rouge'
       require 'kramdown-parser-gfm'
-      
-      opts = default_kramdown_options.merge(opts)
-      Kramdown::Document.new(markdown, **opts).to_html
     end
 
-    # Returns the default Kramdown options used for rendering Markdown.
-    #
-    # @return [Hash] Kramdown options
-    def default_kramdown_options
-      @default_kramdown_options ||= {
-        entity_output: :numeric,
-        syntax_highlighter: :rouge,
-        input: 'GFM',
-        hard_wrap: false
-      }
-    end
+    opts = default_kramdown_options.merge(opts)
+    Kramdown::Document.new(markdown, **opts).to_html
+  end
 
-    # Sets the default Kramdown options used for rendering Markdown.
-    #
-    # @param opts [Hash] Kramdown options
-    # @return [void]
-    def default_kramdown_options=(opts)
-      @default_kramdown_options = opts
-    end
+  # Returns the default Kramdown options used for rendering Markdown.
+  #
+  # @return [Hash] Kramdown options
+  def default_kramdown_options
+    @default_kramdown_options ||= {
+      entity_output: :numeric,
+      syntax_highlighter: :rouge,
+      input: 'GFM',
+      hard_wrap: false
+    }
+  end
+
+  # Sets the default Kramdown options used for rendering Markdown.
+  #
+  # @param opts [Hash] Kramdown options
+  # @return [Hash] Kramdown options
+  def default_kramdown_options=(opts)
+    @default_kramdown_options = opts
   end
 end

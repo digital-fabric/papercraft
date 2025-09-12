@@ -1,7 +1,7 @@
 x = 'bar&baz'
 
 ->() {
-  emit 'foo&bar'
+  raw 'foo&bar'
   br
-  emit x
+  raw x
 }

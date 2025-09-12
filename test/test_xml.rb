@@ -2,104 +2,50 @@
 
 require 'bundler/setup'
 require 'minitest/autorun'
+require 'time'
 require 'papercraft'
 
-class XmlTest < Minitest::Test
-  def test_xml_method_with_block
-    block = proc { :foo }
-    x = Papercraft.xml(&block)
+class HtmlTest < Minitest::Test
+  def test_rss_generation
+    entries = [
+      {
+        title:  'foo',
+        url:    '/01-foo',
+        date:   'Tue, 01 Jan 2025',
+        markdown: '# Foo & Bar'
+      },
+      {
+        title:  'bar',
+        url:    '/02-bar',
+        date:   'Sat, 02 Feb 2025',
+        markdown: '# Bar & Baz'
+      },
+    ]
 
-    assert_kind_of(Papercraft::Template, x)
-    assert_equal :xml, x.mode
-    assert_equal :foo, x.call
-  end
-
-  def test_xml_method_with_argument
-    o = proc { :foo }
-    x = Papercraft.xml(o)
-
-    assert_kind_of(Papercraft::Template, x)
-    assert_equal :xml, x.mode
-    assert_equal :foo, x.call
-
-    x2 = Papercraft.xml(x)
-    assert_equal x2, x
-  end
-
-  def test_generic_xml
-    xml = Papercraft.xml {
-      rss(version: '2.0') {
+    t = -> {
+      rss(version: '2.0', 'xmlns:atom' => 'http://www.w3.org/2005/Atom') {
         channel {
-          item 'foo'
-          item 'bar'
-        }
-      }
-    }
+          title 'Foo'
+          link 'https://foo.com/'
+          description 'Foo RSS'
+          language 'en-us'
+          pubDate 'Thu, 11 Sep 2025 08:00:00 GMT'
+          raw '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" /> '
 
-    assert_equal(
-      '<rss version="2.0"><channel><item>foo</item><item>bar</item></channel></rss>',
-      xml.render
-    )
-  end
-
-  def test_xml_encoding
-    xml = Papercraft.xml {
-      link 'http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp'
-    }
-
-    assert_equal(
-      '<link>http://liftoff.msfc.nasa.gov/news/2003/news-starcity.asp</link>',
-      xml.render
-    )
-  end
-
-  def test_xml_capitalized_tags
-    xml = Papercraft.xml {
-      Foo {
-        Bar 42
-      }
-    }
-
-    assert_equal(
-      '<Foo><Bar>42</Bar></Foo>', xml.render
-    )
-  end
-
-  def test_xml_namespaced_tags
-    xml = Papercraft.xml {
-      soap__Envelope 'hi'
-    }
-    assert_equal(
-      '<soap:Envelope>hi</soap:Envelope>',
-      xml.render
-    )
-  end
-
-  def test_soap_issue_9
-    xml = Papercraft.xml {
-      soap__Envelope(
-        xmlns__soap:  'http://schemas.xmlsoap.org/soap/envelope/',
-        xmlns__xsd: 'http://www.w3.org/2001/XMLSchema',
-        xmlns__xsi: 'http://www.w3.org/2001/XMLSchema-instance'
-      ) {
-        soap__Body {
-          PosRequest(xmlns: 'http://Some.Site') {
-            tag('Ver1.0') {
-              Header {
-                SecretAPIKey 'some_secret_key'
-              }
-              Transaction {
-                SomeData { }
-              }
+          entries.each { |e|
+            item {
+              title e[:title]
+              link "https://noteflakes.com#{e[:url]}"
+              guid "https://noteflakes.com#{e[:url]}"
+              pubDate "#{e[:date]} 00:00:00 GMT"
+              description Papercraft.markdown(e[:markdown]).chomp
             }
           }
         }
       }
     }
 
-    assert_equal(
-      '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><PosRequest xmlns="http://Some.Site"><Ver1.0><Header><SecretAPIKey>some_secret_key</SecretAPIKey></Header><Transaction><SomeData></SomeData></Transaction></Ver1.0></PosRequest></soap:Body></soap:Envelope>'.gsub('<', '\n<'),
-      xml.render.gsub('<', '\n<')
-    )
+    expected = '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Foo</title><link>https://foo.com/</link><description>Foo RSS</description><language>en-us</language><pubDate>Thu, 11 Sep 2025 08:00:00 GMT</pubDate><atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" /> <item><title>foo</title><link>https://noteflakes.com/01-foo</link><guid>https://noteflakes.com/01-foo</guid><pubDate>Tue, 01 Jan 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;foo--bar&quot;&gt;Foo &amp;amp; Bar&lt;/h1&gt;</description></item><item><title>bar</title><link>https://noteflakes.com/02-bar</link><guid>https://noteflakes.com/02-bar</guid><pubDate>Sat, 02 Feb 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;bar--baz&quot;&gt;Bar &amp;amp; Baz&lt;/h1&gt;</description></item></channel></rss>'
+    assert_equal expected, t.render_xml
   end
 end

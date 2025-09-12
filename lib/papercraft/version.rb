@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Papercraft
-  VERSION = '1.4'
+  VERSION = '2.13'
 end

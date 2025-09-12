@@ -1,7 +1,7 @@
 require 'bundler/setup'
 require 'papercraft'
 
-App = Papercraft.html { |**props|
+App = ->(**props) {
   html5 {
     body {
       emit(Header, title: props[:title]) {
@@ -13,14 +13,14 @@ App = Papercraft.html { |**props|
   }
 }
 
-Header = Papercraft.html { |title:|
+Header = ->(title:) {
   header {
     h2(title, id: 'title')
-    emit_yield
+    render_yield
   }
 }
 
-Content = Papercraft.html { |title:|
+Content = ->(title:) {
   article {
     h3 title
     p "Hello, world!"

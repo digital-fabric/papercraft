@@ -2,8 +2,7 @@ pr1 = -> { p 'foo' }
 pr2 = ->(x) { p x }
 
 ->() {
-  emit pr1
-  emit pr2, 42
+  render pr1
   br
-  emit -> { q 'bar' }
+  render pr2, 42
 }

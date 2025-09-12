@@ -1,45 +1,31 @@
-## Compiler
+## Next: fold into Papercraft
 
-- [v] Finish work on compiler: integrate HTML emission with whitespace
-      adjustment mechanism.
-- [v] Add support for all emit possibilities:
-      - text
-      - emit
-      - emit_markdown
-      - etc.
-- [v] 
-- [v] Add support for special tags: especially html5
-- [v] Add support for defer
-- [ ] Make compiled proc return the buffer
-- [ ] Add support for inlining emitted sub-templates
-- [ ] Add support for emit_yield?
+- Publish as Papercraft, remove Papercraft repo, gem
 
+## Add missing escaping of attribute values:
 
+https://stackoverflow.com/questions/9187946/escaping-inside-html-tag-attribute-value
 
-## Enhancements
+## API
 
-- [ ] Behind the scenes compile every 
+- [ ] Support for inlining (needed for doing extension procs - see below)
 
+      - [ ] Detect procs that can be inlined by interrogating the original
+            proc's binding:
 
-- [ ] Automatic compilation
-- [ ] Once everything's compiled, add support for following:
+            ```ruby
+            # for local variable:
+            o.binding.local_variable_defined?(:foo)
+            o.binding.local_variable_get(:foo)
 
-      ```ruby
-      Papercraft.html {
-        # class
-        p.my_class 'foo' #=> <p class="my-class">foo</p>
+            # for const
+            o.binding.eval('Foo')
+            ```
 
-        # or maybe
-        p.class('my-class') 'foo'
+      - [ ] Detect whether proc can be inlined:
 
-        # or maybe
-        p(class: 'my-class') 'foo'
+            - No local var assignments
+            - No return statements
 
-        # or maybe
-        p(class: 'my-class') { 'foo' }
-
-        # id
-        p['my-id'] 'foo' #=> <p id="my-id">foo</p>
-      }
-      ```
-
+      - [ ] Reimplement source map generation such that it can include entries
+            pointing to different files

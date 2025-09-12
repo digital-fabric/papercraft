@@ -8,7 +8,7 @@ end
 task :release do
   require_relative './lib/papercraft/version'
   version = Papercraft::VERSION
-  
+
   puts 'Building papercraft...'
   `gem build papercraft.gemspec`
 
