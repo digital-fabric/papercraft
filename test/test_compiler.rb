@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative './helper'
-require_relative '../lib/p2/compiler'
+require_relative '../lib/papercraft/compiler'
 
 class CompilerTest < Minitest::Test
   Dir["#{FIXTURES_PATH}/compiler/*_source.rb"].each do |fn|
@@ -19,7 +19,7 @@ class CompilerTest < Minitest::Test
 
       if ENV['DEBUG'] == '1'
         p node
-        _source_map, compiled_code = P2::Compiler.compile_to_code(proc)
+        _source_map, compiled_code = Papercraft::Compiler.compile_to_code(proc)
 
         puts '=' * 40
         puts compiled_code

@@ -13,7 +13,7 @@ class Prism::InspectVisitor
   end
 end
 
-module P2
+module Papercraft
   # Represents a tag call
   class TagNode < Prism::Node
     attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block

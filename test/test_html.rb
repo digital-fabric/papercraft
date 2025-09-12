@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'minitest/autorun'
-require 'p2'
+require 'papercraft'
 
 class HtmlTest < Minitest::Test
   def test_void_elements
@@ -202,7 +202,7 @@ class DynamicTagMethodTest < Minitest::Test
     )
   end
 
-  def test_that_dynamic_tag_method_accepts_p2_argument
+  def test_that_dynamic_tag_method_accepts_papercraft_argument
     a = -> { a 'foo', href: '/' }
 
     assert_equal(
@@ -274,7 +274,7 @@ class TagMethodTest < Minitest::Test
     )
   end
 
-  def test_that_tag_method_accepts_p2_argument
+  def test_that_tag_method_accepts_papercraft_argument
     a = -> { tag :a, 'foo', href: '/' }
 
     assert_equal(

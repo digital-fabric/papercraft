@@ -3,15 +3,15 @@
 require 'bundler/inline'
 
 gemfile do
-  gem 'p2', path: '.'
+  gem 'papercraft', path: '.'
   gem 'benchmark-ips', '>= 2.14.0'
 end
 
-require 'p2'
+require 'papercraft'
 require 'erb'
 require 'benchmark/ips'
 
-class P2Baseline
+class PapercraftBaseline
   App = ->(title:) {
     html5 {
       body {
@@ -43,7 +43,7 @@ class P2Baseline
   }
 end
 
-class P2NoYield
+class PapercraftNoYield
   App = ->(title:) {
     html5 {
       body {
@@ -76,11 +76,11 @@ end
 class Coalesced
   App = ->(_b_, title:) do
     _b_ << "<!DOCTYPE html><html><body>#{
-      P2.render_emit_call(Header, title: title, &(->(_b_) {
+      Papercraft.render_emit_call(Header, title: title, &(->(_b_) {
         ; _b_ << "<button>1</button><button>2</button>"
       }.compiled!))
       }#{
-      P2.render_emit_call(Content, title: title)
+      Papercraft.render_emit_call(Content, title: title)
       }</body></html>";
     _b_
   rescue Exception => e
@@ -109,10 +109,10 @@ end
 class Chunked
   App = ->(_b_, title:) do
     _b_ << "<!DOCTYPE html><html><body>" <<
-        P2.render_emit_call(Header, title: title, &(->(_b_) {
+        Papercraft.render_emit_call(Header, title: title, &(->(_b_) {
         ; _b_ << "<button>1</button><button>2</button>"
         }.compiled!)) <<
-        P2.render_emit_call(Content, title: title) <<
+        Papercraft.render_emit_call(Content, title: title) <<
         "</body></html>";
     _b_
   rescue Exception => e
@@ -303,10 +303,10 @@ end
 class Separate
   App = ->(_b_, title:) do
     _b_ << "<!DOCTYPE html><html><body>"
-    _b_ << P2.render_emit_call(Header, title: title, &(->(_b_) {
+    _b_ << Papercraft.render_emit_call(Header, title: title, &(->(_b_) {
         ; _b_ << "<button>1</button><button>2</button>"
         }.compiled!))
-    _b_ << P2.render_emit_call(Content, title: title)
+    _b_ << Papercraft.render_emit_call(Content, title: title)
     _b_ << "</body></html>";
     _b_
   rescue Exception => e
@@ -431,12 +431,12 @@ puts
 # puts CompiledERubi.new.render_app(title: 'title')
 # puts
 
-puts "P2 baseline:"
-puts P2Baseline::App.render(title: 'title')
+puts "Papercraft baseline:"
+puts PapercraftBaseline::App.render(title: 'title')
 puts
 
-puts "P2 no yield:"
-puts P2NoYield::App.render(title: 'title')
+puts "Papercraft no yield:"
+puts PapercraftNoYield::App.render(title: 'title')
 puts
 
 cerb = CompiledERB.new
@@ -447,8 +447,8 @@ Benchmark.ips do |x|
 
   x.report("ERB") { cerb.render_app(title: 'title from context') }
   x.report("ERubi") { cerubi.render_app(title: 'title from context') }
-  x.report("p2 baseline") { P2Baseline::App.render(title: 'title from context') }
-  x.report("p2 no yield") { P2NoYield::App.render(title: 'title from context') }
+  x.report("papercraft baseline") { PapercraftBaseline::App.render(title: 'title from context') }
+  x.report("papercraft no yield") { PapercraftNoYield::App.render(title: 'title from context') }
 
   x.report("inlined") { Inlined::App.(+'', title: 'title from context') }
 

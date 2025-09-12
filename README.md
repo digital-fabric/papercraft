@@ -1,31 +1,31 @@
 <h1 align="center">
-  <img src="p2.png">
+  <img src="papercraft.png">
   <br>
-  P2
+  Papercraft
 </h1>
 
 <h4 align="center">Functional HTML templating for Ruby</h4>
 
 <p align="center">
-  <a href="http://rubygems.org/gems/p2">
-    <img src="https://badge.fury.io/rb/p2.svg" alt="Ruby gem">
+  <a href="http://rubygems.org/gems/papercraft">
+    <img src="https://badge.fury.io/rb/papercraft.svg" alt="Ruby gem">
   </a>
-  <a href="https://github.com/digital-fabric/p2/actions/workflows/test.yml">
-    <img src="https://github.com/digital-fabric/p2/actions/workflows/test.yml/badge.svg" alt="Tests">
+  <a href="https://github.com/digital-fabric/papercraft/actions/workflows/test.yml">
+    <img src="https://github.com/digital-fabric/papercraft/actions/workflows/test.yml/badge.svg" alt="Tests">
   </a>
-  <a href="https://github.com/digital-fabric/p2/blob/master/LICENSE">
+  <a href="https://github.com/digital-fabric/papercraft/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://www.rubydoc.info/gems/p2">API reference</a>
+  <a href="https://www.rubydoc.info/gems/papercraft">API reference</a>
 </p>
 
-## What is P2?
+## What is Papercraft?
 
 ```ruby
-require 'p2'
+require 'papercraft'
 
 page = ->(**props) {
   html {
@@ -39,21 +39,21 @@ page.render {
 #=> "<html><head><title>Title</title></head><body><p>foo</p></body></html>"
 ```
 
-P2 is a templating engine for dynamically producing HTML in Ruby apps. P2
+Papercraft is a templating engine for dynamically producing HTML in Ruby apps. Papercraft
 templates are expressed as Ruby procs, leading to easier debugging, better
 protection against HTML injection attacks, and better code reuse.
 
-P2 templates can be composed in a variety of ways, facilitating the usage of
+Papercraft templates can be composed in a variety of ways, facilitating the usage of
 layout templates, and enabling a component-oriented approach to building web
 interfaces of arbitrary complexity.
 
-In P2, dynamic data is passed explicitly to the template as block/lambda
-arguments, making the data flow easy to follow and understand. P2 also lets
+In Papercraft, dynamic data is passed explicitly to the template as block/lambda
+arguments, making the data flow easy to follow and understand. Papercraft also lets
 developers create derivative templates using full or partial parameter
 application.
 
 ```ruby
-require 'p2'
+require 'papercraft'
 
 page = ->(**props) {
   html {
@@ -73,11 +73,11 @@ hello.render(name: 'world')
 #=> "<html><head><title>Title</title></head><body><h1>Hello, world!</h1></body></html>"
 ```
 
-P2 features:
+Papercraft features:
 
 - Express HTML using plain Ruby procs.
 - Automatic compilation for super-fast execution (about as
-  [fast](https://github.com/digital-fabric/p2/blob/master/examples/perf.rb) as
+  [fast](https://github.com/digital-fabric/papercraft/blob/master/examples/perf.rb) as
   compiled ERB/ERubi).
 - Deferred rendering using `defer`.
 - Simple and easy template composition (for uses such as layouts, or modular
@@ -103,11 +103,11 @@ P2 features:
 - [Cached Rendering](#cached-rendering)
 
 A typical example for a dashboard-type app markup can be found here:
-https://github.com/digital-fabric/p2/blob/master/examples/dashboard.rb
+https://github.com/digital-fabric/papercraft/blob/master/examples/dashboard.rb
 
 ## Getting Started
 
-In P2, an HTML template is expressed as a proc:
+In Papercraft, an HTML template is expressed as a proc:
 
 ```ruby
 html = -> {
@@ -118,7 +118,7 @@ html = -> {
 Rendering a template is done using `Proc#render`:
 
 ```ruby
-require 'p2'
+require 'papercraft'
 
 html.render #=> "<div id="greeter"><p>Hello!</p></div>"
 ```
@@ -176,7 +176,7 @@ An attribute value given as an array will be joined by space characters:
 
 ### Tag and Attribute Formatting
 
-P2 does not make any assumption about what tags and attributes you can use. You
+Papercraft does not make any assumption about what tags and attributes you can use. You
 can mix upper and lower case letters, and you can include arbitrary characters
 in tag and attribute names. However, in order to best adhere to the HTML specs
 and common practices, tag names and attributes will be formatted according to
@@ -202,13 +202,13 @@ normally used for tags:
 
 ### Escaping Content
 
-P2 automatically escapes all text content emitted in a template. The specific
+Papercraft automatically escapes all text content emitted in a template. The specific
 escaping algorithm depends on the template type. To emit raw HTML, use the
 `#raw` method as [described below](#builtin-methods).
 
 ## Builtin Methods
 
-In addition to normal tags, P2 provides the following method calls for templates:
+In addition to normal tags, Papercraft provides the following method calls for templates:
 
 ### `#text` - emit escaped text
 
@@ -334,7 +334,7 @@ markdown to HTML and emits it into the rendered HTML:
 
 ## Template Parameters
 
-In P2, parameters are always passed explicitly. This means that template
+In Papercraft, parameters are always passed explicitly. This means that template
 parameters are specified as block parameters, and are passed to the template on
 rendering:
 
@@ -352,7 +352,7 @@ greeting.render(name: 'world') #=> "<h1>Hello, world!</h1>"
 
 ## Template Logic
 
-Since P2 templates are just a bunch of Ruby, you can easily embed your view
+Since Papercraft templates are just a bunch of Ruby, you can easily embed your view
 logic right in the template:
 
 ```ruby
@@ -382,7 +382,7 @@ page.render { h1 'hi' }
 
 ## Template Composition
 
-P2 makes it easy to compose multiple templates into a whole HTML document. A P2
+Papercraft makes it easy to compose multiple templates into a whole HTML document. A Papercraft
 template can contain other templates, as the following example shows.
 
 ```ruby
@@ -456,7 +456,7 @@ wrapped_hello_world.render #=> "<div><h1>Hello, world!</h1></div>"
 
 ## Higher-Order Templates
 
-P2 also lets you create higher-order templates, that is, templates that take
+Papercraft also lets you create higher-order templates, that is, templates that take
 other templates as parameters, or as blocks. Higher-order templates are handy
 for creating layouts, wrapping templates in arbitrary markup, enhancing
 templates or injecting template parameters.
@@ -531,10 +531,10 @@ template = -> { |md| div { markdown md, auto_ids: false } }
 template.render("# title") #=> "<div><h1>title</h1></div>"
 ```
 
-You can also use `P2.markdown` directly:
+You can also use `Papercraft.markdown` directly:
 
 ```ruby
-P2.markdown('# title') #=> "<h1>title</h1>"
+Papercraft.markdown('# title') #=> "<h1>title</h1>"
 ```
 
 The default Kramdown options are:
@@ -549,10 +549,10 @@ The default Kramdown options are:
 ```
 
 The deafult options can be configured by accessing
-`P2.default_kramdown_options`, e.g.:
+`Papercraft.default_kramdown_options`, e.g.:
 
 ```ruby
-P2.default_kramdown_options[:auto_ids] = false
+Papercraft.default_kramdown_options[:auto_ids] = false
 ```
 
 ## Deferred Evaluation
@@ -610,7 +610,7 @@ page = default_layout.apply {
 
 ## Cached Rendering
 
-P2 provides a simple API for caching the result of a rendering. The cache stores
+Papercraft provides a simple API for caching the result of a rendering. The cache stores
 renderings of a template respective to the given arguments. To automatically
 retrieve the cached rendered HTML, or generate it for the first time, use
 `Proc#render_cached`:

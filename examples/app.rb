@@ -1,5 +1,5 @@
 require 'bundler/setup'
-require 'p2'
+require 'papercraft'
 
 App = ->(**props) {
   html5 {

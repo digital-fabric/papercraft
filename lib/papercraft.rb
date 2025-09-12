@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-require_relative 'p2/template'
-require_relative 'p2/compiler'
-require_relative 'p2/proc_ext'
+require_relative 'papercraft/template'
+require_relative 'papercraft/compiler'
+require_relative 'papercraft/proc_ext'
 
-# P2 is a functional templating library. In P2, templates are expressed as plain
+# Papercraft is a functional templating library. In Papercraft, templates are expressed as plain
 # Ruby procs.
-module P2
+module Papercraft
   # Exception class used to signal templating-related errors
   class Error < RuntimeError; end
 
   extend self
 
-  # Registry of P2 exgtensions
+  # Registry of Papercraft exgtensions
   Extensions = {}
 
-  # Registers extensions to the P2 syntax.
+  # Registers extensions to the Papercraft syntax.
   #
   # @param spec [Hash] hash mapping symbols to procs
   # @return [self]

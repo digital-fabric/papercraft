@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'minitest/autorun'
-require 'p2'
+require 'papercraft'
 
 class ParametersTest < Minitest::Test
   def test_simple_template
@@ -174,7 +174,7 @@ class BlockCallTest < Minitest::Test
         }
       }
     }
-    assert_raises(P2::Error) {
+    assert_raises(Papercraft::Error) {
       a.apply { |&c|
         span(&c)
       }
@@ -432,7 +432,7 @@ end
 
 class TemplateWrapperTest < Minitest::Test
   def test_wrapper_exception_backtrace
-    t = P2::Template.new(->(x) {
+    t = Papercraft::Template.new(->(x) {
       p x.to_s(16)
     })
 
@@ -441,13 +441,13 @@ class TemplateWrapperTest < Minitest::Test
 
     t2 = t.apply(43)
 
-    assert_kind_of P2::Template, t2
+    assert_kind_of Papercraft::Template, t2
     assert_equal "<p>2b</p>", t2.render
     assert_equal "<p>2b</p>", t2.proc.render
   end
 
   def test_wrapper_xml
-    t = P2::Template.new(-> { link 'foo' }, mode: :xml)
+    t = Papercraft::Template.new(-> { link 'foo' }, mode: :xml)
     assert_equal "<link>foo</link>", t.render
     assert_equal :xml, t.mode
   end
@@ -470,7 +470,7 @@ class ExtensionTest < Minitest::Test
   }
 
   def test_extension
-    P2.extension(EXT)
+    Papercraft.extension(EXT)
 
     t = -> {
       youtube_player('foo')
@@ -479,7 +479,7 @@ class ExtensionTest < Minitest::Test
   end
 
   def test_extension_with_block
-    P2.extension(EXT)
+    Papercraft.extension(EXT)
 
     t = -> {
       ulist([1, 2, 3]) { |item|
@@ -493,7 +493,7 @@ class ExtensionTest < Minitest::Test
         p (it * 10)
       }
     }
-    assert_raises(P2::Error) { t.render }
+    assert_raises(Papercraft::Error) { t.render }
   end
 end
 
@@ -572,12 +572,12 @@ end
 class EvaldProcTest < Minitest::Test
   def test_eval_proc_error
     t = eval('-> { hr }')
-    assert_raises(P2::Error) { t.render }
+    assert_raises(Papercraft::Error) { t.render }
   end
 
   def test_irb_proc_error
     t = eval('-> { hr }', binding, '(irb)')
-    assert_raises(P2::Error) { t.render }
+    assert_raises(Papercraft::Error) { t.render }
   end
 end
 
@@ -618,15 +618,15 @@ class AttributeInjectionTest < Minitest::Test
       p 'foo'
     }
 
-    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
-      { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    Papercraft::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
+      { 'data-papercraft-fn' => fn, 'data-papercraft-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
     html = t.render
 
-    assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\">foo</p>", html
+    assert_equal "<p data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 2}:7\">foo</p>", html
   ensure
-    P2::Compiler.html_debug_attribute_injector = nil
+    Papercraft::Compiler.html_debug_attribute_injector = nil
   end
 
   def test_attribute_injection_static_atts
@@ -635,15 +635,15 @@ class AttributeInjectionTest < Minitest::Test
       p 'foo', class: 'bar', baz: true, ynot: nil
     }
 
-    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
-      { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    Papercraft::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
+      { 'data-papercraft-fn' => fn, 'data-papercraft-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
     html = t.render
 
-    assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\" class=\"bar\" baz>foo</p>", html
+    assert_equal "<p data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 2}:7\" class=\"bar\" baz>foo</p>", html
   ensure
-    P2::Compiler.html_debug_attribute_injector = nil
+    Papercraft::Compiler.html_debug_attribute_injector = nil
   end
 
   def test_attribute_injection_dynamic_atts
@@ -653,14 +653,14 @@ class AttributeInjectionTest < Minitest::Test
       p 'foo', class: 'bar', **atts
     }
 
-    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
-      { 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    Papercraft::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
+      { 'data-papercraft-fn' => fn, 'data-papercraft-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
     html = t.render
-    assert_equal "<p data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 3}:7\" class=\"bar\" baz>foo</p>", html
+    assert_equal "<p data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 3}:7\" class=\"bar\" baz>foo</p>", html
   ensure
-    P2::Compiler.html_debug_attribute_injector = nil
+    Papercraft::Compiler.html_debug_attribute_injector = nil
   end
 
   def test_attribute_injection_nested
@@ -673,18 +673,18 @@ class AttributeInjectionTest < Minitest::Test
       }
     }
 
-    P2::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
-      { 'data-p2-level' => level, 'data-p2-fn' => fn, 'data-p2-loc' => "foo://#{fn}:#{line}:#{col}" }
+    Papercraft::Compiler.html_debug_attribute_injector = ->(level, fn, line, col) {
+      { 'data-papercraft-level' => level, 'data-papercraft-fn' => fn, 'data-papercraft-loc' => "foo://#{fn}:#{line}:#{col}" }
     }
 
     html = t.render
 
-    expected = "<div data-p2-level=\"1\" data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 2}:7\">" + 
-               "<h1 data-p2-level=\"2\" data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 3}:9\">" + 
-               "<span data-p2-level=\"3\" data-p2-fn=\"#{__FILE__}\" data-p2-loc=\"foo://#{__FILE__}:#{line + 4}:11\">foo</span></h1></div>"
+    expected = "<div data-papercraft-level=\"1\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 2}:7\">" + 
+               "<h1 data-papercraft-level=\"2\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 3}:9\">" + 
+               "<span data-papercraft-level=\"3\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 4}:11\">foo</span></h1></div>"
     assert_equal expected, html
   ensure
-    P2::Compiler.html_debug_attribute_injector = nil
+    Papercraft::Compiler.html_debug_attribute_injector = nil
   end
 
 end

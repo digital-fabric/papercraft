@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'minitest/autorun'
-require 'p2'
+require 'papercraft'
 
 class MarkdownTest < Minitest::Test
   def test_basic_markdown
@@ -20,11 +20,11 @@ class MarkdownTest < Minitest::Test
       templ.render('# hi')
 
     templ = ->(md) { markdown(md) }
-    P2.default_kramdown_options[:auto_ids] = false
+    Papercraft.default_kramdown_options[:auto_ids] = false
     assert_equal "<h1>hi</h1>\n",
       templ.render('# hi')
   ensure
-    P2.default_kramdown_options.delete(:auto_ids)
+    Papercraft.default_kramdown_options.delete(:auto_ids)
   end
 
   def test_markdown_with_inline_code
@@ -39,7 +39,7 @@ class MarkdownTest < Minitest::Test
       templ.render("before\n\n```ruby\ndef foo; end\n```\n\nafter")
   end
 
-  def test_p2_markdown_method
-    assert_equal "<h1 id=\"hello\">Hello</h1>\n", P2.markdown("# Hello")
+  def test_papercraft_markdown_method
+    assert_equal "<h1 id=\"hello\">Hello</h1>\n", Papercraft.markdown("# Hello")
   end
 end

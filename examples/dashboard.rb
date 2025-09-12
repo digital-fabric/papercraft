@@ -3,12 +3,12 @@
 require 'bundler/inline'
 
 gemfile do
-  gem 'p2', path: '.'
+  gem 'papercraft', path: '.'
   gem 'benchmark-ips', '>= 2.14.0'
   gem 'json'
 end
 
-require 'p2'
+require 'papercraft'
 require 'benchmark/ips'
 require 'json'
 
@@ -29,7 +29,7 @@ require 'json'
 # fast: on a decent development machine, the entire page is rendered in about
 # 30µs, or about 30,000 times per second.
 
-P2.extension(
+Papercraft.extension(
   import_map: ->(map) {
     script(type: 'importmap') {
       raw map.to_json

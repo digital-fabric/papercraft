@@ -1,3 +1,7 @@
+## Next: fold into Papercraft
+
+- Publish as Papercraft, remove Papercraft repo, gem
+
 ## Add missing escaping of attribute values:
 
 https://stackoverflow.com/questions/9187946/escaping-inside-html-tag-attribute-value

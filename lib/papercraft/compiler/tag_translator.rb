@@ -3,7 +3,7 @@
 require 'prism'
 require_relative './nodes'
 
-module P2
+module Papercraft
   # Translates a normal proc AST into an AST containing custom nodes used for
   # generating HTML. This translation is the first step in compiling templates
   # into procs that generate HTML.
@@ -57,7 +57,7 @@ module P2
 
     def match_extension(node)
       return if node.receiver
-      return if !P2::Extensions[node.name]
+      return if !Papercraft::Extensions[node.name]
 
       ExtensionTagNode.new(node, self)
     end
@@ -78,7 +78,7 @@ module P2
       return if @root.parameters&.parameters.block&.name != receiver.name
 
       if node.block
-        raise P2::Error, 'No support for proc invocation with block'
+        raise Papercraft::Error, 'No support for proc invocation with block'
       end
 
       BlockInvocationNode.new(node, self)

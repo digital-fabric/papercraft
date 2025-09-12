@@ -6,7 +6,7 @@ require 'erb/escape'
 require_relative './compiler/nodes'
 require_relative './compiler/tag_translator'
 
-module P2
+module Papercraft
   # A Compiler converts a template into an optimized form that generates HTML
   # efficiently.
   class Compiler < Sirop::Sourcifier
@@ -40,7 +40,7 @@ module P2
     #     template = -> {
     #       h1 'Hello, world!'
     #     }
-    #     compiled = P2::Compiler.compile(template)
+    #     compiled = Papercraft::Compiler.compile(template)
     #     compiled.render #=> '<h1>Hello, world!'
     #
     # @param proc [Proc] template
@@ -155,7 +155,7 @@ module P2
 
     # Visits a tag node.
     #
-    # @param node [P2::TagNode] node
+    # @param node [Papercraft::TagNode] node
     # @return [void]
     def visit_tag_node(node)
       @level += 1
@@ -189,7 +189,7 @@ module P2
 
     # Visits a const tag node.
     #
-    # @param node [P2::ConstTagNode] node
+    # @param node [Papercraft::ConstTagNode] node
     # @return [void]
     def visit_const_tag_node(node)
       flush_html_parts!
@@ -208,7 +208,7 @@ module P2
 
     # Visits a render node.
     #
-    # @param node [P2::RenderNode] node
+    # @param node [Papercraft::RenderNode] node
     # @return [void]
     def visit_render_node(node)
       args = node.call_node.arguments.arguments
@@ -230,7 +230,7 @@ module P2
 
     # Visits a text node.
     #
-    # @param node [P2::TextNode] node
+    # @param node [Papercraft::TextNode] node
     # @return [void]
     def visit_text_node(node)
       return if !node.call_node.arguments
@@ -250,7 +250,7 @@ module P2
 
     # Visits a raw node.
     #
-    # @param node [P2::RawNode] node
+    # @param node [Papercraft::RawNode] node
     # @return [void]
     def visit_raw_node(node)
       return if !node.call_node.arguments
@@ -270,7 +270,7 @@ module P2
 
     # Visits a defer node.
     #
-    # @param node [P2::DeferNode] node
+    # @param node [Papercraft::DeferNode] node
     # @return [void]
     def visit_defer_node(node)
       block = node.block
@@ -294,7 +294,7 @@ module P2
 
     # Visits a builtin node.
     #
-    # @param node [P2::BuiltinNode] node
+    # @param node [Papercraft::BuiltinNode] node
     # @return [void]
     def visit_builtin_node(node)
       case node.tag
@@ -308,18 +308,18 @@ module P2
         args = node.call_node.arguments
         return if !args
 
-        emit_html(node.location, interpolated("P2.markdown(#{format_code(args)})"))
+        emit_html(node.location, interpolated("Papercraft.markdown(#{format_code(args)})"))
       end
     end
 
     # Visits a extension tag node.
     #
-    # @param node [P2::ExtensionTagNode] node
+    # @param node [Papercraft::ExtensionTagNode] node
     # @return [void]
     def visit_extension_tag_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
-      emit("; P2::Extensions[#{node.tag.inspect}].compiled_proc.(__buffer__")
+      emit("; Papercraft::Extensions[#{node.tag.inspect}].compiled_proc.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -329,7 +329,7 @@ module P2
         block_params = []
 
         if node.block.parameters.is_a?(Prism::ItParametersNode)
-          raise P2::Error, "Blocks passed to extensions cannot use it parameter"
+          raise Papercraft::Error, "Blocks passed to extensions cannot use it parameter"
         end
 
         if (params = node.block.parameters&.parameters)
@@ -357,7 +357,7 @@ module P2
 
     # Visits a render_yield node.
     #
-    # @param node [P2::RenderYieldNode] node
+    # @param node [Papercraft::RenderYieldNode] node
     # @return [void]
     def visit_render_yield_node(node)
       flush_html_parts!
@@ -375,7 +375,7 @@ module P2
 
     # Visits a render_children node.
     #
-    # @param node [P2::RenderChildrenNode] node
+    # @param node [Papercraft::RenderChildrenNode] node
     # @return [void]
     def visit_render_children_node(node)
       flush_html_parts!
@@ -496,11 +496,11 @@ module P2
     def convert_tag(tag)
       case tag
       when Prism::SymbolNode, Prism::StringNode
-        P2.underscores_to_dashes(tag.unescaped)
+        Papercraft.underscores_to_dashes(tag.unescaped)
       when Prism::Node
-        interpolated("P2.underscores_to_dashes(#{format_code(tag)})")
+        interpolated("Papercraft.underscores_to_dashes(#{format_code(tag)})")
       else
-        P2.underscores_to_dashes(tag)
+        Papercraft.underscores_to_dashes(tag)
       end
     end
 
@@ -584,9 +584,9 @@ module P2
     def format_html_dynamic_attributes(loc, node)
       injected_atts = compute_injected_attributes(loc)
       if injected_atts.empty?
-        return interpolated("P2.format_tag_attrs(#{format_code(node)})")
+        return interpolated("Papercraft.format_tag_attrs(#{format_code(node)})")
       else
-        return interpolated("P2.format_tag_attrs(#{injected_atts.inspect}.merge(#{format_code(node)}))")
+        return interpolated("Papercraft.format_tag_attrs(#{injected_atts.inspect}.merge(#{format_code(node)}))")
       end
     end
 
@@ -631,14 +631,14 @@ module P2
       when Prism::FalseNode, Prism::NilNode
         nil
       when String, Integer, Float, Symbol
-        "#{P2.underscores_to_dashes(key)}=\\\"#{value}\\\""
+        "#{Papercraft.underscores_to_dashes(key)}=\\\"#{value}\\\""
       else
         key = format_literal(key)
         if is_static_node?(value)
           value = format_literal(value)
-          "#{P2.underscores_to_dashes(key)}=\\\"#{value}\\\""
+          "#{Papercraft.underscores_to_dashes(key)}=\\\"#{value}\\\""
         else
-          "#{P2.underscores_to_dashes(key)}=\\\"#\{#{format_code(value)}}\\\""
+          "#{Papercraft.underscores_to_dashes(key)}=\\\"#\{#{format_code(value)}}\\\""
         end
       end
     end

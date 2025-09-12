@@ -8,7 +8,7 @@ class ::Proc
   #
   # @return [String] compiled proc code
   def compiled_code
-    P2::Compiler.compile_to_code(self).last
+    Papercraft::Compiler.compile_to_code(self).last
   end
 
   # Returns the source map for the compiled proc.
@@ -16,8 +16,8 @@ class ::Proc
   # @return [Array<String>] source map
   def source_map
     loc = source_location
-    fn = compiled? ? loc.first : P2::Compiler.source_location_to_fn(loc)
-    P2::Compiler.source_map_store[fn]
+    fn = compiled? ? loc.first : Papercraft::Compiler.source_location_to_fn(loc)
+    Papercraft::Compiler.source_map_store[fn]
   end
 
   # Returns the AST for the proc.
@@ -57,9 +57,9 @@ class ::Proc
   # @param mode [Symbol] compilation mode (:html, :xml)
   # @return [Proc] compiled proc
   def compile(mode: :html)
-    P2::Compiler.compile(self, mode:).compiled!
+    Papercraft::Compiler.compile(self, mode:).compiled!
   rescue Sirop::Error
-    raise P2::Error, "Dynamically defined procs cannot be compiled"
+    raise Papercraft::Error, "Dynamically defined procs cannot be compiled"
   end
 
   # Renders the proc to HTML with the given arguments.
@@ -68,7 +68,7 @@ class ::Proc
   def render(*a, **b, &c)
     compiled_proc.(+'', *a, **b, &c)
   rescue Exception => e
-    e.is_a?(P2::Error) ? raise : raise(P2.translate_backtrace(e))
+    e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
   end
 
   # Renders the proc to XML with the given arguments.
@@ -77,7 +77,7 @@ class ::Proc
   def render_xml(*a, **b, &c)
     compiled_proc(mode: :xml).(+'', *a, **b, &c)
   rescue Exception => e
-    e.is_a?(P2::Error) ? raise : raise(P2.translate_backtrace(e))
+    e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
   end
 
   # Renders the proc to HTML with the given arguments into the given buffer.
@@ -87,7 +87,7 @@ class ::Proc
   def render_to_buffer(buf, *a, **b, &c)
     compiled_proc.(buf, *a, **b, &c)
   rescue Exception => e
-    raise P2.translate_backtrace(e)
+    raise Papercraft.translate_backtrace(e)
   end
 
   # Returns a proc that applies the given arguments to the original proc.

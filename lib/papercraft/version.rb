@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-module P2
+module Papercraft
   VERSION = '2.13'
 end

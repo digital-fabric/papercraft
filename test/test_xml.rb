@@ -3,7 +3,7 @@
 require 'bundler/setup'
 require 'minitest/autorun'
 require 'time'
-require 'p2'
+require 'papercraft'
 
 class HtmlTest < Minitest::Test
   def test_rss_generation
@@ -38,7 +38,7 @@ class HtmlTest < Minitest::Test
               link "https://noteflakes.com#{e[:url]}"
               guid "https://noteflakes.com#{e[:url]}"
               pubDate "#{e[:date]} 00:00:00 GMT"
-              description P2.markdown(e[:markdown]).chomp
+              description Papercraft.markdown(e[:markdown]).chomp
             }
           }
         }

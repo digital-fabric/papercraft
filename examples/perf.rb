@@ -3,14 +3,13 @@
 require 'bundler/inline'
 
 gemfile do
-  gem 'p2', path: '.'
-  gem 'papercraft'
+  gem 'papercraft', path: '.'
   gem 'benchmark-ips', '>= 2.14.0'
   gem 'erubi'
   gem 'phlex'
 end
 
-require 'p2'
+require 'papercraft'
 require 'erb'
 require 'erubi'
 require 'benchmark/ips'
@@ -35,34 +34,6 @@ Header = ->(title:) {
 }
 
 Content = ->(title:) {
-  article {
-    h3 title
-    p "Hello, world!"
-    div {
-      a(href: 'http://google.com/?a=1&b=2&c=3 4') { h3 "foo bar" }
-      p "lorem ipsum"
-    }
-  }
-}
-
-PapercraftApp = Papercraft.html { |title:|
-  html5 {
-    body {
-      emit(PapercraftHeader, title: title)
-      emit(PapercraftContent, title: title)
-    }
-  }
-}
-
-PapercraftHeader = Papercraft.html { |title:|
-  header {
-    h2(title, id: 'title')
-    button "1"
-    button "2"
-  }
-}
-
-PapercraftContent = Papercraft.html { |title:|
   article {
     h3 title
     p "Hello, world!"
@@ -198,12 +169,8 @@ class PhlexContent < Phlex::HTML
 end
 
 class Renderer
-  def render_p2_app
-    App.render(title: 'title from context')
-  end
-
   def render_papercraft_app
-    PapercraftApp.render(title: 'title from context')
+    App.render(title: 'title from context')
   end
 
   def render_phlex_app
@@ -268,10 +235,6 @@ end
 
 r = Renderer.new
 
-# puts '* P2:'
-# puts r.render_p2_app
-# puts
-
 # puts '* Papercraft:'
 # puts r.render_papercraft_app
 # puts
@@ -290,7 +253,6 @@ Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
 
   x.report("erb") { r.render_erb_app }
-  x.report("p2") { r.render_p2_app }
   x.report("papercraft") { r.render_papercraft_app }
   x.report("phlex") { r.render_phlex_app }
   x.report("erubi") { r.render_erubi_app }

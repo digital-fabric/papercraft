@@ -23,7 +23,7 @@ _erbout.<< "\">\n      <h3>foo bar</h3>\n    </a>\n    <p>lorem ipsum</p>\n  </d
 ; _erbout
 end
 
-def p2(__buffer__, title:)
+def papercraft(__buffer__, title:)
   ; __buffer__  << "<article><h3>"
     ; __buffer__  << ERB::Escape.html_escape((title)) << "</h3><p>Hello, world!</p><div><a href=\"http://google.com/?a=1&b=2&c=3 4\"><h3>foo bar</h3></a><p>lorem ipsum</p></div></article>"; __buffer__
 end
@@ -32,7 +32,7 @@ puts erubi(title: 'foo')
 puts
 puts erb(title: 'foo')
 puts
-puts p2(+'', title: 'foo')
+puts papercraft(+'', title: 'foo')
 puts
 
 
@@ -40,7 +40,7 @@ puts
 Benchmark.ips do |x|
   x.report("erubi") { erubi(title: 'foo') }
   x.report("erb")   { erb(title: 'foo') }
-  x.report("p2")    { p2(+'', title: 'foo') }
+  x.report("papercraft")    { papercraft(+'', title: 'foo') }
 
   x.compare!(order: :baseline)
 end

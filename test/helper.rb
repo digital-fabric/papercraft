@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'minitest/autorun'
-require 'p2'
+require 'papercraft'
 
 FIXTURES_PATH = File.join(__dir__, 'fixtures')
 
