@@ -83,6 +83,7 @@ Papercraft features:
 - Simple and easy template composition (for uses such as layouts, or modular
   templates).
 - Markdown rendering using [Kramdown](https://github.com/gettalong/kramdown/).
+- Rudimentary support for generating XML.
 - Support for extensions.
 - Simple caching API for caching the rendering result.
 
