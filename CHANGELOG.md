@@ -1,3 +1,7 @@
+# 2.14 2025-09-17
+
+- Do not escape inner text of style and script tags
+
 # 2.13 2025-09-11
 
 - Pass level to HTML debug attribute injection proc
