@@ -1,6 +1,4 @@
-## Next: fold into Papercraft
 
-- Publish as Papercraft, remove Papercraft repo, gem
 
 ## Add missing escaping of attribute values:
 

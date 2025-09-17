@@ -163,6 +163,8 @@ module Papercraft
 
       # adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
+      is_raw_inner_text = is_raw_inner_text_element?(tag)
+
       emit_html(node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes))
       return if is_void
 
@@ -177,9 +179,17 @@ module Papercraft
 
       if node.inner_text
         if is_static_node?(node.inner_text)
-          emit_html(node.location, ERB::Escape.html_escape(format_literal(node.inner_text)))
+          if is_raw_inner_text
+            emit_html(node.location, format_literal(node.inner_text))
+          else
+            emit_html(node.location, ERB::Escape.html_escape(format_literal(node.inner_text)))
+          end
         else
-          emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)}))"))
+          if is_raw_inner_text
+            emit_html(node.location, interpolated(format_code(node.inner_text)))
+          else
+            emit_html(node.location, interpolated("ERB::Escape.html_escape((#{format_code(node.inner_text)}))"))
+          end
         end
       end
       emit_html(node.location, format_html_tag_close(tag))
@@ -464,6 +474,14 @@ module Papercraft
       VOID_TAGS.include?(tag.to_s)
     end
 
+    RAW_INNER_TEXT_TAGS = %w(style script)
+
+    def is_raw_inner_text_element?(tag)
+      return false if @mode == :xml
+
+      RAW_INNER_TEXT_TAGS.include?(tag.to_s)
+    end
+
     # Formats an open tag with optional attributes.
     #
     # @param loc [Prism::Location] tag location
@@ -591,7 +609,7 @@ module Papercraft
     end
 
     # Returns true if the given node is a dynamic node.
-    # 
+    #
     # @param node [Prism::Node] attributes node
     # @return [bool] is node dynamic
     def is_dynamic_attribute?(node)
@@ -599,7 +617,7 @@ module Papercraft
     end
 
     # Computes injected attributes for the given tag location.
-    # 
+    #
     # @param loc [Prism::Location] tag location
     # @return [Hash] injected attributes hash
     def compute_injected_attributes(loc)
@@ -610,7 +628,7 @@ module Papercraft
     end
 
     # Computes injected attributes for the given tag location.
-    # 
+    #
     # @param loc [Prism::Location] tag location
     # @return [Array<String>] array of attribute strings
     def format_injected_attributes(loc)

@@ -679,12 +679,45 @@ class AttributeInjectionTest < Minitest::Test
 
     html = t.render
 
-    expected = "<div data-papercraft-level=\"1\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 2}:7\">" + 
-               "<h1 data-papercraft-level=\"2\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 3}:9\">" + 
+    expected = "<div data-papercraft-level=\"1\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 2}:7\">" +
+               "<h1 data-papercraft-level=\"2\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 3}:9\">" +
                "<span data-papercraft-level=\"3\" data-papercraft-fn=\"#{__FILE__}\" data-papercraft-loc=\"foo://#{__FILE__}:#{line + 4}:11\">foo</span></h1></div>"
     assert_equal expected, html
   ensure
     Papercraft::Compiler.html_debug_attribute_injector = nil
   end
+end
 
+class RawIOnnerTextTest < Minitest::Test
+  def test_script_tag_with_content
+    t = -> {
+      script 'let a = 1 & 2; let b = "abc";'
+    }
+
+    assert_equal '<script>let a = 1 & 2; let b = "abc";</script>', t.render
+  end
+
+  def test_script_tag_module_with_content
+    t = -> {
+      script 'let a = 1 & 2; let b = "abc";', type: 'module'
+    }
+
+    assert_equal '<script type="module">let a = 1 & 2; let b = "abc";</script>', t.render
+  end
+
+  def test_style_tag_with_content
+    t = -> {
+      style 'a&b { color: black }'
+    }
+
+    assert_equal '<style>a&b { color: black }</style>', t.render
+  end
+
+  def test_script_tag_module_with_content
+    t = -> {
+      style 'a&b { color: black }', media: '(width < 500px)'
+    }
+
+    assert_equal '<style media="(width < 500px)">a&b { color: black }</style>', t.render
+  end
 end

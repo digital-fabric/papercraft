@@ -30,7 +30,7 @@ require 'papercraft'
 page = ->(**props) {
   html {
     head { title 'My Title' }
-    body { render_yield **props }
+    body { render_children **props }
   }
 }
 page.render {
@@ -58,7 +58,7 @@ require 'papercraft'
 page = ->(**props) {
   html {
     head { title 'My Title' }
-    body { yield **props }
+    body { render_children **props }
   }
 }
 page.render {
@@ -99,7 +99,7 @@ Papercraft features:
 - [Parameter and Block Application](#parameter-and-block-application)
 - [Higher-Order Templates](#higher-order-templates)
 - [Layout Template Composition](#layout-template-composition)
-- [Emitting Markdown](#emitting-markdown)
+- [Rendering Markdown](#rendering-markdown)
 - [Deferred Evaluation](#deferred-evaluation)
 - [Cached Rendering](#cached-rendering)
 
@@ -239,14 +239,14 @@ TITLE_HTML = '<h1>hi</h1>'
 }.render #=> <div><h1>hi</h1></div>
 ```
 
-### `#render_yield` - emit given block
+### `#render_children` - render the given block
 
-`#render_yield` is used to emit a given block. If no block is given, a
+`#render_children` is used to emit a given block. If no block is given, a
 `LocalJumpError` exception is raised:
 
 ```ruby
 Card = ->(**props) {
-  card { render_yield(**props) }
+  card { render_children(**props) }
 }
 
 Card.render(foo: 'bar') { |foo|
@@ -254,13 +254,8 @@ Card.render(foo: 'bar') { |foo|
 } #=> <card><h1>bar</h1></card>
 ```
 
-`render_yield` can be called with or without arguments, which are passed to the
+`render_children` can be called with or without arguments, which are passed to the
 given block.
-
-### `#render_children` - emit given block
-
-`#render_children` is used to emit a given block, but does not raise an
-exception if no block is given.
 
 ### `#defer` - emit deferred HTML
 
@@ -275,7 +270,7 @@ Layout = -> {
     }
   }
   body {
-    render_yield
+    render_children
   }
 }
 
@@ -368,12 +363,12 @@ logic right in the template:
 
 ## Template Blocks
 
-Templates can also accept and render blocks by using `render_yield`:
+Templates can also accept and render blocks by using `render_children`:
 
 ```ruby
 page = -> {
   html {
-    body { render_yield }
+    body { render_children }
   }
 }
 
@@ -446,7 +441,7 @@ hello_world = hello.apply('world')
 hello_world.render #=> "<h1>Hello, world!</h1>"
 
 # block application
-div_wrap = -> { div { render_yield } }
+div_wrap = -> { div { render_children } }
 wrapped_h1 = div_wrap.apply { h1 'hi' }
 wrapped_h1.render #=> "<div><h1>hi</h1></div>"
 
@@ -474,7 +469,7 @@ wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 The inner template can also be passed as a block, as shown above:
 
 ```ruby
-div_wrap = -> { div { render_yield } }
+div_wrap = -> { div { render_children } }
 wrapped_greeter = div_wrap.apply { h1 'hi' }
 wrapped_greeter.render #=> "<div><h1>hi</h1></div>"
 ```
@@ -494,7 +489,7 @@ default_layout = -> { |**params|
       title: params[:title]
     }
     body {
-      render_yield(**params)
+      render_children(**params)
     }
   }
 }
@@ -512,7 +507,7 @@ article_layout.render(
 )
 ```
 
-## Emitting Markdown
+## Rendering Markdown
 
 Markdown is rendered using the
 [Kramdown](https://kramdown.gettalong.org/index.html) gem. To emit Markdown, use
@@ -583,7 +578,7 @@ default_layout = -> { |**args|
   head {
     defer { render deps.head_markup }
   }
-  body { render_yield **args }
+  body { render_children **args }
 }
 
 button = proc { |text, onclick|
