@@ -1,3 +1,8 @@
+# 2.15 2025-10-01
+
+- Add `Papercraft.markdown_doc` method
+- Emit DOCTYPE for `#html` as well as `#html5`
+
 # 2.14 2025-09-17
 
 - Do not escape inner text of style and script tags
