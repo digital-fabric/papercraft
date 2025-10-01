@@ -94,13 +94,14 @@ module Papercraft
     ArgumentError.new(message).tap { it.set_backtrace(backtrace) }
   end
 
-  # Renders Markdown into HTML. The `opts` argument will be merged with the
-  # default Kramdown options in order to change the rendering behaviour.
+  # Returns a Kramdown doc for the given markdown. The `opts` argument will be
+  # merged with the default Kramdown options in order to change the rendering
+  # behaviour.
   #
   # @param markdown [String] Markdown
   # @param opts [Hash] Kramdown option overrides
-  # @return [String] HTML
-  def markdown(markdown, **opts)
+  # @return [Kramdown::Document] Kramdown document
+  def markdown_doc(markdown, **opts)
     @markdown_deps_loaded ||= true.tap do
       require 'kramdown'
       require 'rouge'
@@ -108,7 +109,17 @@ module Papercraft
     end
 
     opts = default_kramdown_options.merge(opts)
-    Kramdown::Document.new(markdown, **opts).to_html
+    Kramdown::Document.new(markdown, **opts)
+  end
+
+  # Renders Markdown into HTML. The `opts` argument will be merged with the
+  # default Kramdown options in order to change the rendering behaviour.
+  #
+  # @param markdown [String] Markdown
+  # @param opts [Hash] Kramdown option overrides
+  # @return [String] HTML
+  def markdown(markdown, **opts)
+    markdown_doc(markdown, **opts).to_html
   end
 
   # Returns the default Kramdown options used for rendering Markdown.

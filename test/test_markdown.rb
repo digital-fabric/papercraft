@@ -42,4 +42,10 @@ class MarkdownTest < Minitest::Test
   def test_papercraft_markdown_method
     assert_equal "<h1 id=\"hello\">Hello</h1>\n", Papercraft.markdown("# Hello")
   end
+
+  def test_papercraft_markdown_doc_method
+    doc = Papercraft.markdown_doc("# Hello")
+    assert_kind_of Kramdown::Document, doc
+    assert_equal "<h1 id=\"hello\">Hello</h1>\n", doc.to_html
+  end
 end
