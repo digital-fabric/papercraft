@@ -305,7 +305,7 @@ large_button = ->(title) { button(title, class: 'large') }
 }.render #=> <button class="large">foo</button>
 ```
 
-### `#html5` - emit an HTML5 document type declaration and html tag
+### `#html`/`#html5` - emit an HTML5 document type declaration and html tag
 
 ```ruby
 -> {

@@ -399,7 +399,7 @@ class DeferTest < Minitest::Test
       h1 'foo'
     }
 
-    assert_equal "<html><head><title>My super page</title></head><body><h1>foo</h1></body></html>",
+    assert_equal "<!DOCTYPE html><html><head><title>My super page</title></head><body><h1>foo</h1></body></html>",
       html
   end
 
@@ -430,7 +430,7 @@ class DeferTest < Minitest::Test
 
     html = layout.render(&user_form)
 
-    assert_equal "<html><head><title>Awesome user form</title></head><body><form><h3>Syntax error!</h3><p>Welcome to the awesome user form</p></form></body></html>",
+    assert_equal "<!DOCTYPE html><html><head><title>Awesome user form</title></head><body><form><h3>Syntax error!</h3><p>Welcome to the awesome user form</p></form></body></html>",
       html
   end
 end

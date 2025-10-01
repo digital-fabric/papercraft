@@ -310,7 +310,7 @@ module Papercraft
       case node.tag
       when :tag
         args = node.call_node.arguments&.arguments
-      when :html5
+      when :html, :html5
         emit_html(node.location, '<!DOCTYPE html><html>')
         visit(node.block.body) if node.block
         emit_html(node.block.closing_loc, '</html>')

@@ -1,4 +1,12 @@
+## Immediate
 
+- [ ] Add `Papercraft.markdown_doc` method, returns Kramdown document.
+- [v] Add automatic DOCTYPE on `html` calls.
+
+## Code generation
+
+- Benchmark preallocating the buffer with a capacity of 4096 or 8192 in `Proc#render`.
+  - for templates of ~2400 bytes, we get ~ 8% speedup
 
 ## Add missing escaping of attribute values:
 
