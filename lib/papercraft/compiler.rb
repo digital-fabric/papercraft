@@ -204,11 +204,12 @@ module Papercraft
     def visit_const_tag_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
+      emit("; ")
       if node.call_node.receiver
-        emit(node.call_node.receiver.location)
+        emit(format_code(node.call_node.receiver))
         emit('::')
       end
-      emit("; #{node.call_node.name}.compiled_proc.(__buffer__")
+      emit("#{node.call_node.name}.compiled_proc.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)

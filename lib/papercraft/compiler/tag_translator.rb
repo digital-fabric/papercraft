@@ -63,8 +63,13 @@ module Papercraft
     end
 
     def match_const_tag(node)
-      return if node.receiver
       return if node.name !~ /^[A-Z]/
+      case node.receiver
+      when nil, Prism::ConstantReadNode, Prism::ConstantPathNode
+        # ok
+      else
+        return
+      end
 
       ConstTagNode.new(node, self)
     end

@@ -105,6 +105,89 @@ class RenderComponentTest < Minitest::Test
     }
     assert_equal '<header><h1>bar</h1><button>hi</button></header>', template.render
   end
+
+  Foo = ->(name) { h1 "Hello, #{name}!" }
+
+  def test_render_constant_component
+    template = -> {
+      div { render Foo, 'foo' }
+    }
+    assert_equal "<div><h1>Hello, foo!</h1></div>", template.render
+
+    template = -> {
+      div { Foo('bar') }
+    }
+    assert_equal "<div><h1>Hello, bar!</h1></div>", template.render
+  end
+
+  module Blah
+    Foo = ->(name) { h2 "Hello, #{name}!" }
+  end
+
+  def test_render_namespaced_constant_component
+    template = -> {
+      div { render Blah::Foo, 'foo' }
+    }
+    assert_equal "<div><h2>Hello, foo!</h2></div>", template.render
+
+    template = -> {
+      div { Blah::Foo('bar') }
+    }
+    assert_equal "<div><h2>Hello, bar!</h2></div>", template.render
+  end
+
+  module A
+    module B
+      Foo = ->(name) { h3 "Hello, #{name}!" }
+    end
+  end
+
+  def test_render_deeply_namespaced_constant_component
+    template = -> {
+      div { render A::B::Foo, 'foo' }
+    }
+    assert_equal "<div><h3>Hello, foo!</h3></div>", template.render
+
+    template = -> {
+      div { A::B::Foo('bar') }
+    }
+    assert_equal "<div><h3>Hello, bar!</h3></div>", template.render
+  end
+
+  def test_render_invalid_constant_component
+    template = -> {
+      div { Bar('foo') }
+    }
+    assert_raises(NameError) { template.render }
+
+    template = -> {
+      div { Blah::Bar('foo') }
+    }
+    assert_raises(NameError) { template.render }
+
+    template = -> {
+      div { A::B::Bar('foo') }
+    }
+    assert_raises(NameError) { template.render }
+  end
+
+  module ::C
+    Foo = ->(name) { h4 "Hello, #{name}!" }
+  end
+
+  def test_render_global_namespaced_constant_component
+    template = -> {
+      div { render ::C::Foo, 'foo' }
+    }
+    assert_equal "<div><h4>Hello, foo!</h4></div>", template.render
+
+    template = -> {
+      div { ::C::Foo('bar') }
+    }
+    assert_equal "<div><h4>Hello, bar!</h4></div>", template.render
+  end
+
+
 end
 
 class RenderYieldTest < Minitest::Test
