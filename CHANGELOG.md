@@ -1,3 +1,7 @@
+# 2.16 2025-10-02
+
+- Add support for namespaced components
+
 # 2.15 2025-10-01
 
 - Add `Papercraft.markdown_doc` method
