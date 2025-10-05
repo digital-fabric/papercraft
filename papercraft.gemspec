@@ -22,9 +22,9 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency      'sirop',                '~>0.9'
   s.add_runtime_dependency      'kramdown',             '~>2.5.1'
-  s.add_runtime_dependency      'rouge',                '~>4.5.1'
+  s.add_runtime_dependency      'rouge',                '~>4.6.1'
   s.add_runtime_dependency      'kramdown-parser-gfm',  '~>1.1.0'
 
-  s.add_development_dependency  'minitest',             '~>5.25.4'
-  s.add_development_dependency  'benchmark-ips',        '~>2.7.2'
+  s.add_development_dependency  'minitest',             '~>5.25.5'
+  s.add_development_dependency  'benchmark-ips',        '~>2.14.0'
 end

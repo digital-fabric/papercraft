@@ -1,8 +1,3 @@
-## Immediate
-
-- [ ] Add `Papercraft.markdown_doc` method, returns Kramdown document.
-- [v] Add automatic DOCTYPE on `html` calls.
-
 ## Code generation
 
 - Benchmark preallocating the buffer with a capacity of 4096 or 8192 in `Proc#render`.
