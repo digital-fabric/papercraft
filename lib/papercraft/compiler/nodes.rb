@@ -149,13 +149,20 @@ module Papercraft
 
   # Represents a builtin call
   class BuiltinNode
-    attr_reader :tag, :call_node, :location, :block
+    attr_reader :tag, :call_node, :location, :attributes, :block
 
     def initialize(call_node, translator)
       @call_node = call_node
       @tag = call_node.name
       @location = call_node.location
       @block = call_node.block && translator.visit(call_node.block)
+
+      args = call_node.arguments&.arguments
+      return if !args
+
+      if args.size == 1 && args.first.is_a?(Prism::KeywordHashNode)
+        @attributes = args.first
+      end
     end
 
     def accept(visitor)

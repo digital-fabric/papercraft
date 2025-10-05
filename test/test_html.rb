@@ -23,6 +23,20 @@ class HtmlTest < Minitest::Test
     )
   end
 
+  def test_html
+    assert_equal(
+      '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
+      -> { html { div { h1 'foobar' } } }.render
+    )
+  end
+
+  def test_html_with_lang
+    assert_equal(
+      '<!DOCTYPE html><html lang="en"><div><h1>foobar</h1></div></html>',
+      -> { html(lang: "en") { div { h1 'foobar' } } }.render
+    )
+  end
+
   def test_link_stylesheet
     skip
 

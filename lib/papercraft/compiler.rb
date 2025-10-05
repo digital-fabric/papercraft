@@ -312,7 +312,9 @@ module Papercraft
       when :tag
         args = node.call_node.arguments&.arguments
       when :html, :html5
-        emit_html(node.location, '<!DOCTYPE html><html>')
+        emit_html(node.location, '<!DOCTYPE html>')
+        emit_html(node.location, format_html_tag_open(node.location, 'html', node.attributes))
+        # emit_html(node.location, '<!DOCTYPE html><html>')
         visit(node.block.body) if node.block
         emit_html(node.block.closing_loc, '</html>')
       when :markdown
