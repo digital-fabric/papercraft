@@ -1,3 +1,9 @@
+# 2.17 2025-10-05
+
+- Update dependencies
+- Add support for attributes in `html` tag
+- Add `Papercraft.__clear__extensions__` method
+
 # 2.16 2025-10-02
 
 - Add support for namespaced components
