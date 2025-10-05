@@ -24,6 +24,14 @@ module Papercraft
     self
   end
 
+  # Clears all registered extensions.
+  #
+  # @return [self]
+  def __clear_extensions__
+    Extensions.clear
+    self
+  end
+
   # Formats the given string, converting underscores to dashes.
   #
   # @param tag [String, Symbol] input string
