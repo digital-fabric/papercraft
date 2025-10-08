@@ -331,6 +331,43 @@ class ApplyTest < Minitest::Test
     c = b.render { h1 'foo' }
     assert_equal '<body><article><h1>foo</h1></article></body>', c
   end
+
+  def test_apply_with_block_with_yield_with_args
+    a = proc { |*a, **b| body { render_yield(*a, **b) } }
+    b = a.apply(:foo, :bar, p: 42, q: 43) { |*c, **d|
+      article { render_yield(*c, **d) }
+    }
+
+    buf = []
+    c = b.render(:baz, :but, x: 1, y: 2) { |*a, **b|
+      buf << a << b
+      h1 "foo"
+    }
+    assert_equal '<body><article><h1>foo</h1></article></body>', c
+    assert_equal [
+      [:foo, :bar, :baz, :but],
+      {
+        p: 42,
+        q: 43,
+        x: 1,
+        y: 2
+      }
+    ], buf
+  end
+
+  def test_apply_with_block_render_with_block
+    a = proc { |*a, **b| body { render_yield(*a, **b) } }
+    b = a.apply(:foo, :bar, p: 42, q: 43) { |*c, **d|
+      article { render_yield(*c, **d) }
+    }
+
+    buf = []
+    c = b.render(:baz, :but, x: 1, y: 2) { |*a, **b|
+      buf << a << b
+      h1 "foo"
+    }
+    
+  end
 end
 
 Title = ->(title) { h1 title }
