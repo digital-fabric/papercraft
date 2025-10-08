@@ -1,3 +1,7 @@
+# 2.19 2025-10-08
+
+- Use gem.coop in Gemfile
+
 # 2.18 2025-10-08
 
 - Add `link_stylesheet` extension
