@@ -38,8 +38,6 @@ class HtmlTest < Minitest::Test
   end
 
   def test_link_stylesheet
-    skip
-
     html = -> {
       link_stylesheet '/assets/style.css'
     }
@@ -52,7 +50,7 @@ class HtmlTest < Minitest::Test
       link_stylesheet '/assets/style.css', media: 'print'
     }
     assert_equal(
-      '<link media="print" rel="stylesheet" href="/assets/style.css">',
+      '<link rel="stylesheet" href="/assets/style.css" media="print">',
       html.render
     )
   end

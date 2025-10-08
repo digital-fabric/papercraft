@@ -12,8 +12,12 @@ module Papercraft
 
   extend self
 
-  # Registry of Papercraft exgtensions
-  Extensions = {}
+  # Registry of Papercraft extensions
+  Extensions = {
+    link_stylesheet: ->(href, **atts) {
+      link(rel: "stylesheet", href:, **atts)
+    }
+  }
 
   # Registers extensions to the Papercraft syntax.
   #
