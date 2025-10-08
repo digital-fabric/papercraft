@@ -1,3 +1,9 @@
+# 2.18 2025-10-08
+
+- Add `link_stylesheet` extension
+- Add support for rendering templates in IRB
+- Update Sirop to 1.0
+
 # 2.17 2025-10-05
 
 - Update dependencies
