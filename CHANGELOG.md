@@ -1,3 +1,8 @@
+# 2.20 2025-10-08
+
+- Raise error on void element with child nodes or inner text
+- Fix compilation of empty template
+
 # 2.19 2025-10-08
 
 - Use gem.coop in Gemfile
