@@ -1,3 +1,8 @@
+# 2.21 2025-10-08
+
+- Fix `Proc#apply` parameter handling
+- Put Proc extensions in separate module, included into Proc
+
 # 2.20 2025-10-08
 
 - Raise error on void element with child nodes or inner text
