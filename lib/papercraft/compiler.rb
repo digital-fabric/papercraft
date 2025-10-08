@@ -165,6 +165,10 @@ module Papercraft
       is_void = is_void_element?(tag)
       is_raw_inner_text = is_raw_inner_text_element?(tag)
 
+      if is_void && (node.block || node.inner_text)
+        raise Papercraft::Error, "Void element #{tag} cannot contain child nodes or inner text"
+      end
+
       emit_html(node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes))
       return if is_void
 

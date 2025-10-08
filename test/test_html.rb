@@ -16,6 +16,18 @@ class HtmlTest < Minitest::Test
     assert_equal '<hr><input value="foo"><br>hi<hr>', h.render
   end
 
+  def test_error_on_void_elements_with_block
+    t = -> {
+      hr { foo }
+    }
+    assert_raises(Papercraft::Error) { t.render }
+    
+    t = -> {
+      input "foo"
+    }
+    assert_raises(Papercraft::Error) { t.render }
+  end
+
   def test_html5
     assert_equal(
       '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
