@@ -537,14 +537,6 @@ class TemplateWrapperTest < Minitest::Test
 end
 
 class ExtensionTest < Minitest::Test
-  def setup
-    Papercraft.__clear_extensions__
-  end
-
-  def teardown
-    Papercraft.__clear_extensions__
-  end
-
   EXT = {
     youtube_player: ->(ref) {
       iframe(
