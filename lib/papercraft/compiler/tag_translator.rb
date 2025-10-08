@@ -16,6 +16,8 @@ module Papercraft
     end
 
     def self.transform(ast, root)
+      return nil if !ast
+
       ast.accept(new(root))
     end
 

@@ -5,6 +5,15 @@ require 'minitest/autorun'
 require 'papercraft'
 
 class ParametersTest < Minitest::Test
+  def test_empty_template
+    t = -> { }
+    assert_equal '', t.render
+
+    t = ->(foo) { }
+    assert_raises(ArgumentError) { t.render }
+    assert_equal '', t.render(1)
+  end
+
   def test_simple_template
     h = ->(foo) { h1 foo }
 
