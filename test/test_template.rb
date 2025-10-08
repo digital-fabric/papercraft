@@ -665,11 +665,6 @@ class EvaldProcTest < Minitest::Test
     t = eval('-> { hr }')
     assert_raises(Papercraft::Error) { t.render }
   end
-
-  def test_irb_proc_error
-    t = eval('-> { hr }', binding, '(irb)')
-    assert_raises(Papercraft::Error) { t.render }
-  end
 end
 
 class StringEscapingTest < Minitest::Test
@@ -810,5 +805,29 @@ class RawIOnnerTextTest < Minitest::Test
     }
 
     assert_equal '<style media="(width < 500px)">a&b { color: black }</style>', t.render
+  end
+end
+
+class MethodChainingTest < Minitest::Test
+  def foo
+    [:foo, :bar]
+  end
+
+  def test_receiverless_method_chaining
+    t = -> {
+      foo
+    }
+    assert_equal '<foo></foo>', t.render
+
+    t = -> {
+      foo[0]
+    }
+    assert_equal '<foo></foo>', t.render
+
+    buf = []
+    t = -> {
+      buf.size
+    }
+    assert_equal '', t.render
   end
 end

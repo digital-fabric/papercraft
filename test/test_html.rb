@@ -58,8 +58,6 @@ class HtmlTest < Minitest::Test
   end
 
   def test_style
-    skip
-
     html = -> {
       style <<~CSS.chomp
         * { color: red }
@@ -73,8 +71,6 @@ class HtmlTest < Minitest::Test
   end
 
   def test_script
-    skip
-
     html = -> {
       script <<~JS.chomp
         if (a && b) c();
