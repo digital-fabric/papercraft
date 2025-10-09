@@ -1,3 +1,7 @@
+# 2.22 2025-10-08
+
+- Use `prepend` instead of `include` to extend the `Proc` class
+
 # 2.21 2025-10-08
 
 - Fix `Proc#apply` parameter handling

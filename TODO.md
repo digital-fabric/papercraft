@@ -1,11 +1,12 @@
-## Code generation
-
-- Benchmark preallocating the buffer with a capacity of 4096 or 8192 in `Proc#render`.
-  - for templates of ~2400 bytes, we get ~ 8% speedup
-
 ## Add missing escaping of attribute values:
 
-https://stackoverflow.com/questions/9187946/escaping-inside-html-tag-attribute-value
+https://html.spec.whatwg.org/multipage/parsing.html#serialising-html-fragments
+
+- Replace any occurrence of the "&" character by the string "&amp;".
+- Replace any occurrences of the U+00A0 NO-BREAK SPACE character by the string "&nbsp;".
+- Replace any occurrences of the "<" character by the string "&lt;".
+- Replace any occurrences of the ">" character by the string "&gt;".
+- If the algorithm was invoked in the attribute mode, then replace any occurrences of the """ character by the string "&quot;".
 
 ## API
 
