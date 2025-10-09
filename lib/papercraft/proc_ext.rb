@@ -125,4 +125,4 @@ module Papercraft
   end
 end
 
-::Proc.include(Papercraft::ProcExtensions)
+::Proc.prepend(Papercraft::ProcExtensions)
