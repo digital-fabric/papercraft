@@ -1,3 +1,7 @@
+# 2.23 2025-10-12
+
+- Update ERB to version 5.1.1
+
 # 2.22 2025-10-08
 
 - Use `prepend` instead of `include` to extend the `Proc` class
