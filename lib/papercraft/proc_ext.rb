@@ -73,10 +73,10 @@ module Papercraft
     # Caches and returns the rendered HTML for the template with the given
     # arguments.
     #
+    # @param key [any] Cache key
     # @return [String] HTML string
-    def render_cached(*args, **kargs, &block)
+    def render_cache(key, *args, **kargs, &block)
       @render_cache ||= {}
-      key = args.empty? && kargs.empty? && !block ? nil : [args, kargs, block&.source_location]
       @render_cache[key] ||= render(*args, **kargs, &block)
     end
   end

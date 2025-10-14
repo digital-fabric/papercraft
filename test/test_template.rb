@@ -626,74 +626,29 @@ class ExtensionTest < Minitest::Test
   end
 end
 
-class RenderCachedTest < Minitest::Test
-  def test_render_cached
+class RenderCacheTest < Minitest::Test
+  def test_render_cache
     counter = 0
     t = ->(*args) {
       counter += 1
       p args.join
     }
 
-    assert_equal '<p>foo</p>', t.render_cached(:foo)
+    assert_equal '<p>foo</p>', t.render_cache(:foo, :foo)
     assert_equal 1, counter
-    assert_equal '<p>foo</p>', t.render_cached(:foo)
+    assert_equal '<p>foo</p>', t.render_cache(:foo, :foo)
+    assert_equal 1, counter
+    assert_equal '<p>foo</p>', t.render_cache(:foo, :bar)
     assert_equal 1, counter
 
-    assert_equal '<p>bar</p>', t.render_cached(:bar)
+    assert_equal '<p>bar</p>', t.render_cache(:bar, :bar)
     assert_equal 2, counter
-    assert_equal '<p>bar</p>', t.render_cached(:bar)
+    assert_equal '<p>bar</p>', t.render_cache(:bar, :bar)
     assert_equal 2, counter
 
-    assert_equal '<p>foobar</p>', t.render_cached(:foo, :bar)
+    assert_equal '<p>foobar</p>', t.render_cache(:baz, :foo, :bar)
     assert_equal 3, counter
-    assert_equal '<p>foobar</p>', t.render_cached(:foo, :bar)
-    assert_equal 3, counter
-  end
-
-  def test_render_cached_kargs
-    counter = 0
-    t = ->(foo:, bar:) {
-      counter += 1
-      p foo
-      p bar
-    }
-
-    assert_equal '<p>1</p><p>2</p>', t.render_cached(foo: 1, bar: 2)
-    assert_equal 1, counter
-    assert_equal '<p>1</p><p>2</p>', t.render_cached(foo: 1, bar: 2)
-    assert_equal 1, counter
-
-    assert_equal '<p>42</p><p>43</p>', t.render_cached(foo: 42, bar: 43)
-    assert_equal 2, counter
-    assert_equal '<p>42</p><p>43</p>', t.render_cached(foo: 42, bar: 43)
-    assert_equal 2, counter
-  end
-
-  def test_render_cached_with_block
-    counter = 0
-    t = ->(foo:, bar:) {
-      counter += 1
-      div { render_yield(foo:) }
-    }
-
-    r = ->(**props) {
-      t.render_cached(**props) { |foo:| p foo }
-    }
-
-    r2 = ->(**props) {
-      t.render_cached(**props) { |foo:| q foo }
-    }
-
-    assert_equal '<div><p>bar</p></div>', r.(foo: 'bar', bar: 'baz')
-    assert_equal 1, counter
-
-    assert_equal '<div><p>bar</p></div>', r.(foo: 'bar', bar: 'baz')
-    assert_equal 1, counter
-
-    assert_equal '<div><q>bar</q></div>', r2.(foo: 'bar', bar: 'baz')
-    assert_equal 2, counter
-
-    assert_equal '<div><q>baz</q></div>', r2.(foo: 'baz', bar: 'baz')
+    assert_equal '<p>foobar</p>', t.render_cache(:baz, :foo, :bar)
     assert_equal 3, counter
   end
 end
