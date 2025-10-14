@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
   s.files       = `git ls-files README.md CHANGELOG.md lib`.split
   s.homepage    = 'http://github.com/digital-fabric/papercraft'
   s.metadata    = {
-    "homepage_uri" => "https://github.com/digital-fabric/papercraft",
-    "documentation_uri" => "https://www.rubydoc.info/gems/papercraft",
+    "homepage_uri" => "https://papercraft.noteflakes.com/",
+    "source_code_uri" => "https://github.com/digital-fabric/papercraft",
     "changelog_uri" => "https://github.com/digital-fabric/papercraft/blob/master/CHANGELOG.md"
   }
 
