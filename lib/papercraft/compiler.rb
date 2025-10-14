@@ -178,7 +178,7 @@ module Papercraft
       when Prism::BlockArgumentNode
         flush_html_parts!
         adjust_whitespace(node.block)
-        emit("; #{format_code(node.block.expression)}.compiled_proc.(__buffer__)")
+        emit("; #{format_code(node.block.expression)}.__compiled_proc__.(__buffer__)")
       end
 
       if node.inner_text
@@ -213,7 +213,7 @@ module Papercraft
         emit(format_code(node.call_node.receiver))
         emit('::')
       end
-      emit("#{node.call_node.name}.compiled_proc.(__buffer__")
+      emit("#{node.call_node.name}.__compiled_proc__.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -229,17 +229,17 @@ module Papercraft
       args = node.call_node.arguments.arguments
       first_arg = args.first
 
-      block_embed = node.block && "&(->(__buffer__) #{format_code(node.block)}.compiled!)"
+      block_embed = node.block && "&(->(__buffer__) #{format_code(node.block)}.__compiled__!)"
       block_embed = ", #{block_embed}" if block_embed && node.call_node.arguments
 
       flush_html_parts!
       adjust_whitespace(node.location)
 
       if args.length == 1
-        emit("; #{format_code(first_arg)}.compiled_proc.(__buffer__#{block_embed})")
+        emit("; #{format_code(first_arg)}.__compiled_proc__.(__buffer__#{block_embed})")
       else
         args_code = format_code_comma_separated_nodes(args[1..])
-        emit("; #{format_code(first_arg)}.compiled_proc.(__buffer__, #{args_code}#{block_embed})")
+        emit("; #{format_code(first_arg)}.__compiled_proc__.(__buffer__, #{args_code}#{block_embed})")
       end
     end
 
@@ -336,7 +336,7 @@ module Papercraft
     def visit_extension_tag_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
-      emit("; Papercraft::Extensions[#{node.tag.inspect}].compiled_proc.(__buffer__")
+      emit("; Papercraft::Extensions[#{node.tag.inspect}].__compiled_proc__.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -367,7 +367,7 @@ module Papercraft
         end
         block_params = block_params.empty? ? '' : ", #{block_params.join(', ')}"
 
-        emit(", &(proc { |__buffer__#{block_params}| #{block_body} }).compiled!")
+        emit(", &(proc { |__buffer__#{block_params}| #{block_body} }).__compiled__!")
       end
       emit(")")
     end
@@ -382,7 +382,7 @@ module Papercraft
       guard = @render_yield_used ?
         '' : "; raise(LocalJumpError, 'no block given (render_yield)') if !__block__"
       @render_yield_used = true
-      emit("#{guard}; __block__.compiled_proc.(__buffer__")
+      emit("#{guard}; __block__.__compiled_proc__.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -398,7 +398,7 @@ module Papercraft
       flush_html_parts!
       adjust_whitespace(node.location)
       @render_children_used = true
-      emit("; __block__&.compiled_proc&.(__buffer__")
+      emit("; __block__&.__compiled_proc__&.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -410,7 +410,7 @@ module Papercraft
       flush_html_parts!
       adjust_whitespace(node.location)
 
-      emit("; #{node.call_node.receiver.name}.compiled_proc.(__buffer__")
+      emit("; #{node.call_node.receiver.name}.__compiled_proc__.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -418,7 +418,7 @@ module Papercraft
       if node.call_node.block
         emit(", &(->")
         visit(node.call_node.block)
-        emit(").compiled_proc")
+        emit(").__compiled_proc__")
       end
       emit(")")
     end

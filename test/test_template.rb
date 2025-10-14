@@ -288,7 +288,7 @@ class ApplyTest < Minitest::Test
     b = a.apply(proc { p 'hi' })
 
     assert_kind_of Proc, b
-    assert b.compiled?
+    assert b.__compiled__?
     assert_equal(
       '<body><p>hi</p></body>',
       b.render

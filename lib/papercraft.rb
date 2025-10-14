@@ -153,4 +153,41 @@ module Papercraft
   def default_kramdown_options=(opts)
     @default_kramdown_options = opts
   end
+
+  # Returns the compiled form code for the given proc.
+  #
+  # @param proc [Proc] template proc
+  # @return [String] compiled proc code
+  def compiled_code(proc)
+    Papercraft::Compiler.compile_to_code(proc).last
+  end
+
+  # Returns the source map for the given proc.
+  #
+  # @param proc [Proc] template proc
+  # @return [Array<String>] source map
+  def source_map(proc)
+    loc = proc.source_location
+    fn = proc.__compiled__? ? loc.first : Papercraft::Compiler.source_location_to_fn(loc)
+    Papercraft::Compiler.source_map_store[fn]
+  end
+
+  # Returns the AST for the given proc.
+  #
+  # @param proc [Proc] template proc
+  # @return [Prism::Node] AST root
+  def ast(proc)
+    Sirop.to_ast(proc)
+  end
+
+  # Compiles the given template.
+  #
+  # @param proc [Proc] template proc
+  # @param mode [Symbol] compilation mode (:html, :xml)
+  # @return [Proc] compiled proc
+  def compile(proc, mode: :html)
+    Papercraft::Compiler.compile(proc, mode:).__compiled__!
+  rescue Sirop::Error
+    raise Papercraft::Error, "Can't compile eval'd template"
+  end
 end

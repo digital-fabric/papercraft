@@ -21,8 +21,8 @@ module Papercraft
       Template.new(@proc.apply(*, **, &), mode: @mode)
     end
 
-    def compiled_proc
-      @proc.compiled_proc(mode: @mode)
+    def __compiled_proc__
+      @proc.__compiled_proc__(mode: @mode)
     end
   end
 end
