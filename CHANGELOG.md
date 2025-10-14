@@ -1,3 +1,9 @@
+# 2.24 2025-10-14
+
+- Update gem links
+- Simplify `render_cache`, caller must provide cache key
+- Reduce surface area of Proc extensions
+
 # 2.23 2025-10-12
 
 - Update ERB to version 5.1.1
