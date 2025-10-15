@@ -568,6 +568,7 @@ class TemplateWrapperTest < Minitest::Test
     })
 
     assert_equal "<p>2a</p>", t.render(42)
+    assert_equal "<p>2a</p>", t.call(42)
     assert_equal "<p>2a</p>", Papercraft.render(t, 42)
     assert_equal "<p>2a</p>", Papercraft.render(t.proc, 42)
 
@@ -582,6 +583,14 @@ class TemplateWrapperTest < Minitest::Test
     t = Papercraft::Template.new(-> { link 'foo' }, mode: :xml)
     assert_equal "<link>foo</link>", t.render
     assert_equal :xml, t.mode
+  end
+
+  def test_wrapper_with_block
+    t = Papercraft::Template.new { |x|
+      p x.to_s(16)
+    }
+    assert_equal "<p>2a</p>", t.render(42)
+    assert_equal "<p>2a</p>", t.call(42)
   end
 end
 
