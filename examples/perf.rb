@@ -170,7 +170,7 @@ end
 
 class Renderer
   def render_papercraft_app
-    App.render(title: 'title from context')
+    Papercraft.render(App, title: 'title from context')
   end
 
   def render_phlex_app

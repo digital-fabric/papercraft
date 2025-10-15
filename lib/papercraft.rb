@@ -168,7 +168,7 @@ module Papercraft
   # @return [Array<String>] source map
   def source_map(proc)
     loc = proc.source_location
-    fn = proc.__compiled__? ? loc.first : Papercraft::Compiler.source_location_to_fn(loc)
+    fn = proc.__papercraft_compiled? ? loc.first : Papercraft::Compiler.source_location_to_fn(loc)
     Papercraft::Compiler.source_map_store[fn]
   end
 
@@ -186,7 +186,7 @@ module Papercraft
   # @param mode [Symbol] compilation mode (:html, :xml)
   # @return [Proc] compiled proc
   def compile(proc, mode: :html)
-    Papercraft::Compiler.compile(proc, mode:).__compiled__!
+    Papercraft::Compiler.compile(proc, mode:).__papercraft_compiled!
   rescue Sirop::Error
     raise Papercraft::Error, "Can't compile eval'd template"
   end
@@ -197,7 +197,7 @@ module Papercraft
   # @return [String] HTML string
   def render(template, *a, **b, &c)
     template = template.proc if template.is_a?(Template)
-    template.__compiled_proc__.(+'', *a, **b, &c)
+    template.__papercraft_compiled_proc.(+'', *a, **b, &c)
   rescue Exception => e
     e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
   end
@@ -209,7 +209,7 @@ module Papercraft
   # @return [String] XML string
   def render_xml(template, *a, **b, &c)
     template = template.proc if template.is_a?(Template)
-    template.__compiled_proc__(mode: :xml).(+'', *a, **b, &c)
+    template.__papercraft_compiled_proc(mode: :xml).(+'', *a, **b, &c)
   rescue Exception => e
     e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
   end
@@ -226,16 +226,16 @@ module Papercraft
   # @return [Proc] applied proc
   def apply(template, *pos1, **kw1, &block)
     template = template.proc if template.is_a?(Template)
-    compiled = template.__compiled_proc__
-    c_compiled = block&.__compiled_proc__
+    compiled = template.__papercraft_compiled_proc
+    c_compiled = block&.__papercraft_compiled_proc
 
     ->(__buffer__, *pos2, **kw2, &block2) {
       c_proc = c_compiled && ->(__buffer__, *pos3, **kw3) {
         c_compiled.(__buffer__, *pos3, **kw3, &block2)
-      }.__compiled__!
+      }.__papercraft_compiled!
 
       compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &c_proc)
-    }.__compiled__!
+    }.__papercraft_compiled!
   end
 
   # Caches and returns the rendered HTML for the template with the given
@@ -245,7 +245,7 @@ module Papercraft
   # @param key [any] Cache key
   # @return [String] HTML string
   def render_cache(template, key, *args, **kargs, &block)
-    template.__render_cache__[key] ||= render(template, *args, **kargs, &block)
+    template.__papercraft_render_cache[key] ||= render(template, *args, **kargs, &block)
   end
 
 end

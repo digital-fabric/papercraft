@@ -8,16 +8,16 @@ module Papercraft
     # Returns true if proc is marked as compiled.
     #
     # @return [bool] is the proc marked as compiled
-    def __compiled__?
-      @__compiled__
+    def __papercraft_compiled?
+      @__papercraft_compiled
     end
 
     # Marks the proc as compiled, i.e. can render directly and takes a string
     # buffer as first argument.
     #
     # @return [self]
-    def __compiled__!
-      @__compiled__ = true
+    def __papercraft_compiled!
+      @__papercraft_compiled = true
       self
     end
 
@@ -26,15 +26,16 @@ module Papercraft
     #
     # @param mode [Symbol] compilation mode (:html, :xml)
     # @return [Proc] compiled proc or self
-    def __compiled_proc__(mode: :html)
-      @__compiled_proc__ ||= @__compiled__ ? self : Papercraft.compile(self, mode:)
+    def __papercraft_compiled_proc(mode: :html)
+      @__papercraft_compiled_proc ||= @__papercraft_compiled ?
+        self : Papercraft.compile(self, mode:)
     end
 
     # Returns the render cache for the proc.
     #
     # @return [Hash] cache hash
-    def __render_cache__
-      @__render_cache__ ||= {}
+    def __papercraft_render_cache
+      @__papercraft_render_cache ||= {}
     end
   end
 end

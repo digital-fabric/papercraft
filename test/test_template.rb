@@ -290,7 +290,7 @@ class ApplyTest < Minitest::Test
     b = Papercraft.apply(a, proc { p 'hi' })
 
     assert_kind_of Proc, b
-    assert b.__compiled__?
+    assert b.__papercraft_compiled?
     assert_equal(
       '<body><p>hi</p></body>',
       Papercraft.render(b)
