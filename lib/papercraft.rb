@@ -190,4 +190,62 @@ module Papercraft
   rescue Sirop::Error
     raise Papercraft::Error, "Can't compile eval'd template"
   end
+
+  # Renders the given template to HTML with the given arguments.
+  #
+  # @param template [Proc] template proc
+  # @return [String] HTML string
+  def render(template, *a, **b, &c)
+    template = template.proc if template.is_a?(Template)
+    template.__compiled_proc__.(+'', *a, **b, &c)
+  rescue Exception => e
+    e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
+  end
+  alias_method :html, :render
+
+  # Renders the proc to XML with the given arguments.
+  #
+  # @param template [Proc] template proc
+  # @return [String] XML string
+  def render_xml(template, *a, **b, &c)
+    template = template.proc if template.is_a?(Template)
+    template.__compiled_proc__(mode: :xml).(+'', *a, **b, &c)
+  rescue Exception => e
+    e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
+  end
+
+  # Returns a proc that applies the given arguments to the original proc. The
+  # returned proc calls the *compiled* form of the proc, merging the
+  # positional and keywords parameters passed to `#apply` with parameters
+  # passed to the applied proc. If a block is given, it is wrapped in a proc
+  # that passed merged parameters to the block.
+  #
+  # @param template [Proc] template proc
+  # @param *pos1 [Array<any>] applied positional parameters
+  # @param **kw1 [Hash<any, any] applied keyword parameters
+  # @return [Proc] applied proc
+  def apply(template, *pos1, **kw1, &block)
+    template = template.proc if template.is_a?(Template)
+    compiled = template.__compiled_proc__
+    c_compiled = block&.__compiled_proc__
+
+    ->(__buffer__, *pos2, **kw2, &block2) {
+      c_proc = c_compiled && ->(__buffer__, *pos3, **kw3) {
+        c_compiled.(__buffer__, *pos3, **kw3, &block2)
+      }.__compiled__!
+
+      compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &c_proc)
+    }.__compiled__!
+  end
+
+  # Caches and returns the rendered HTML for the template with the given
+  # arguments.
+  #
+  # @param template [Proc] template proc
+  # @param key [any] Cache key
+  # @return [String] HTML string
+  def render_cache(template, key, *args, **kargs, &block)
+    template.__render_cache__[key] ||= render(template, *args, **kargs, &block)
+  end
+
 end

@@ -14,11 +14,11 @@ module Papercraft
     end
 
     def render(*, **, &)
-      (mode == :xml) ? @proc.render_xml(*, **, &) : @proc.render(*, **, &)
+      (mode == :xml) ? Papercraft.render_xml(@proc, *, **, &) : Papercraft.render(@proc, *, **, &)
     end
 
     def apply(*, **, &)
-      Template.new(@proc.apply(*, **, &), mode: @mode)
+      Template.new(Papercraft.apply(@proc, *, **, &), mode: @mode)
     end
 
     def __compiled_proc__

@@ -25,7 +25,7 @@ class CompilerTest < Minitest::Test
         puts compiled_code
       end
 
-      assert_equal html, proc.render
+      assert_equal html, Papercraft.render(proc)
     end
   end
 end
