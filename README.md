@@ -21,10 +21,12 @@
 ```ruby
 require 'papercraft'
 
--> {
-  h1 "Hello from Papercraft!"
-}.render
-#=> "<h1>Hello from Papercraft</h1>"
+Papercraft.render {
+  div {
+    h1 "Hello from Papercraft!"
+  }
+}
+#=> "<div><h1>Hello from Papercraft</h1></div>"
 ```
 
 Papercraft is a templating engine for dynamically producing HTML in Ruby apps.

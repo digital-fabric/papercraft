@@ -13,39 +13,39 @@ class HtmlTest < Minitest::Test
       text 'hi'
       hr
     }
-    assert_equal '<hr><input value="foo"><br>hi<hr>', h.render
+    assert_equal '<hr><input value="foo"><br>hi<hr>', Papercraft.render(h)
   end
 
   def test_error_on_void_elements_with_block
     t = -> {
       hr { foo }
     }
-    assert_raises(Papercraft::Error) { t.render }
+    assert_raises(Papercraft::Error) { Papercraft.render(t) }
     
     t = -> {
       input "foo"
     }
-    assert_raises(Papercraft::Error) { t.render }
+    assert_raises(Papercraft::Error) { Papercraft.render(t) }
   end
 
   def test_html5
     assert_equal(
       '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
-      -> { html5 { div { h1 'foobar' } } }.render
+      Papercraft.render(-> { html5 { div { h1 'foobar' } } })
     )
   end
 
   def test_html
     assert_equal(
       '<!DOCTYPE html><html><div><h1>foobar</h1></div></html>',
-      -> { html { div { h1 'foobar' } } }.render
+      Papercraft.render(-> { html { div { h1 'foobar' } } })
     )
   end
 
   def test_html_with_lang
     assert_equal(
       '<!DOCTYPE html><html lang="en"><div><h1>foobar</h1></div></html>',
-      -> { html(lang: "en") { div { h1 'foobar' } } }.render
+      Papercraft.render(-> { html(lang: "en") { div { h1 'foobar' } } })
     )
   end
 
@@ -55,7 +55,7 @@ class HtmlTest < Minitest::Test
     }
     assert_equal(
       '<link rel="stylesheet" href="/assets/style.css">',
-      html.render
+      Papercraft.render(html)
     )
 
     html = -> {
@@ -63,7 +63,7 @@ class HtmlTest < Minitest::Test
     }
     assert_equal(
       '<link rel="stylesheet" href="/assets/style.css" media="print">',
-      html.render
+      Papercraft.render(html)
     )
   end
 
@@ -76,7 +76,7 @@ class HtmlTest < Minitest::Test
     }
     assert_equal(
       "<style>* { color: red }\na & b { color: green }</style>",
-      html.render
+      Papercraft.render(html)
     )
   end
 
@@ -88,7 +88,7 @@ class HtmlTest < Minitest::Test
     }
     assert_equal(
       "<script>if (a && b) c();</script>",
-      html.render
+      Papercraft.render(html)
     )
   end
 
@@ -98,7 +98,7 @@ class HtmlTest < Minitest::Test
     }
     assert_equal(
       "<script src=\"/static/stuff.js\"></script>",
-      html.render
+      Papercraft.render(html)
     )
   end
 
@@ -109,7 +109,7 @@ class HtmlTest < Minitest::Test
 
     assert_equal(
       '<span>me, myself &amp; I</span>',
-      html.render
+      Papercraft.render(html)
     )
   end
 end
@@ -119,7 +119,7 @@ class RenderTest < Minitest::Test
     h = -> { div { p 'foo'; p 'bar' } }
     assert_equal(
       '<div><p>foo</p><p>bar</p></div>',
-      h.render
+      Papercraft.render(h)
     )
   end
 end
@@ -128,41 +128,41 @@ class AttributesTest < Minitest::Test
   def test_attribute_encoding
     assert_equal(
       '<div class="blue and green"></div>',
-      -> { div class: 'blue and green' }.render
+      Papercraft.render(-> { div class: 'blue and green' })
     )
 
     assert_equal(
       '<div onclick="return doit();"></div>',
-      -> { div onclick: 'return doit();' }.render
+      Papercraft.render(-> { div onclick: 'return doit();' })
     )
 
     assert_equal(
       '<a href="/?q=a b"></a>',
-      -> { a href: '/?q=a b' }.render
+      Papercraft.render(-> { a href: '/?q=a b' })
     )
   end
 
   def test_valueless_attributes
     assert_equal(
       '<input type="checkbox" checked>',
-      -> { input type: 'checkbox', checked: true }.render
+      Papercraft.render(-> { input type: 'checkbox', checked: true })
     )
 
     assert_equal(
       '<input type="checkbox">',
-      -> { input type: 'checkbox', checked: false }.render
+      Papercraft.render(-> { input type: 'checkbox', checked: false })
     )
   end
 
   def test_array_attributes
     assert_equal(
       '<div class="foo bar"></div>',
-      -> { div class: [:foo, :bar] }.render
+      Papercraft.render(-> { div class: [:foo, :bar] })
     )
 
     assert_equal(
       '<div class="foo  bar"></div>',
-      -> { div class: [:foo, nil, 'bar'] }.render
+      Papercraft.render(-> { div class: [:foo, nil, 'bar'] })
     )
   end
 end
@@ -171,54 +171,54 @@ class DynamicTagMethodTest < Minitest::Test
   def test_that_dynamic_tag_method_accepts_no_arguments
     assert_equal(
       '<div></div>',
-      -> { div() }.render
+      Papercraft.render(-> { div() })
     )
   end
 
   def test_that_dynamic_tag_method_accepts_text_argument
     assert_equal(
       '<p>lorem ipsum</p>',
-      -> { p "lorem ipsum" }.render
+      Papercraft.render(-> { p "lorem ipsum" })
     )
   end
 
   def test_that_dynamic_tag_method_accepts_non_string_text_argument
     assert_equal(
       '<p>lorem</p>',
-      -> { p :lorem }.render
+      Papercraft.render(-> { p :lorem })
     )
   end
 
   def test_that_dynamic_tag_method_escapes_string_text_argument
     assert_equal(
       '<p>lorem &amp; ipsum</p>',
-      -> { p 'lorem & ipsum' }.render
+      Papercraft.render(-> { p 'lorem & ipsum' })
     )
   end
 
   def test_dynamic_tag_underscore_to_hyphen_conversion
     assert_equal(
       '<my-nifty-tag>foo</my-nifty-tag>',
-      -> { my_nifty_tag 'foo' }.render
+      Papercraft.render(-> { my_nifty_tag 'foo' })
     )
 
     assert_equal(
       '<my-nifty-tag></my-nifty-tag>',
-      -> { my_nifty_tag }.render
+      Papercraft.render(-> { my_nifty_tag })
     )
   end
 
   def test_that_dynamic_tag_method_accepts_text_and_attributes
     assert_equal(
       '<p class="hi">lorem ipsum</p>',
-      -> { p "lorem ipsum", class: 'hi' }.render
+      Papercraft.render(-> { p "lorem ipsum", class: 'hi' })
     )
   end
 
   def test_dynamic_tag_attribute_underscore_to_hyphen_conversion
     assert_equal(
       '<p data-foo="bar">hello</p>',
-      -> { p 'hello', data_foo: 'bar' }.render
+      Papercraft.render(-> { p 'hello', data_foo: 'bar' })
     )
   end
 
@@ -227,14 +227,14 @@ class DynamicTagMethodTest < Minitest::Test
 
     assert_equal(
       '<p><a href="/">foo</a></p>',
-      -> { p(&a) }.render
+      Papercraft.render(-> { p(&a) })
     )
   end
 
   def test_that_dynamic_tag_method_accepts_block
     assert_equal(
       '<div><p><a></a></p></div>',
-      -> { div { p { a() } } }.render
+      Papercraft.render(-> { div { p { a() } } })
     )
   end
 end
@@ -243,54 +243,54 @@ class TagMethodTest < Minitest::Test
   def test_that_tag_method_accepts_no_arguments
     assert_equal(
       '<div></div>',
-      -> { tag(:div) }.render
+      Papercraft.render(-> { tag(:div) })
     )
   end
 
   def test_that_tag_method_accepts_text_argument
     assert_equal(
       '<p>lorem ipsum</p>',
-      -> { tag :p, "lorem ipsum" }.render
+      Papercraft.render(-> { tag :p, "lorem ipsum" })
     )
   end
 
   def test_that_tag_method_accepts_non_string_text_argument
     assert_equal(
       '<p>lorem</p>',
-      -> { tag :p, :lorem }.render
+      Papercraft.render(-> { tag :p, :lorem })
     )
   end
 
   def test_that_tag_method_escapes_string_text_argument
     assert_equal(
       '<p>lorem &amp; ipsum</p>',
-      -> { tag :p, 'lorem & ipsum' }.render
+      Papercraft.render(-> { tag :p, 'lorem & ipsum' })
     )
   end
 
   def test_tag_underscore_to_hyphen_conversion
     assert_equal(
       '<my-nifty-tag>foo</my-nifty-tag>',
-      -> { tag :my_nifty_tag, 'foo' }.render
+      Papercraft.render(-> { tag :my_nifty_tag, 'foo' })
     )
 
     assert_equal(
       '<my-nifty-tag></my-nifty-tag>',
-      -> { tag :my_nifty_tag }.render
+      Papercraft.render(-> { tag :my_nifty_tag })
     )
   end
 
   def test_that_tag_method_accepts_text_and_attributes
     assert_equal(
       '<p class="hi">lorem ipsum</p>',
-      -> { tag :p, "lorem ipsum", class: 'hi' }.render
+      Papercraft.render(-> { tag :p, "lorem ipsum", class: 'hi' })
     )
   end
 
   def test_attribute_underscore_to_hyphen_conversion
     assert_equal(
       '<p data-foo="bar">hello</p>',
-      -> { tag :p, 'hello', data_foo: 'bar' }.render
+      Papercraft.render(-> { tag :p, 'hello', data_foo: 'bar' })
     )
   end
 
@@ -299,14 +299,14 @@ class TagMethodTest < Minitest::Test
 
     assert_equal(
       '<p><a href="/">foo</a></p>',
-      -> { tag :p, &a }.render
+      Papercraft.render(-> { tag :p, &a })
     )
   end
 
   def test_that_tag_method_accepts_block
     assert_equal(
       '<div><p><a></a></p></div>',
-      -> { tag(:div) { tag(:p) { tag :a } } }.render
+      Papercraft.render(-> { tag(:div) { tag(:p) { tag :a } } })
     )
   end
 end
@@ -318,31 +318,31 @@ class SubTemplateTest < Minitest::Test
 
     assert_equal(
       'foobar',
-      -> { render block }.render
+      Papercraft.render(-> { render block })
     )
   end
 
   def test_that_raw_accepts_string
     assert_equal(
       '<div>foobar</div>',
-      -> { div { raw 'foobar' } }.render
+      Papercraft.render(-> { div { raw 'foobar' } })
     )
   end
 
   def test_that_raw_doesnt_escape_string
     assert_equal(
       '<div>foo&bar</div>',
-      -> { div { raw 'foo&bar' } }.render
+      Papercraft.render(-> { div { raw 'foo&bar' } })
     )
   end
 
   def test_render_yield
     r = -> { body { render_yield } }
-    assert_raises { r.render(foo: 'bar') }
+    assert_raises { Papercraft.render(r, foo: 'bar') }
 
     assert_equal(
       '<body><p>foo</p><hr></body>',
-      r.render { p 'foo'; hr; }
+      Papercraft.render(r) { p 'foo'; hr; }
     )
   end
 
@@ -351,7 +351,7 @@ class SubTemplateTest < Minitest::Test
     inner = -> { p 'foo' }
     assert_equal(
       '<body><div id="content"><p>foo</p></div></body>',
-      outer.render(&inner)
+      Papercraft.render(outer, &inner)
     )
   end
 
@@ -370,7 +370,8 @@ class SubTemplateTest < Minitest::Test
       }
     }
 
-    assert_equal '<ul><li><card><span>foo</span></card></li><li><card><span>bar</span></card></li></ul>', ulist.render(%w{foo bar}, &item_card)
+    assert_equal '<ul><li><card><span>foo</span></card></li><li><card><span>bar</span></card></li></ul>',
+      Papercraft.render(ulist, %w{foo bar}, &item_card)
   end
 end
 
@@ -379,7 +380,7 @@ class ScopeTest < Minitest::Test
     text = 'foobar'
     assert_equal(
       '<p>foobar</p>',
-      -> { p text }.render
+      Papercraft.render(-> { p text })
     )
   end
 end
@@ -399,7 +400,7 @@ class DeferTest < Minitest::Test
       }
     }
 
-    assert_equal "<div><h1>bar</h1></div>", html.render
+    assert_equal "<div><h1>bar</h1></div>", Papercraft.render(html)
   end
 
   def test_deferred_title
@@ -414,7 +415,7 @@ class DeferTest < Minitest::Test
       }
     }
 
-    html = layout.render {
+    html = Papercraft.render(layout) {
       @title = 'My super page'
       h1 'foo'
     }
@@ -441,14 +442,14 @@ class DeferTest < Minitest::Test
       }
     }
 
-    user_form = form.apply {
+    user_form = Papercraft.apply(form) {
       @title = 'Awesome user form'
       @error_message = 'Syntax error!'
 
       p 'Welcome to the awesome user form'
     }
 
-    html = layout.render(&user_form)
+    html = Papercraft.render(layout, &user_form)
 
     assert_equal "<!DOCTYPE html><html><head><title>Awesome user form</title></head><body><form><h3>Syntax error!</h3><p>Welcome to the awesome user form</p></form></body></html>",
       html

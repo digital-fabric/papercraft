@@ -1,9 +1,49 @@
-## Immediate
+## Existing
 
-- Refactor proc_ext:
-  - remove all methods except for `render`, `apply`, `render_cache` from Proc.
-  - put them under `Papercraft` module.
-- Rework `render_cache` to take a key (instead of computing it from args).
+```ruby
+layout = ->(**) {
+  html {
+    body {
+      render_children(**)
+    }
+  }
+}
+
+page = layout.apply { |title:, **|
+  h1 title
+}
+
+page.render(title: 'foo')
+```
+
+## Alternative
+
+```ruby
+layout = ->(**) {
+  html {
+    body {
+      render_children(**)
+    }
+  }
+}
+
+page = Papercraft.apply(layout) { |title:, **|
+  h1 title
+}
+
+Papercraft.render(page, title: 'foo')
+```
+
+## Papercraft landing page example
+
+```ruby
+Papercraft.render(
+  -> {
+    h1 "Hello from Papercraft!"
+  }
+)
+#=> "<h1>Hello from Papercraft!</h1>"
+```
 
 ## API
 
@@ -25,3 +65,4 @@
 
     - No local var assignments
     - No return statements
+
