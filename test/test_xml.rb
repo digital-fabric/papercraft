@@ -6,7 +6,37 @@ require 'time'
 require 'papercraft'
 
 class HtmlTest < Minitest::Test
-  def test_rss_generation
+  def test_xml_for_html_void_elements
+    t = -> {
+      link 'foo'
+    }
+    assert_equal "<link>foo</link>", Papercraft.xml(t)
+  end
+
+  def test_xml_self_closing_tag
+    t = -> {
+      foo
+    }
+    assert_equal '<foo/>', Papercraft.xml(t)
+
+    t = -> {
+      foo bar: "baz"
+    }
+    assert_equal '<foo bar="baz"/>', Papercraft.xml(t)
+  end
+
+  def test_xml_custom_tag
+    t = -> {
+      tag('atom:link',
+        href:"https://noteflakes.com/feeds/rss",
+        rel:"self", type: "application/rss+xml"
+      )
+    }
+    assert_equal '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml"/>',
+      Papercraft.xml(t)
+  end
+
+  def test_xml_rss_generation
     entries = [
       {
         title:  'foo',
@@ -30,7 +60,10 @@ class HtmlTest < Minitest::Test
           description 'Foo RSS'
           language 'en-us'
           pubDate 'Thu, 11 Sep 2025 08:00:00 GMT'
-          raw '<atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" /> '
+          tag('atom:link',
+            href:"https://noteflakes.com/feeds/rss",
+            rel:"self", type: "application/rss+xml"
+          )
 
           entries.each { |e|
             item {
@@ -45,7 +78,7 @@ class HtmlTest < Minitest::Test
       }
     }
 
-    expected = '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Foo</title><link>https://foo.com/</link><description>Foo RSS</description><language>en-us</language><pubDate>Thu, 11 Sep 2025 08:00:00 GMT</pubDate><atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" /> <item><title>foo</title><link>https://noteflakes.com/01-foo</link><guid>https://noteflakes.com/01-foo</guid><pubDate>Tue, 01 Jan 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;foo--bar&quot;&gt;Foo &amp;amp; Bar&lt;/h1&gt;</description></item><item><title>bar</title><link>https://noteflakes.com/02-bar</link><guid>https://noteflakes.com/02-bar</guid><pubDate>Sat, 02 Feb 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;bar--baz&quot;&gt;Bar &amp;amp; Baz&lt;/h1&gt;</description></item></channel></rss>'
+    expected = '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Foo</title><link>https://foo.com/</link><description>Foo RSS</description><language>en-us</language><pubDate>Thu, 11 Sep 2025 08:00:00 GMT</pubDate><atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml"/><item><title>foo</title><link>https://noteflakes.com/01-foo</link><guid>https://noteflakes.com/01-foo</guid><pubDate>Tue, 01 Jan 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;foo--bar&quot;&gt;Foo &amp;amp; Bar&lt;/h1&gt;</description></item><item><title>bar</title><link>https://noteflakes.com/02-bar</link><guid>https://noteflakes.com/02-bar</guid><pubDate>Sat, 02 Feb 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;bar--baz&quot;&gt;Bar &amp;amp; Baz&lt;/h1&gt;</description></item></channel></rss>'
     assert_equal expected, Papercraft.xml(t)
   end
 end

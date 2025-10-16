@@ -164,12 +164,23 @@ module Papercraft
       # adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
       is_raw_inner_text = is_raw_inner_text_element?(tag)
+      is_empty = !node.block && !node.inner_text
 
-      if is_void && (node.block || node.inner_text)
+      if is_void && !is_empty
         raise Papercraft::Error, "Void element #{tag} cannot contain child nodes or inner text"
       end
 
-      emit_html(node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes))
+      if @mode == :xml && is_empty
+        emit_html(
+          node.tag_location, 
+          format_xml_tag_self_closing(node.tag_location, tag, node.attributes)
+        )
+        return
+      end
+
+      emit_html(
+        node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes)
+      )
       return if is_void
 
       case node.block
@@ -487,6 +498,15 @@ module Papercraft
       return false if @mode == :xml
 
       RAW_INNER_TEXT_TAGS.include?(tag.to_s)
+    end
+
+    def format_xml_tag_self_closing(loc, tag, attributes)
+      tag = convert_tag(tag)
+      if attributes && attributes&.elements.size > 0 || @@html_debug_attribute_injector
+        "<#{tag} #{format_html_attributes(loc, attributes)}/>"
+      else
+        "<#{tag}/>"
+      end
     end
 
     # Formats an open tag with optional attributes.
