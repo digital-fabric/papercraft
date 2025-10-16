@@ -9,10 +9,10 @@ t = ->(title:) {
   }
 }
 
-p t.ast
+p Papercraft.ast(t)
 puts
-puts t.compiled_code
+puts Papercraft.compiled_code(t)
 puts
-p t.source_map
+p Papercraft.source_map(t)
 puts
-puts t.render(title: 'Hello, world!')
+puts Papercraft.html(t, title: 'Hello, world!')

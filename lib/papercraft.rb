@@ -198,7 +198,7 @@ module Papercraft
   #
   # @param template [Proc] template proc
   # @return [String] HTML string
-  def render(template = nil, *pos, **kw, &block)
+  def html(template = nil, *pos, **kw, &block)
     if !template
       template = block
     elsif template.is_a?(Template)
@@ -210,7 +210,6 @@ module Papercraft
   rescue Exception => e
     e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
   end
-  alias_method :html, :render
 
   # Renders the given template to XML with the given arguments. The template can
   # be passed either as the first parameter, or as a block, if no parameter is
@@ -218,7 +217,7 @@ module Papercraft
   #
   # @param template [Proc] template proc
   # @return [String] XML string
-  def render_xml(template = nil, *pos, **kw, &block)
+  def xml(template = nil, *pos, **kw, &block)
     if !template
       template = block
     elsif template.is_a?(Template)
@@ -262,7 +261,17 @@ module Papercraft
   # @param template [Proc] template proc
   # @param key [any] Cache key
   # @return [String] HTML string
-  def render_cache(template, key, *args, **kargs, &block)
-    template.__papercraft_render_cache[key] ||= render(template, *args, **kargs, &block)
+  def cache_html(template, key, *, **, &)
+    template.__papercraft_render_cache[key] ||= html(template, *, **, &)
+  end
+
+  # Caches and returns the rendered XML for the template with the given
+  # arguments.
+  #
+  # @param template [Proc] template proc
+  # @param key [any] Cache key
+  # @return [String] XML string
+  def cache_xml(template, key, *, **, &)
+    template.__papercraft_render_cache[key] ||= xml(template, *, **, &)
   end
 end

@@ -19,7 +19,7 @@ module Papercraft
     #
     # @return [String] generated HTML
     def render(*, **, &)
-      (mode == :xml) ? Papercraft.render_xml(@proc, *, **, &) : Papercraft.render(@proc, *, **, &)
+      (mode == :xml) ? Papercraft.xml(@proc, *, **, &) : Papercraft.html(@proc, *, **, &)
     end
     alias_method :call, :render
 

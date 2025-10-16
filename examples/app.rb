@@ -31,4 +31,4 @@ Content = ->(title:) {
   }
 }
 
-puts App.render(title: 'title parameter')
+puts Papercraft.html(App, title: 'title parameter')

@@ -46,6 +46,6 @@ class HtmlTest < Minitest::Test
     }
 
     expected = '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Foo</title><link>https://foo.com/</link><description>Foo RSS</description><language>en-us</language><pubDate>Thu, 11 Sep 2025 08:00:00 GMT</pubDate><atom:link href="https://noteflakes.com/feeds/rss" rel="self" type="application/rss+xml" /> <item><title>foo</title><link>https://noteflakes.com/01-foo</link><guid>https://noteflakes.com/01-foo</guid><pubDate>Tue, 01 Jan 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;foo--bar&quot;&gt;Foo &amp;amp; Bar&lt;/h1&gt;</description></item><item><title>bar</title><link>https://noteflakes.com/02-bar</link><guid>https://noteflakes.com/02-bar</guid><pubDate>Sat, 02 Feb 2025 00:00:00 GMT</pubDate><description>&lt;h1 id=&quot;bar--baz&quot;&gt;Bar &amp;amp; Baz&lt;/h1&gt;</description></item></channel></rss>'
-    assert_equal expected, Papercraft.render_xml(t)
+    assert_equal expected, Papercraft.xml(t)
   end
 end
