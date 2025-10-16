@@ -244,14 +244,19 @@ module Papercraft
   def apply(template, *pos1, **kw1, &block1)
     template = template.proc if template.is_a?(Template)
     compiled = template.__papercraft_compiled_proc
-    c_compiled = block1&.__papercraft_compiled_proc
+    block1_compiled = block1&.__papercraft_compiled_proc
 
     ->(__buffer__, *pos2, **kw2, &block2) {
-      compiled_block = c_compiled && ->(__buffer__, *pos3, **kw3) {
-        c_compiled.(__buffer__, *pos3, **kw3, &block2)
-      }.__papercraft_compiled!
-
-      compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &compiled_block)
+      if block2
+        block2_compiled = block1_compiled ?
+          ->(__buffer__, *pos3, **kw3) {
+            block1_compiled.(__buffer__, *pos3, **kw3, &block2)
+          }.__papercraft_compiled! :
+          block2.__papercraft_compiled_proc
+        compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &block2_compiled)
+      else
+        compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &block1_compiled)
+      end
     }.__papercraft_compiled!
   end
 

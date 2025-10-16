@@ -134,4 +134,33 @@ class PapercraftRenderTest < Minitest::Test
     assert_equal "<link>bar</link>", Papercraft.cache_xml(t, 'bar', 'bar')
     assert_equal 2, count
   end
+
+  def test_papercraft_apply_params
+    t = ->(a, b, c:, d:) {
+      hr(a => b, c => d)
+    }
+    a = Papercraft.apply(t, 'foo', 'bar', c: 'baz', d: 42)
+    assert_equal '<hr foo="bar" baz="42">', Papercraft.html(a)
+  end
+
+  def test_papercraft_apply_with_block
+    t = ->(foo:) { div { render_yield(bar: foo) } }
+    a = Papercraft.apply(t, foo: 'baz') { |bar:| h1 bar }
+    assert_equal "<div><h1>baz</h1></div>", Papercraft.html(a)
+  end
+
+  def test_papercraft_apply_with_block_nested_render_yield
+    t = ->(foo:) { div { render_yield(bar: foo) } }
+    a = Papercraft.apply(t, foo: 'baz') { |**props| section { render_yield(**props) } }
+    html = Papercraft.html(a) { |bar:| h1 bar }
+    assert_equal "<div><section><h1>baz</h1></section></div>", html
+  end
+
+  def test_papercraft_apply_nested_render_yield
+    t = ->(foo:) { div { render_yield(bar: foo) } }
+    a = Papercraft.apply(t, foo: 'baz')
+    html = Papercraft.html(a) { |bar:| h1 bar }
+    assert_equal "<div><h1>baz</h1></div>", html
+    
+  end
 end
