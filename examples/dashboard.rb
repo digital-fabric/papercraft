@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
-require 'bundler/inline'
-
-gemfile do
-  gem 'papercraft', path: '.'
-  gem 'benchmark-ips', '>= 2.14.0'
-  gem 'json'
-end
+require 'bundler/setup'
 
 require 'papercraft'
 require 'benchmark/ips'

@@ -21,7 +21,7 @@
 ```ruby
 require 'papercraft'
 
-Papercraft.render {
+Papercraft.html {
   div {
     h1 "Hello from Papercraft!"
   }
