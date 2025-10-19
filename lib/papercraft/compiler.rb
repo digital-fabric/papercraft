@@ -164,12 +164,23 @@ module Papercraft
       # adjust_whitespace(node.location)
       is_void = is_void_element?(tag)
       is_raw_inner_text = is_raw_inner_text_element?(tag)
+      is_empty = !node.block && !node.inner_text
 
-      if is_void && (node.block || node.inner_text)
+      if is_void && !is_empty
         raise Papercraft::Error, "Void element #{tag} cannot contain child nodes or inner text"
       end
 
-      emit_html(node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes))
+      if @mode == :xml && is_empty
+        emit_html(
+          node.tag_location, 
+          format_xml_tag_self_closing(node.tag_location, tag, node.attributes)
+        )
+        return
+      end
+
+      emit_html(
+        node.tag_location, format_html_tag_open(node.tag_location, tag, node.attributes)
+      )
       return if is_void
 
       case node.block
@@ -178,7 +189,7 @@ module Papercraft
       when Prism::BlockArgumentNode
         flush_html_parts!
         adjust_whitespace(node.block)
-        emit("; #{format_code(node.block.expression)}.__compiled_proc__.(__buffer__)")
+        emit("; #{format_code(node.block.expression)}.__papercraft_compiled_proc.(__buffer__)")
       end
 
       if node.inner_text
@@ -213,7 +224,7 @@ module Papercraft
         emit(format_code(node.call_node.receiver))
         emit('::')
       end
-      emit("#{node.call_node.name}.__compiled_proc__.(__buffer__")
+      emit("#{node.call_node.name}.__papercraft_compiled_proc.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -229,17 +240,17 @@ module Papercraft
       args = node.call_node.arguments.arguments
       first_arg = args.first
 
-      block_embed = node.block && "&(->(__buffer__) #{format_code(node.block)}.__compiled__!)"
+      block_embed = node.block && "&(->(__buffer__) #{format_code(node.block)}.__papercraft_compiled!)"
       block_embed = ", #{block_embed}" if block_embed && node.call_node.arguments
 
       flush_html_parts!
       adjust_whitespace(node.location)
 
       if args.length == 1
-        emit("; #{format_code(first_arg)}.__compiled_proc__.(__buffer__#{block_embed})")
+        emit("; #{format_code(first_arg)}.__papercraft_compiled_proc.(__buffer__#{block_embed})")
       else
         args_code = format_code_comma_separated_nodes(args[1..])
-        emit("; #{format_code(first_arg)}.__compiled_proc__.(__buffer__, #{args_code}#{block_embed})")
+        emit("; #{format_code(first_arg)}.__papercraft_compiled_proc.(__buffer__, #{args_code}#{block_embed})")
       end
     end
 
@@ -336,7 +347,7 @@ module Papercraft
     def visit_extension_tag_node(node)
       flush_html_parts!
       adjust_whitespace(node.location)
-      emit("; Papercraft::Extensions[#{node.tag.inspect}].__compiled_proc__.(__buffer__")
+      emit("; Papercraft::Extensions[#{node.tag.inspect}].__papercraft_compiled_proc.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -367,7 +378,7 @@ module Papercraft
         end
         block_params = block_params.empty? ? '' : ", #{block_params.join(', ')}"
 
-        emit(", &(proc { |__buffer__#{block_params}| #{block_body} }).__compiled__!")
+        emit(", &(proc { |__buffer__#{block_params}| #{block_body} }).__papercraft_compiled!")
       end
       emit(")")
     end
@@ -382,7 +393,7 @@ module Papercraft
       guard = @render_yield_used ?
         '' : "; raise(LocalJumpError, 'no block given (render_yield)') if !__block__"
       @render_yield_used = true
-      emit("#{guard}; __block__.__compiled_proc__.(__buffer__")
+      emit("#{guard}; __block__.__papercraft_compiled_proc.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -398,7 +409,7 @@ module Papercraft
       flush_html_parts!
       adjust_whitespace(node.location)
       @render_children_used = true
-      emit("; __block__&.__compiled_proc__&.(__buffer__")
+      emit("; __block__&.__papercraft_compiled_proc&.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -410,7 +421,7 @@ module Papercraft
       flush_html_parts!
       adjust_whitespace(node.location)
 
-      emit("; #{node.call_node.receiver.name}.__compiled_proc__.(__buffer__")
+      emit("; #{node.call_node.receiver.name}.__papercraft_compiled_proc.(__buffer__")
       if node.call_node.arguments
         emit(', ')
         visit(node.call_node.arguments)
@@ -418,7 +429,7 @@ module Papercraft
       if node.call_node.block
         emit(", &(->")
         visit(node.call_node.block)
-        emit(").__compiled_proc__")
+        emit(").__papercraft_compiled_proc")
       end
       emit(")")
     end
@@ -487,6 +498,15 @@ module Papercraft
       return false if @mode == :xml
 
       RAW_INNER_TEXT_TAGS.include?(tag.to_s)
+    end
+
+    def format_xml_tag_self_closing(loc, tag, attributes)
+      tag = convert_tag(tag)
+      if attributes && attributes&.elements.size > 0 || @@html_debug_attribute_injector
+        "<#{tag} #{format_html_attributes(loc, attributes)}/>"
+      else
+        "<#{tag}/>"
+      end
     end
 
     # Formats an open tag with optional attributes.

@@ -8,21 +8,34 @@ module Papercraft
 
     # @param proc [Proc] template proc
     # @param mode [Symbol] mode (:html, :xml)
-    def initialize(proc, mode: :html)
-      @proc = proc
+    def initialize(proc = nil, mode: :html, &block)
+      @proc = proc || block
+      raise ArgumentError, "No template proc given" if !@proc
+
       @mode = mode
     end
 
+    # Renders the template.
+    #
+    # @return [String] generated HTML
     def render(*, **, &)
-      (mode == :xml) ? @proc.render_xml(*, **, &) : @proc.render(*, **, &)
+      (mode == :xml) ? Papercraft.xml(@proc, *, **, &) : Papercraft.html(@proc, *, **, &)
     end
+    alias_method :call, :render
 
+    # Applies the given parameters and block to the template, returning an
+    # applied template.
+    #
+    # @return [Papercraft::Template] applied template
     def apply(*, **, &)
-      Template.new(@proc.apply(*, **, &), mode: @mode)
+      Template.new(Papercraft.apply(@proc, *, **, &), mode: @mode)
     end
 
-    def __compiled_proc__
-      @proc.__compiled_proc__(mode: @mode)
+    # Returns the compiled proc for the template.
+    #
+    # @return [Proc] compiled proc
+    def __papercraft_compiled_proc
+      @proc.__papercraft_compiled_proc(mode: @mode)
     end
   end
 end

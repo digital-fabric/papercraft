@@ -78,14 +78,14 @@ class Coalesced
     _b_ << "<!DOCTYPE html><html><body>#{
       Papercraft.render_emit_call(Header, title: title, &(->(_b_) {
         ; _b_ << "<button>1</button><button>2</button>"
-      }.compiled!))
+      }.__papercraft_compiled!))
       }#{
       Papercraft.render_emit_call(Content, title: title)
       }</body></html>";
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:, &__block__) do
     _b_ << "<header><h2 id=\"title\">#{
@@ -96,14 +96,14 @@ class Coalesced
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>#{ERB::Escape.html_escape((title).to_s)}</h3><p>Hello, world!</p><div><a href=\"http://google.com/?a=1&b=2&c=3 4\"><h3>foo bar</h3></a><p>lorem ipsum</p></div></article>"
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class Chunked
@@ -111,13 +111,13 @@ class Chunked
     _b_ << "<!DOCTYPE html><html><body>" <<
         Papercraft.render_emit_call(Header, title: title, &(->(_b_) {
         ; _b_ << "<button>1</button><button>2</button>"
-        }.compiled!)) <<
+        }.__papercraft_compiled!)) <<
         Papercraft.render_emit_call(Content, title: title) <<
         "</body></html>";
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:, &__block__) do
     _b_ << "<header><h2 id=\"title\">" <<
@@ -128,7 +128,7 @@ class Chunked
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>" <<
@@ -137,7 +137,7 @@ class Chunked
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class DirectInvocation
@@ -145,13 +145,13 @@ class DirectInvocation
     _b_ << "<!DOCTYPE html><html><body>"
     Header.compiled_proc.(_b_, title: title, &(->(_b_) {
       ; _b_ << "<button>1</button><button>2</button>"
-    }).compiled!)
+    }).__papercraft_compiled!)
     Content.compiled_proc.(_b_, title: title)
     _b_ << "</body></html>";
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:, &__block__) do
     _b_ << "<header><h2 id=\"title\">" <<
@@ -162,7 +162,7 @@ class DirectInvocation
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>" <<
@@ -171,7 +171,7 @@ class DirectInvocation
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class Inlined
@@ -189,7 +189,7 @@ class Inlined
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   # Header = ->(_b_, title:, &__block__) do
   #   _b_ << "<header><h2 id=\"title\">" <<
@@ -200,7 +200,7 @@ class Inlined
   #   _b_
   # rescue Exception => e
   #   raise e
-  # end.compiled!
+  # end.__papercraft_compiled!
 
   # Content = ->(_b_, title:) do
   #   _b_ << "<article><h3>" <<
@@ -209,7 +209,7 @@ class Inlined
   #   _b_
   # rescue Exception => e
   #   raise e
-  # end.compiled!
+  # end.__papercraft_compiled!
 end
 
 class NoYield
@@ -221,7 +221,7 @@ class NoYield
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:) do
     _b_ << "<header><h2 id=\"title\">" <<
@@ -230,7 +230,7 @@ class NoYield
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>" <<
@@ -239,7 +239,7 @@ class NoYield
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class NoYieldSeparate
@@ -251,7 +251,7 @@ class NoYieldSeparate
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:) do
     _b_ << "<header><h2 id=\"title\">"
@@ -260,7 +260,7 @@ class NoYieldSeparate
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>"
@@ -269,7 +269,7 @@ class NoYieldSeparate
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class NoRescue
@@ -277,11 +277,11 @@ class NoRescue
     _b_ << "<!DOCTYPE html><html><body>"
     Header.compiled_proc.(_b_, title: title, &(->(_b_) {
       ; _b_ << "<button>1</button><button>2</button>"
-    }).compiled!)
+    }).__papercraft_compiled!)
     Content.compiled_proc.(_b_, title: title)
     _b_ << "</body></html>";
     _b_
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:, &__block__) do
     _b_ << "<header><h2 id=\"title\">" <<
@@ -290,14 +290,14 @@ class NoRescue
     (__block__ ? __block__.render_to_buffer(_b_) : raise(LocalJumpError, 'no block given (yield)'))
     _b_ << "</header>"
     _b_
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>" <<
       ERB::Escape.html_escape((title).to_s) <<
       "</h3><p>Hello, world!</p><div><a href=\"http://google.com/?a=1&b=2&c=3 4\"><h3>foo bar</h3></a><p>lorem ipsum</p></div></article>"
     _b_
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class Separate
@@ -305,13 +305,13 @@ class Separate
     _b_ << "<!DOCTYPE html><html><body>"
     _b_ << Papercraft.render_emit_call(Header, title: title, &(->(_b_) {
         ; _b_ << "<button>1</button><button>2</button>"
-        }.compiled!))
+        }.__papercraft_compiled!))
     _b_ << Papercraft.render_emit_call(Content, title: title)
     _b_ << "</body></html>";
     _b_
   rescue Exception => e
     raise e;
-  end.compiled!
+  end.__papercraft_compiled!
 
   Header = ->(_b_, title:, &__block__) do
     _b_ << "<header><h2 id=\"title\">"
@@ -322,7 +322,7 @@ class Separate
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 
   Content = ->(_b_, title:) do
     _b_ << "<article><h3>"
@@ -331,7 +331,7 @@ class Separate
     _b_
   rescue Exception => e
     raise e
-  end.compiled!
+  end.__papercraft_compiled!
 end
 
 class CompiledERB
@@ -432,11 +432,11 @@ puts
 # puts
 
 puts "Papercraft baseline:"
-puts PapercraftBaseline::App.render(title: 'title')
+puts Papercraft.html(PapercraftBaseline::App, title: 'title')
 puts
 
 puts "Papercraft no yield:"
-puts PapercraftNoYield::App.render(title: 'title')
+puts Papercraft.html(PapercraftNoYield::App, title: 'title')
 puts
 
 cerb = CompiledERB.new
@@ -447,8 +447,8 @@ Benchmark.ips do |x|
 
   x.report("ERB") { cerb.render_app(title: 'title from context') }
   x.report("ERubi") { cerubi.render_app(title: 'title from context') }
-  x.report("papercraft baseline") { PapercraftBaseline::App.render(title: 'title from context') }
-  x.report("papercraft no yield") { PapercraftNoYield::App.render(title: 'title from context') }
+  x.report("papercraft baseline") { Papercraft.html(PapercraftBaseline::App, title: 'title from context') }
+  x.report("papercraft no yield") { Papercraft.html(PapercraftNoYield::App, title: 'title from context') }
 
   x.report("inlined") { Inlined::App.(+'', title: 'title from context') }
 

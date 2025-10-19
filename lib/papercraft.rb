@@ -114,10 +114,11 @@ module Papercraft
   # @param opts [Hash] Kramdown option overrides
   # @return [Kramdown::Document] Kramdown document
   def markdown_doc(markdown, **opts)
-    @markdown_deps_loaded ||= true.tap do
+    @markdown_deps_loaded ||= begin
       require 'kramdown'
       require 'rouge'
       require 'kramdown-parser-gfm'
+      true
     end
 
     opts = default_kramdown_options.merge(opts)
@@ -168,7 +169,7 @@ module Papercraft
   # @return [Array<String>] source map
   def source_map(proc)
     loc = proc.source_location
-    fn = proc.__compiled__? ? loc.first : Papercraft::Compiler.source_location_to_fn(loc)
+    fn = proc.__papercraft_compiled? ? loc.first : Papercraft::Compiler.source_location_to_fn(loc)
     Papercraft::Compiler.source_map_store[fn]
   end
 
@@ -186,8 +187,96 @@ module Papercraft
   # @param mode [Symbol] compilation mode (:html, :xml)
   # @return [Proc] compiled proc
   def compile(proc, mode: :html)
-    Papercraft::Compiler.compile(proc, mode:).__compiled__!
+    Papercraft::Compiler.compile(proc, mode:).__papercraft_compiled!
   rescue Sirop::Error
     raise Papercraft::Error, "Can't compile eval'd template"
+  end
+
+  # Renders the given template to HTML with the given arguments. The template
+  # can be passed either as the first parameter, or as a block, if no parameter
+  # is given.
+  #
+  # @param template [Proc] template proc
+  # @return [String] HTML string
+  def html(template = nil, *pos, **kw, &block)
+    if !template
+      template = block
+    elsif template.is_a?(Template)
+      template = template.proc
+    end
+    raise ArgumentError, "No template given" if !template
+
+    template.__papercraft_compiled_proc.(+'', *pos, **kw, &block)
+  rescue Exception => e
+    e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
+  end
+
+  # Renders the given template to XML with the given arguments. The template can
+  # be passed either as the first parameter, or as a block, if no parameter is
+  # given.
+  #
+  # @param template [Proc] template proc
+  # @return [String] XML string
+  def xml(template = nil, *pos, **kw, &block)
+    if !template
+      template = block
+    elsif template.is_a?(Template)
+      template = template.proc
+    end
+    raise ArgumentError, "No template given" if !template
+
+    template = template.proc if template.is_a?(Template)
+    template.__papercraft_compiled_proc(mode: :xml).(+'', *pos, **kw, &block)
+  rescue Exception => e
+    e.is_a?(Papercraft::Error) ? raise : raise(Papercraft.translate_backtrace(e))
+  end
+
+  # Returns a proc that applies the given arguments to the original proc. The
+  # returned proc calls the *compiled* form of the proc, merging the
+  # positional and keywords parameters passed to `#apply` with parameters
+  # passed to the applied proc. If a block is given, it is wrapped in a proc
+  # that passed merged parameters to the block.
+  #
+  # @param template [Proc] template proc
+  # @param *pos1 [Array<any>] applied positional parameters
+  # @param **kw1 [Hash<any, any] applied keyword parameters
+  # @return [Proc] applied proc
+  def apply(template, *pos1, **kw1, &block1)
+    template = template.proc if template.is_a?(Template)
+    compiled = template.__papercraft_compiled_proc
+    block1_compiled = block1&.__papercraft_compiled_proc
+
+    ->(__buffer__, *pos2, **kw2, &block2) {
+      if block2
+        block2_compiled = block1_compiled ?
+          ->(__buffer__, *pos3, **kw3) {
+            block1_compiled.(__buffer__, *pos3, **kw3, &block2)
+          }.__papercraft_compiled! :
+          block2.__papercraft_compiled_proc
+        compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &block2_compiled)
+      else
+        compiled.(__buffer__, *pos1, *pos2, **kw1, **kw2, &block1_compiled)
+      end
+    }.__papercraft_compiled!
+  end
+
+  # Caches and returns the rendered HTML for the template with the given
+  # arguments.
+  #
+  # @param template [Proc] template proc
+  # @param key [any] Cache key
+  # @return [String] HTML string
+  def cache_html(template, key, *, **, &)
+    template.__papercraft_render_cache[key] ||= html(template, *, **, &)
+  end
+
+  # Caches and returns the rendered XML for the template with the given
+  # arguments.
+  #
+  # @param template [Proc] template proc
+  # @param key [any] Cache key
+  # @return [String] XML string
+  def cache_xml(template, key, *, **, &)
+    template.__papercraft_render_cache[key] ||= xml(template, *, **, &)
   end
 end

@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
-require 'bundler/inline'
-
-gemfile do
-  gem 'papercraft', path: '.'
-  gem 'benchmark-ips', '>= 2.14.0'
-  gem 'json'
-end
+require 'bundler/setup'
 
 require 'papercraft'
 require 'benchmark/ips'
@@ -399,17 +393,17 @@ module Dashboard
 end
 
 
-html = Dashboard::Page.render
+html = Papercraft.html(Dashboard::Page)
 puts html
 puts
 puts format('Size: %.2gKB', html.bytesize.to_f / 1024)
 puts
-puts Dashboard::Page.compiled_code
+puts Papercraft.compiled_code(Dashboard::Page)
 puts
 
 Benchmark.ips do |x|
-  x.report('page') { Dashboard::Page.render }
-  x.report('cached') { Dashboard::Page.render_cached }
+  x.report('page') { Papercraft.html(Dashboard::Page) }
+  x.report('cached') { Papercraft.cache_html(Dashboard::Page, 'foo') }
 
   x.compare!(order: :baseline)
 end

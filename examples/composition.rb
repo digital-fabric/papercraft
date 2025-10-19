@@ -25,7 +25,9 @@ page = ->(title, items) {
   }
 }
 
-puts page.render('Hello from composed templates', [
-  { id: 1, text: 'foo', checked: false },
-  { id: 2, text: 'bar', checked: true }
-])
+puts Papercraft.html(page, 
+  'Hello from composed templates', [
+    { id: 1, text: 'foo', checked: false },
+    { id: 2, text: 'bar', checked: true }
+  ]
+)
