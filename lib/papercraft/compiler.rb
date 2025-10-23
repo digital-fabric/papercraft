@@ -699,6 +699,16 @@ module Papercraft
       @pending_html_parts << [loc, str]
     end
 
+    def visit_if_node_ternary(node)
+      emit_code(node.predicate)
+      emit_code(node.then_keyword_loc)
+      @in_ternary_op = true
+      emit_code(node.statements)
+      emit_code(node.subsequent)
+      flush_html_parts!
+      @in_ternary_op = nil
+    end
+
     # Flushes pending HTML parts to the source code buffer.
     #
     # @return [void]
@@ -706,7 +716,11 @@ module Papercraft
       return if @pending_html_parts.empty?
 
       adjust_whitespace(@html_loc_start, advance_to_end: false)
-      emit('; __buffer__')
+      if @in_ternary_op
+        emit('(; __buffer__')
+      else
+        emit('; __buffer__')
+      end
       concatenated = +''
 
       last_loc = @html_loc_start
@@ -722,7 +736,9 @@ module Papercraft
         last_loc = loc
       end
       emit_html_buffer_push(concatenated, quotes: true) if !concatenated.empty?
-
+      if @in_ternary_op
+        emit(')')
+      end
       @pending_html_parts.clear
 
       @last_loc = last_loc

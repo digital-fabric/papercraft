@@ -1,3 +1,14 @@
+## Immediate
+
+- [ ] - Fix bad compiled source generation ternary op:
+
+  ```ruby
+  -> (p) {
+    p ? a('<', href: p, class: 'prev') : span(class: 'prev')
+  }
+  ```
+
+
 ## Support for inlining
 
 ### Uses
