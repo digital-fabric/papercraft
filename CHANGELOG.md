@@ -1,3 +1,7 @@
+# 3.1.0 2025-10-26
+
+- Restore Proc methods: to_html, to_xml, ast, apply
+
 # 3.0.2 2025-10-23
 
 - Fix compilation of ternary ops with HTML tags
