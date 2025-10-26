@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'minitest/autorun'
-require 'papercraft'
+require_relative './helper'
 
 class HtmlTest < Minitest::Test
   def test_void_elements

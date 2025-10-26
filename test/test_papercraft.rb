@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'minitest/autorun'
-require 'papercraft'
+require_relative './helper'
 
 class PapercraftRenderTest < Minitest::Test
   def test_papercraft_html_with_block

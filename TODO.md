@@ -193,3 +193,55 @@ proc, so:
 # into the mutated AST, which is then stored in FancyLayout, and so forth...
 FancyLayout = Papercraft.apply(DefaultLayout) { ... } 
 ```
+
+## Support for introspection
+
+### Objectives
+
+Some of the applications:
+
+- Debugging
+  - Be able to find problems with a view, like why something was not rendered,
+    or why it was rendered incorrectly.
+  - Be able to inspect dependencies
+- Testing
+  - Be able to test the output of a template, the existence of an element, etc.
+- Annotation
+  - Be able to annotate specific elements
+- Refactoring
+  - Tools for extracting parts of templates, or rewriting templates
+- Partial rendering
+  - Render only parts of a template
+
+### How
+
+One option:
+
+- Use CSS-like selectors to select nodes
+- Select tag nodes from AST
+
+Another option (at least for testing):
+
+- Just use Nokigiri and wrap that with some conveient API
+
+### API
+
+```ruby
+t = ->(name) {
+  body {
+    div {
+      h1 "Hello, #{name}!"
+    }
+  }
+}
+
+# partial
+div = Papercraft.partial(t, "div")
+Papercraft.html(div, "world") #=> "<h1>Hello, world!</h1>"
+
+# render partial
+html = Papercraft.html_partial(t, "div", "world!")
+
+# get node
+node = Papercraft.select(t, "div") #=> TagNode("div")
+```

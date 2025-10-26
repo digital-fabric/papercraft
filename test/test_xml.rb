@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'minitest/autorun'
+require_relative './helper'
 require 'time'
-require 'papercraft'
 
 class HtmlTest < Minitest::Test
   def test_xml_for_html_void_elements
