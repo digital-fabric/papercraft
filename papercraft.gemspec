@@ -29,4 +29,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency  'minitest',             '~>5.25.5'
   s.add_development_dependency  'benchmark-ips',        '~>2.14.0'
   s.add_development_dependency  'irb',                  '~>1.15.2'
+  s.add_development_dependency  'tilt',                 '~>2.6.1'
 end
