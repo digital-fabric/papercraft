@@ -1,13 +1,68 @@
 ## Immediate
 
-- [ ] - Fix bad compiled source generation ternary op:
+## Switch code generation to generating a method
 
-  ```ruby
-  -> (p) {
-    p ? a('<', href: p, class: 'prev') : span(class: 'prev')
+Benchmarks show a significant performance increase when instead of creating a
+compiled lambda, we create a method that is invoked directly. Take the following
+example:
+
+```ruby
+t = ->(foo, bar) {
+  div {
+    h1 foo
+    h2 bar
   }
-  ```
+}
+```
 
+The compiled form currently is:
+
+```ruby
+->(__buffer__, foo, bar) {
+  __buffer__
+    .<<("<div><h1>")
+    .<<(ERB::Escape.html_escape((foo)))
+    .<<("</h1><h2>")
+    .<<(ERB::Escape.html_escape((bar)))
+    .<<("</h2></div>")
+  __buffer__
+}
+```
+
+Instead, we can define a method on the template itself:
+
+```ruby
+def t.__papercraft_render_html(__buffer__, foo, bar)
+  __buffer__
+    .<<("<div><h1>")
+    .<<(ERB::Escape.html_escape((foo)))
+    .<<("</h1><h2>")
+    .<<(ERB::Escape.html_escape((bar)))
+    .<<("</h2></div>")
+  __buffer__
+end
+```
+
+And then, we change `Papercraft.html` to do:
+
+```ruby
+def Papercraft.html(template, *, **, &)
+  template.__papercraft_render_html(+'', *, **, &)
+rescue => e
+  translate_backtrace(e)
+end
+```
+
+The default impl for `__papercraft_render_html` can be:
+
+```ruby
+class ::Proc
+  def __papercraft_render_html(*, **, &)
+    Papercraft.compile_render_html_method(self)
+    __papercraft_render_html(*, **, &)
+  end
+end
+```
 
 ## Support for inlining
 
