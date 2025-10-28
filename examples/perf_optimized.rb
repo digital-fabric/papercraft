@@ -92,17 +92,17 @@ puts
 # puts '* ERUBI (raw):'
 # puts r.render_erubi_app.gsub(/\n\s+/, '')
 
-res = Benchmark.ips do |x|
-  # x.config(:time => 5, :warmup => 2)
+GC.start
+
+_res = Benchmark.ips do |x|
+  x.config(:time => 30, :warmup => 5)
 
   x.report("erb") { render_erb('FOO', 'BAR') }
-  x.report("erb_indirect") { render_erb_indirect('FOO', 'BAR') }
-  x.report("papercraft") { render_papercraft('FOO', 'BAR') }
-  x.report("papercraft_optimized") { render_papercraft_optimized('FOO', 'BAR') }
-  x.report("optimized") { render_optimized('FOO', 'BAR') }
+  # x.report("erb_indirect") { render_erb_indirect('FOO', 'BAR') }
+  x.report("papercraft_proc") { render_papercraft('FOO', 'BAR') }
+  x.report("papercraft_method") { render_papercraft_optimized('FOO', 'BAR') }
+  # x.report("optimized") { render_optimized('FOO', 'BAR') }
 
   x.compare!(order: :baseline)
 end
-
-
-p res
+# p res
