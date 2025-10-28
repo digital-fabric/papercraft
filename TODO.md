@@ -1,6 +1,20 @@
 ## Immediate
 
+## Bring back Tilt integration
+
+https://github.com/digital-fabric/papercraft/issues/15
+
+Original tilt integration:
+
+https://github.com/digital-fabric/papercraft/commit/e80c8bc8a433e6482c0117a1ed8b2d626f724151
+
 ## Switch code generation to generating a method
+
+> One problem with this is that we lose the original binding of the template,
+> and thus lose the closure property. Is this really worth it? Since the major
+> performance benefits we're going to get from inlining (see below) is anyway
+> supposed to make Papercraft much faster than ERB when using composed
+> templates.
 
 Benchmarks show a significant performance increase when instead of creating a
 compiled lambda, we create a method that is invoked directly. Take the following
