@@ -1,82 +1,33 @@
 ## Immediate
 
-## Bring back Tilt integration
+- [ ] add support for `yield` instead of `render_yield`
+- [ ] add support for nested data attributes
 
-https://github.com/digital-fabric/papercraft/issues/15
+  ```ruby
+  h1(
+    data: {
+      turbo: {
+        link: "foo"
+      }
+    }
+  )
+  #=> <h1 data-turbo-link="foo">
+  ```
 
-Original tilt integration:
+  - [ ] Update roda, hanami integration gems for latest Papercraft version
+  - [ ] More work on Hanami integration:
+        - helpers
+        - access to instance vars
+        - documentation
 
-https://github.com/digital-fabric/papercraft/commit/e80c8bc8a433e6482c0117a1ed8b2d626f724151
+  - [ ] More work on docs site:
+    - [ ] Improve styling
+      - [ ] Use sans-serif font
+      - [ ] Add support for dark/light themes
+      - [ ] Add more icons
+      - [ ] Logo work
 
-## Switch code generation to generating a method
-
-> One problem with this is that we lose the original binding of the template,
-> and thus lose the closure property. Is this really worth it? Since the major
-> performance benefits we're going to get from inlining (see below) is anyway
-> supposed to make Papercraft much faster than ERB when using composed
-> templates.
-
-Benchmarks show a significant performance increase when instead of creating a
-compiled lambda, we create a method that is invoked directly. Take the following
-example:
-
-```ruby
-t = ->(foo, bar) {
-  div {
-    h1 foo
-    h2 bar
-  }
-}
-```
-
-The compiled form currently is:
-
-```ruby
-->(__buffer__, foo, bar) {
-  __buffer__
-    .<<("<div><h1>")
-    .<<(ERB::Escape.html_escape((foo)))
-    .<<("</h1><h2>")
-    .<<(ERB::Escape.html_escape((bar)))
-    .<<("</h2></div>")
-  __buffer__
-}
-```
-
-Instead, we can define a method on the template itself:
-
-```ruby
-def t.__papercraft_render_html(__buffer__, foo, bar)
-  __buffer__
-    .<<("<div><h1>")
-    .<<(ERB::Escape.html_escape((foo)))
-    .<<("</h1><h2>")
-    .<<(ERB::Escape.html_escape((bar)))
-    .<<("</h2></div>")
-  __buffer__
-end
-```
-
-And then, we change `Papercraft.html` to do:
-
-```ruby
-def Papercraft.html(template, *, **, &)
-  template.__papercraft_render_html(+'', *, **, &)
-rescue => e
-  translate_backtrace(e)
-end
-```
-
-The default impl for `__papercraft_render_html` can be:
-
-```ruby
-class ::Proc
-  def __papercraft_render_html(*, **, &)
-    Papercraft.compile_render_html_method(self)
-    __papercraft_render_html(*, **, &)
-  end
-end
-```
+  - Rework compiler to generate code by transforming tree, instead of 
 
 ## Support for inlining
 

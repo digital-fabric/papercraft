@@ -356,45 +356,6 @@ class CompiledERB
   end
 end
 
-class CompiledERubi
-  def render_app(title:)
-    _buf = +'';; _buf << '<!DOCTYPE html>
-<html>
-  <body>
-    ' << ( render_header(title: title) ).to_s << '
-' << '    ' << ( render_content(title: title) ).to_s << '
-' << '  </body>
-</html>
-'
-; _buf.to_s
-  end
-
-  def render_header(title:)
-    _buf = +'';; _buf << '<header>
-  <h2 id="title">' << ( ERB::Escape.html_escape(title) ).to_s << '</h2>
-  <button>1</button>
-  <button>2</button>
-</header>
-'
-; _buf.to_s
-  end
-
-  def render_content(title:)
-    _buf = +'';; _buf << '<article>
-  <h3>' << ( ERB::Escape.html_escape(title) ).to_s << '</h3>
-  <p>Hello, world!</p>
-  <div>
-    <a href="' << ( 'http://google.com/?a=1&b=2&c=3%204' ).to_s << '">
-      <h3>foo bar</h3>
-    </a>
-    <p>lorem ipsum</p>
-  </div>
-</article>
-'
-    ; _buf.to_s
-  end
-end
-
 # puts "Coalesced:"
 # puts Coalesced::App.(+'', title: 'title')
 # puts
@@ -427,10 +388,6 @@ puts
 # puts CompiledERB.new.render_app(title: 'title')
 # puts
 
-# puts "Compiled ERubi:"
-# puts CompiledERubi.new.render_app(title: 'title')
-# puts
-
 puts "Papercraft baseline:"
 puts Papercraft.html(PapercraftBaseline::App, title: 'title')
 puts
@@ -440,13 +397,11 @@ puts Papercraft.html(PapercraftNoYield::App, title: 'title')
 puts
 
 cerb = CompiledERB.new
-cerubi = CompiledERubi.new
 
 Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
 
   x.report("ERB") { cerb.render_app(title: 'title from context') }
-  x.report("ERubi") { cerubi.render_app(title: 'title from context') }
   x.report("papercraft baseline") { Papercraft.html(PapercraftBaseline::App, title: 'title from context') }
   x.report("papercraft no yield") { Papercraft.html(PapercraftNoYield::App, title: 'title from context') }
 

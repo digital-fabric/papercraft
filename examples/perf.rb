@@ -4,14 +4,13 @@ require 'bundler/inline'
 
 gemfile do
   gem 'papercraft', path: '.'
-  gem 'benchmark-ips', '>= 2.14.0'
-  gem 'erubi'
+  gem 'benchmark'
+  gem 'benchmark-ips'
   gem 'phlex'
 end
 
 require 'papercraft'
 require 'erb'
-require 'erubi'
 require 'benchmark/ips'
 require 'cgi'
 require 'phlex'
@@ -63,37 +62,6 @@ HTML_HEADER_ERB = <<~HTML
 HTML
 
 HTML_CONTENT_ERB = <<~HTML
-<article>
-  <h3><%= ERB::Escape.html_escape(title) %></h3>
-  <p>Hello, world!</p>
-  <div>
-    <a href="<%= 'http://google.com/?a=1&b=2&c=3%204' %>">
-      <h3>foo bar</h3>
-    </a>
-    <p>lorem ipsum</p>
-  </div>
-</article>
-HTML
-
-HTML_APP_ERUBI = <<~HTML
-<!DOCTYPE html>
-<html>
-  <body>
-    <%= render_erubi_header(title: 'title from context') %>
-    <%= render_erubi_content(title: 'title from context') %>
-  </body>
-</html>
-HTML
-
-HTML_HEADER_ERUBI = <<~HTML
-<header>
-  <h2 id="title"><%= ERB::Escape.html_escape(title) %></h2>
-  <button>1</button>
-  <button>2</button>
-</header>
-HTML
-
-HTML_CONTENT_ERUBI = <<~HTML
 <article>
   <h3><%= ERB::Escape.html_escape(title) %></h3>
   <p>Hello, world!</p>
@@ -181,42 +149,6 @@ class Renderer
     PhlexApp.new(title: 'title from context').call
   end
 
-  # def render_erb_app
-  #   @erb_app ||= Tilt::ERBTemplate.new { HTML_APP_ERB }
-  #   @erb_app.render(self)
-  # end
-
-  # def render_erb_header(locals)
-  #   @erb_header ||= Tilt::ERBTemplate.new { HTML_HEADER }
-  #   @erb_header.render(self, locals)
-  # end
-
-  # def render_erb_content
-  #   @erb_content ||= Tilt::ERBTemplate.new { HTML_CONTENT }
-  #   @erb_content.render(self)
-  # end
-
-  ERUBI_OPTS = {
-    chain_appends: true,
-    freeze_template_literals: false,
-    bufval: "+''",
-    # escape: true,
-  }
-  class_eval(c = <<~RUBY)
-    # frozen_string_literal: true
-    def render_erubi_app
-      #{Erubi::Engine.new(HTML_APP_ERUBI, ERUBI_OPTS).src}
-    end
-
-    def render_erubi_header(title:)
-      #{Erubi::Engine.new(HTML_HEADER_ERUBI, ERUBI_OPTS).src}
-    end
-
-    def render_erubi_content(title:)
-      #{Erubi::Engine.new(HTML_CONTENT_ERUBI, ERUBI_OPTS).src.tap { puts '* ERUBI:'; puts it }}
-    end
-  RUBY
-
   class_eval(c = <<~RUBY)
     # frozen_string_literal: true
     def render_erb_app
@@ -228,7 +160,7 @@ class Renderer
     end
 
     def render_erb_content(title:)
-      #{ERB.new(HTML_CONTENT_ERB).src.tap { puts '* ERB:'; puts it }}
+      #{ERB.new(HTML_CONTENT_ERB).src}
     end
   RUBY
 end
@@ -239,15 +171,12 @@ r = Renderer.new
 # puts r.render_papercraft_app
 # puts
 
-puts '* Phlex:'
-puts r.render_phlex_app
-puts
+# puts '* Phlex:'
+# puts r.render_phlex_app
+# puts
 
 # puts '* ERB:'
 # puts r.render_erb_app.gsub(/\n\s+/, '')
-
-# puts '* ERUBI (raw):'
-# puts r.render_erubi_app.gsub(/\n\s+/, '')
 
 Benchmark.ips do |x|
   # x.config(:time => 5, :warmup => 2)
@@ -255,7 +184,6 @@ Benchmark.ips do |x|
   x.report("erb") { r.render_erb_app }
   x.report("papercraft") { r.render_papercraft_app }
   x.report("phlex") { r.render_phlex_app }
-  x.report("erubi") { r.render_erubi_app }
 
   x.compare!(order: :baseline)
 end
