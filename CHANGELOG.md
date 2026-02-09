@@ -1,3 +1,7 @@
+# 3.2.1 2026-02-09
+
+- Update dependencies
+
 # 3.2.0 2025-10-28
 
 - Restore Tilt integration (#22)
