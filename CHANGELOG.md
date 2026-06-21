@@ -1,3 +1,7 @@
+# 3.2.2 2026-06-21
+
+- Update Sirop
+
 # 3.2.1 2026-02-09
 
 - Update dependencies
