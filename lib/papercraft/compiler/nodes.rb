@@ -23,7 +23,6 @@ module Papercraft
       @location = call_node.location
       @tag = call_node.name
       prepare_block(translator)
-
       args = call_node.arguments&.arguments
       return if !args
 
@@ -106,15 +105,44 @@ module Papercraft
 
   # Represents a text call
   class TextNode
-    attr_reader :call_node, :location
+    attr_reader :call_node, :location, :tag, :tag_location, :inner_text, :attributes, :block
 
-    def initialize(call_node, _translator)
+    def initialize(call_node, translator)
       @call_node = call_node
       @location = call_node.location
+      @tag = :text
+      prepare_block(translator)
+      args = call_node.arguments&.arguments
+      return if !args
+
+      if @tag == :tag
+        @tag = args[0]
+        args = args[1..]
+      end
+
+      if args.size == 1 && args.first.is_a?(Prism::KeywordHashNode)
+        @inner_text = nil
+        @attributes = args.first
+      else
+        @inner_text = args.first
+        @attributes = args[1].is_a?(Prism::KeywordHashNode) ? args[1] : nil
+      end
     end
 
     def accept(visitor)
       visitor.visit_text_node(self)
+    end
+
+    def prepare_block(translator)
+      @block = call_node.block
+      if @block.is_a?(Prism::BlockNode)
+        @block = translator.visit(@block)
+        offset = @location.start_offset
+        length = @block.opening_loc.start_offset - offset
+        @tag_location = @location.copy(start_offset: offset, length: length)
+      else
+        @tag_location = @location
+      end
     end
   end
 

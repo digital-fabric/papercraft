@@ -23,6 +23,19 @@ _erbout.<< "\">\n      <h3>foo bar</h3>\n    </a>\n    <p>lorem ipsum</p>\n  </d
 ; _erbout
 end
 
+def interpolate(title:)
+  <<~EOF
+    <article>
+      <h3>#{ERB::Escape.html_escape(title)}</h3>
+      <p>Hello, world!</p>
+      <div>
+        <h3>foo bar<a href="http://google.com/?a=1&b=2&c=3%204"></a></h3>
+        <p>lorem ipsum</p>
+      </div>
+    </article>
+  EOF
+end
+
 def papercraft(__buffer__, title:)
   ; __buffer__  << "<article><h3>"
     ; __buffer__  << ERB::Escape.html_escape((title)) << "</h3><p>Hello, world!</p><div><a href=\"http://google.com/?a=1&b=2&c=3 4\"><h3>foo bar</h3></a><p>lorem ipsum</p></div></article>"; __buffer__
@@ -41,6 +54,7 @@ Benchmark.ips do |x|
   x.report("erubi") { erubi(title: 'foo') }
   x.report("erb")   { erb(title: 'foo') }
   x.report("papercraft")    { papercraft(+'', title: 'foo') }
+  x.report("interpolate")    { interpolate(title: 'foo') }
 
   x.compare!(order: :baseline)
 end

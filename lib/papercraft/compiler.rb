@@ -172,7 +172,7 @@ module Papercraft
 
       if @mode == :xml && is_empty
         emit_html(
-          node.tag_location, 
+          node.tag_location,
           format_xml_tag_self_closing(node.tag_location, tag, node.attributes)
         )
         return
@@ -270,7 +270,7 @@ module Papercraft
           emit_html(node.location, interpolated("ERB::Escape.html_escape(#{format_code(first_arg)})"))
         end
       else
-        raise "Don't know how to compile #{node}"
+        visit_tag_node(node)
       end
     end
 

@@ -136,6 +136,14 @@ class PhlexContent < Phlex::HTML
   end
 end
 
+puts
+puts Papercraft.compiled_code(App)
+puts
+puts Papercraft.compiled_code(Header)
+puts
+puts Papercraft.compiled_code(Content)
+puts
+
 class Renderer
   def render_papercraft_app
     Papercraft.html(App, title: 'title from context')

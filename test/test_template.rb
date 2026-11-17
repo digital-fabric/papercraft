@@ -465,6 +465,26 @@ class TagsTest < Minitest::Test
     html = Papercraft.html(t)
     assert_equal("<div><h1 id=\"foo\">Foo</h1>\n\n<p>Lorem ipsum</p>\n</div>", html)
   end
+
+  def test_text_no_atts
+    t = -> {
+      div {
+        text "Foobar"
+      }
+    }
+    html = Papercraft.html(t)
+    assert_equal("<div>Foobar</div>", html)
+  end
+
+  def test_text_with_atts
+    t = -> {
+      div {
+        text "Foobar", foo: 'bar'
+      }
+    }
+    html = Papercraft.html(t)
+    assert_equal("<div><text foo=\"bar\">Foobar</text></div>", html)
+  end
 end
 
 class ExceptionBacktraceTest < Minitest::Test
