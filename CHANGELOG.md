@@ -1,3 +1,9 @@
+# 3.3.0 2026-11-17
+
+- Update dependencies
+- Add support for SVG text element with attributes
+- Add support for SVG tag
+
 # 3.2.2 2026-06-21
 
 - Update Sirop
