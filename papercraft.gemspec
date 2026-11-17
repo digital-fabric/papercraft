@@ -20,14 +20,14 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.required_ruby_version = '>= 3.4'
 
-  s.add_runtime_dependency      'sirop',                '~>1.1.0'
-  s.add_runtime_dependency      'kramdown',             '~>2.5.2'
-  s.add_runtime_dependency      'rouge',                '~>4.7.0'
+  s.add_runtime_dependency      'erb',                  '~>6.0.7'
+  s.add_runtime_dependency      'kramdown',             '~>2.6.1'
   s.add_runtime_dependency      'kramdown-parser-gfm',  '~>1.1.0'
-  s.add_runtime_dependency      'erb',                  '~>6.0.1'
+  s.add_runtime_dependency      'rouge',                '~>5.1.0'
+  s.add_runtime_dependency      'sirop',                '~>1.1.0'
 
-  s.add_development_dependency  'minitest'
+  s.add_development_dependency  'benchmark-ips',        '~>2.15.1'
   s.add_development_dependency  'irb'
-  s.add_development_dependency  'benchmark-ips',        '~>2.14.0'
-  s.add_development_dependency  'tilt',                 '~>2.7.0'
+  s.add_development_dependency  'minitest'
+  s.add_development_dependency  'tilt',                 '~>2.9.0'
 end

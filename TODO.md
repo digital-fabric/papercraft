@@ -1,6 +1,14 @@
 ## Immediate
 
-- [ ] add support for `yield` instead of `render_yield`
+- [ ] Investigate template complexity
+  - [ ] When there's only a single value injection into the rendered HTML,
+        string interpolation is actually faster.
+  - [ ] Make a benchmark where the number of injected strings can be controlled.
+    - [ ] Find out at what level of complexity (in terms of the number of value
+      injections), __if any__, interpolation becomes slower than separate
+      appends to the buffer.
+  
+
 - [ ] add support for nested data attributes
 
   ```ruby
