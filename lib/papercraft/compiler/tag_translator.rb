@@ -50,7 +50,7 @@ module Papercraft
         TextNode.new(node, self)
       when :defer
         DeferNode.new(node, self)
-      when :html, :html5, :markdown
+      when :html, :html5, :svg, :markdown
         BuiltinNode.new(node, self)
       else
         nil

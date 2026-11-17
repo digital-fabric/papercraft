@@ -165,7 +165,6 @@ module Papercraft
       is_void = is_void_element?(tag)
       is_raw_inner_text = is_raw_inner_text_element?(tag)
       is_empty = !node.block && !node.inner_text
-
       if is_void && !is_empty
         raise Papercraft::Error, "Void element #{tag} cannot contain child nodes or inner text"
       end
@@ -329,9 +328,12 @@ module Papercraft
       when :html, :html5
         emit_html(node.location, '<!DOCTYPE html>')
         emit_html(node.location, format_html_tag_open(node.location, 'html', node.attributes))
-        # emit_html(node.location, '<!DOCTYPE html><html>')
         visit(node.block.body) if node.block
         emit_html(node.block.closing_loc, '</html>')
+      when :svg
+        emit_html(node.location, format_html_tag_open(node.location, 'svg xmlns=\"http://www.w3.org/2000/svg\"', node.attributes))
+        visit(node.block.body) if node.block
+        emit_html(node.block.closing_loc, '</svg>')
       when :markdown
         args = node.call_node.arguments
         return if !args
