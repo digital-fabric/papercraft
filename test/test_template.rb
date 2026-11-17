@@ -854,3 +854,10 @@ class MethodChainingTest < Minitest::Test
     assert_equal '', Papercraft.html(t)
   end
 end
+
+class SyntaxErrorTest < Minitest::Test
+  def test_template_syntax_error_1
+    h = ->(foo) { div { foo.to_s } }
+    assert_raises(SyntaxError) { Papercraft.html(h, 42) }
+  end
+end
